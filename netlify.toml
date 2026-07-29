@@ -1,0 +1,17 @@
+# Netlify 部署設定：純靜態網站，不需要建置步驟
+[build]
+  publish = "."
+
+# 基本安全標頭
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# 靜態資源快取
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
