@@ -296,36 +296,87 @@
           </a>
         </div>
 
-        <form class="booking-form" id="bookingForm">
-          <div class="field-row">
-            <div class="field">
-              <label for="name">姓名</label>
-              <input type="text" id="name" name="name" placeholder="您的稱呼" required>
+        <form class="booking-form" id="bookingForm" novalidate>
+
+          <!-- 步驟 1：選擇時間 -->
+          <div class="bk-step">
+            <span class="bk-num">1</span>
+            <div class="bk-body">
+              <h4>選擇時間<span class="bk-tz">台灣時間</span></h4>
+              <div class="bk-dates" id="bkDates" role="tablist" aria-label="可預約日期"></div>
+              <div class="bk-slots" id="bkSlots" aria-label="可預約時段"></div>
+              <p class="bk-picked" id="bkPicked">尚未選擇時段</p>
             </div>
-            <div class="field">
-              <label for="phone">聯絡電話</label>
-              <input type="tel" id="phone" name="phone" placeholder="0912-345-678" required>
+          </div>
+
+          <!-- 步驟 2：見面方式 -->
+          <div class="bk-step">
+            <span class="bk-num">2</span>
+            <div class="bk-body">
+              <h4>見面方式</h4>
+              <div class="bk-meets">
+                <label class="bk-meet">
+                  <input type="radio" name="meetType" value="當面洽談" checked>
+                  <span><strong>當面洽談</strong><span>桃園區（地點另行約定）</span></span>
+                </label>
+                <label class="bk-meet">
+                  <input type="radio" name="meetType" value="電話聯繫">
+                  <span><strong>電話聯繫</strong><span>由我主動致電給您</span></span>
+                </label>
+                <label class="bk-meet">
+                  <input type="radio" name="meetType" value="線上視訊">
+                  <span><strong>線上視訊</strong><span>Google Meet 或 LINE 視訊</span></span>
+                </label>
+              </div>
             </div>
           </div>
-          <div class="field">
-            <label for="topic">諮詢項目</label>
-            <select id="topic" name="topic">
-              <option value="資產配置">資產配置</option>
-              <option value="稅務諮詢">稅務諮詢</option>
-              <option value="簡易裝潢">簡易裝潢</option>
-              <option value="其他">其他 / 尚未確定</option>
-            </select>
+
+          <!-- 步驟 3：聯絡資料 -->
+          <div class="bk-step">
+            <span class="bk-num">3</span>
+            <div class="bk-body">
+              <h4>聯絡資料</h4>
+              <div class="field-row">
+                <div class="field">
+                  <label for="name">姓名</label>
+                  <input type="text" id="name" name="name" placeholder="您的稱呼" required>
+                </div>
+                <div class="field">
+                  <label for="phone">聯絡電話</label>
+                  <input type="tel" id="phone" name="phone" placeholder="0912-345-678" required>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="field">
-            <label for="time">方便聯繫時段</label>
-            <input type="text" id="time" name="time" placeholder="例如：平日晚上7點後">
+
+          <!-- 步驟 4：諮詢需求 -->
+          <div class="bk-step">
+            <span class="bk-num">4</span>
+            <div class="bk-body">
+              <h4>諮詢需求</h4>
+              <p class="bk-hint">想處理什麼（可複選）</p>
+              <div class="bk-intents">
+                <label class="bk-chip"><input type="checkbox" name="intent" value="資產配置"><span>資產配置</span></label>
+                <label class="bk-chip"><input type="checkbox" name="intent" value="稅務諮詢"><span>稅務諮詢</span></label>
+                <label class="bk-chip"><input type="checkbox" name="intent" value="簡易裝潢"><span>簡易裝潢</span></label>
+                <label class="bk-chip"><input type="checkbox" name="intent" value="買房"><span>買房</span></label>
+                <label class="bk-chip"><input type="checkbox" name="intent" value="賣房"><span>賣房</span></label>
+              </div>
+              <p class="bk-hint">預計何時處理</p>
+              <div class="bk-intents">
+                <label class="bk-chip"><input type="radio" name="urgency" value="這個月內" checked><span>這個月內</span></label>
+                <label class="bk-chip"><input type="radio" name="urgency" value="1 至 3 個月"><span>1 至 3 個月</span></label>
+                <label class="bk-chip"><input type="radio" name="urgency" value="先了解"><span>先了解</span></label>
+              </div>
+              <div class="field" style="margin-top:14px;">
+                <label for="message">需求說明</label>
+                <textarea id="message" name="message" rows="3" placeholder="例如：青埔三房想出售，想先了解行情"></textarea>
+              </div>
+            </div>
           </div>
-          <div class="field">
-            <label for="message">想諮詢的內容</label>
-            <textarea id="message" name="message" rows="3" placeholder="簡單描述您想了解的問題"></textarea>
-          </div>
-          <button type="submit" class="submit-btn">送出並透過LINE聯繫我</button>
-          <p class="form-hint">送出後將自動複製您的預約資訊，並開啟LINE聊天視窗，貼上傳送即可完成預約。</p>
+
+          <button type="submit" class="submit-btn">確認預約並傳送到 LINE</button>
+          <p class="form-hint">送出後預約資訊會自動整理並複製，同時開啟 LINE 聊天視窗，貼上傳送即完成預約。</p>
           <p class="form-status" id="formStatus"></p>
         </form>
       </div>

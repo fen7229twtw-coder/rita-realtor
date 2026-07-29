@@ -709,10 +709,181 @@ section { padding: 88px 0; }
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   display: none;
+  white-space: pre-wrap;
+  line-height: 1.6;
 }
 
 .form-status.show { display: block; }
 .form-status.success { background: var(--uch-bg-soft); color: var(--uch-primary); border: 1px solid var(--uch-border); }
+.form-status.error { background: #FDECEA; color: var(--uch-accent); border: 1px solid #F5C6C2; }
+
+/* ===== 預約流程步驟 ===== */
+.bk-step {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px dashed var(--uch-border);
+}
+
+.bk-step:last-of-type { border-bottom: none; padding-bottom: 6px; }
+
+.bk-num {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--uch-primary);
+  color: var(--uch-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.bk-body h4 {
+  font-size: 1rem;
+  color: var(--uch-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bk-tz {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--uch-text-muted);
+  background: var(--uch-bg-soft);
+  border: 1px solid var(--uch-border);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.bk-hint {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--uch-text-muted);
+  margin: 14px 0 8px;
+}
+
+.bk-body > .bk-hint:first-of-type { margin-top: 0; }
+
+/* 日期橫向捲動 */
+.bk-dates {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+}
+
+.bk-date {
+  flex: 0 0 auto;
+  border: 1.5px solid var(--uch-border);
+  background: var(--uch-white);
+  color: var(--uch-text);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.bk-date:hover { border-color: var(--uch-secondary); }
+
+.bk-date.active {
+  background: var(--uch-primary);
+  border-color: var(--uch-primary);
+  color: var(--uch-white);
+}
+
+/* 時段方格 */
+.bk-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.bk-slot {
+  border: 1.5px solid var(--uch-border);
+  background: var(--uch-bg-soft);
+  color: var(--uch-text);
+  border-radius: var(--radius-sm);
+  padding: 10px 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.bk-slot:hover { border-color: var(--uch-secondary); background: var(--uch-white); }
+
+.bk-slot.picked {
+  background: var(--uch-secondary);
+  border-color: var(--uch-secondary);
+  color: var(--uch-white);
+}
+
+.bk-empty, .bk-picked {
+  font-size: 0.82rem;
+  color: var(--uch-text-muted);
+  margin-top: 10px;
+}
+
+.bk-picked.has-pick { color: var(--uch-primary); font-weight: 700; }
+
+/* 見面方式 */
+.bk-meets { display: grid; gap: 8px; }
+
+.bk-meet {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1.5px solid var(--uch-border);
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.bk-meet:hover { border-color: var(--uch-secondary); }
+.bk-meet input { margin-top: 3px; accent-color: var(--uch-primary); flex-shrink: 0; }
+.bk-meet:has(input:checked) { border-color: var(--uch-secondary); background: var(--uch-bg-soft); }
+.bk-meet strong { display: block; font-size: 0.9rem; color: var(--uch-primary); }
+.bk-meet span span { font-size: 0.78rem; color: var(--uch-text-muted); }
+
+/* 需求標籤 */
+.bk-intents { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.bk-chip { cursor: pointer; }
+.bk-chip input { position: absolute; opacity: 0; pointer-events: none; }
+
+.bk-chip span {
+  display: inline-block;
+  border: 1.5px solid var(--uch-border);
+  background: var(--uch-white);
+  border-radius: 999px;
+  padding: 7px 15px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.bk-chip:hover span { border-color: var(--uch-secondary); }
+
+.bk-chip input:checked + span {
+  background: var(--uch-primary);
+  border-color: var(--uch-primary);
+  color: var(--uch-white);
+}
+
+.bk-chip input:focus-visible + span { outline: 2px solid var(--uch-secondary); outline-offset: 2px; }
 
 /* ===== Footer ===== */
 footer {
