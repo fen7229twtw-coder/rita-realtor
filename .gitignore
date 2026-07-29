@@ -1,0 +1,15 @@
+# ===== 不上傳的內容 =====
+
+# 熊課課堂教材專案：屬於付費教材，且含講師本人照片與個資，不公開散布
+realtor-ai-booking/
+
+# 本機 Node.js 免安裝執行環境（121MB，不該進版控）
+.tools/
+
+# Claude Code 本機設定與開發伺服器腳本
+.claude/
+
+# 作業系統雜項
+.DS_Store
+Thumbs.db
+desktop.ini

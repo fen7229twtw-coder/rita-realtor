@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 456" width="380" height="456">
+  <rect width="380" height="456" fill="#F2F7F3"/>
+  <circle cx="190" cy="170" r="70" fill="#D8E7DD"/>
+  <path d="M60 420c0-90 58-150 130-150s130 60 130 150" fill="#D8E7DD"/>
+  <text x="190" y="440" font-family="Noto Sans TC, sans-serif" font-size="16" fill="#64776F" text-anchor="middle">請放入蕭沛縈形象照 (assets/photo.jpg)</text>
+</svg>
