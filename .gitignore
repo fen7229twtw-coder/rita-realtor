@@ -3,11 +3,23 @@
 # 熊課課堂教材專案：屬於付費教材，且含講師本人照片與個資，不公開散布
 realtor-ai-booking/
 
+# 591 刊登管理系統：含 591 登入 session 與物件資料。
+# netlify.toml 設定 publish = "."，根目錄任何進版控的檔案都會被發佈到公開官網，
+# 所以這個資料夾必須整包排除，絕對不可解除。
+rita-591-console/
+
+# 物件競品戰情室：本機單人後台，含案件與競品資料（data/db.json）。
+# 同樣受 netlify.toml publish = "." 影響，必須整包排除。
+realtor-competitor-board/
+
 # 本機 Node.js 免安裝執行環境（121MB，不該進版控）
 .tools/
 
 # Claude Code 本機設定與開發伺服器腳本
 .claude/
+
+# 本機去背工具頁（一次性使用，不屬於官網內容）
+_bgremove.html
 
 # 作業系統雜項
 .DS_Store

@@ -393,8 +393,32 @@ section { padding: 88px 0; }
   flex-shrink: 0;
 }
 
-.hero-badge-card strong { display: block; font-size: 0.95rem; color: var(--uch-primary); }
-.hero-badge-card span { font-size: 0.78rem; color: var(--uch-text-muted); }
+/* 三行式：品牌名 → 訴求 → 服務態度 */
+.badge-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.hero-badge-card strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--uch-primary);
+  letter-spacing: 0.5px;
+}
+
+.hero-badge-card .badge-lines span {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--uch-text-muted);
+  white-space: nowrap;
+}
+
+.hero-badge-card .badge-lines span:first-of-type {
+  color: var(--uch-secondary);
+  font-weight: 700;
+}
 
 /* ===== 關於我 ===== */
 .about { background: var(--uch-bg-soft); }
