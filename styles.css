@@ -160,7 +160,7 @@ section { padding: 88px 0; }
 /* ===== Hero ===== */
 .hero {
   padding: 72px 0 96px;
-  background: linear-gradient(160deg, #E7F1FA 0%, #FFFFFF 55%, #F1F7FB 100%);
+  background: linear-gradient(160deg, #0A2540 0%, #123A5F 52%, #1B4E7A 100%);
   overflow: hidden;
 }
 
@@ -235,6 +235,37 @@ section { padding: 88px 0; }
   max-width: 500px;
   margin-bottom: 32px;
 }
+
+/* ===== Hero 深藍底：文字與元件改為淺色以維持對比 ===== */
+.hero h1 { color: var(--uch-white); }
+.hero-name { color: #CFE0F0; }
+.hero-lead { color: #B7CBDE; }
+
+.hero-eyebrow {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: var(--uch-white);
+}
+
+.hero-tags .tag-pill {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: var(--uch-white);
+}
+
+.hero .btn-outline {
+  border-color: rgba(255, 255, 255, 0.55);
+  color: var(--uch-white);
+}
+
+.hero .btn-outline:hover {
+  background: var(--uch-white);
+  color: #0A2540;
+  border-color: var(--uch-white);
+}
+
+.hero .quickfact strong { color: var(--uch-white); }
+.hero .quickfact span { color: #A9C1D8; }
 
 .hero-actions {
   display: flex;
@@ -329,8 +360,8 @@ section { padding: 88px 0; }
   content: "";
   position: absolute;
   inset: 24px -24px -24px 24px;
-  background: #DCEAF6;
-  border: 1px solid #C7DCEE;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-lg);
   z-index: 1;
 }
