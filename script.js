@@ -20,6 +20,19 @@ if (navToggle && navLinks) {
 
 const LINE_URL = 'https://line.me/ti/p/~ritahaiao';
 
+// Google 表單作為預約資料庫：送出的預約會直接寫進後台的試算表。
+// 用 no-cors 送出，瀏覽器讀不到回應內容，但資料確實會送達。
+const GOOGLE_FORM = {
+  action: 'https://docs.google.com/forms/d/e/1FAIpQLSdwwoj4_-jKbJa9yn4MAX8BvrHGNrrYY-jKVsxtCc2EOs_XXg/formResponse',
+  fields: {
+    slot: 'entry.256599324',
+    name: 'entry.1167115456',
+    phone: 'entry.1521517769',
+    intent: 'entry.1664672412',
+    detail: 'entry.355478782'
+  }
+};
+
 // 營業規則
 const RULES = {
   startHour: 10,      // 每日最早 10:00
@@ -168,21 +181,48 @@ if (bookingForm && datesEl) {
       `時程：${urgency}` +
       (message ? `\n說明：${message}` : '');
 
-    let copied = false;
+    const submitBtn = bookingForm.querySelector('.submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '送出中…';
+
+    // 寫進 Google 表單（＝後台試算表）
+    const payload = new FormData();
+    payload.append(GOOGLE_FORM.fields.slot, `${picked.dayLabel} ${picked.slotLabel}`);
+    payload.append(GOOGLE_FORM.fields.name, name);
+    payload.append(GOOGLE_FORM.fields.phone, phone);
+    payload.append(GOOGLE_FORM.fields.intent, intents.join('、'));
+    payload.append(
+      GOOGLE_FORM.fields.detail,
+      `見面方式：${meetType}｜預計時程：${urgency}` + (message ? `｜需求說明：${message}` : '')
+    );
+
+    let sent = false;
     try {
-      await navigator.clipboard.writeText(summary);
-      copied = true;
+      await fetch(GOOGLE_FORM.action, { method: 'POST', mode: 'no-cors', body: payload });
+      sent = true;
     } catch (err) {
-      copied = false;
+      sent = false;
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = '確認預約並傳送到 LINE';
+
+    if (!sent) {
+      // 送出失敗時不讓客戶白跑一趟，改請他直接用 LINE 聯繫
+      try { await navigator.clipboard.writeText(summary); } catch (err) { /* 忽略 */ }
+      showStatus(`網路連線不穩，預約未送出。請直接加 LINE 傳送以下內容給我：\n\n${summary}`, 'error');
+      return;
     }
 
     showStatus(
-      copied
-        ? '已複製您的預約資訊，正在開啟 LINE — 請在聊天室長按貼上並傳送給我，即完成預約。'
-        : `即將開啟 LINE，請將以下內容複製傳送給我：\n\n${summary}`,
+      `預約已送出！\n\n${summary}\n\n我會盡快與您確認。若要即時聯繫，可加我 LINE：ritahaiao`,
       'success'
     );
 
-    window.open(LINE_URL, '_blank', 'noopener');
+    bookingForm.reset();
+    picked = null;
+    pickedEl.textContent = '尚未選擇時段';
+    pickedEl.classList.remove('has-pick');
+    renderSlots();
   });
 }
