@@ -2221,6 +2221,12 @@ function init(){
   writeCriteria(state.criteria);
   bindEvents();
   switchView('match');
+
+  /* 已經開著工具時才貼上客戶連結，只改 hash 不會重跑一次程式，
+     所以這裡主動重載，讓它進入客戶檢視。 */
+  window.addEventListener('hashchange', () => {
+    if(/^#r=/.test(location.hash) && !clientMode) location.reload();
+  });
 }
 
 init();
