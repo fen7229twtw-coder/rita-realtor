@@ -401,12 +401,36 @@ section { padding: 88px 0; }
 }
 
 .hero-badge-card strong {
-  display: block;
+  /* flex + wrap：窄螢幕時電話會自動換到下一行，不會撐破卡片 */
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   font-size: 1.08rem;
   font-weight: 800;
   color: var(--uch-primary);
   letter-spacing: 1.2px;
   line-height: 1.3;
+}
+
+/* 電話做成可點擊的膠囊，手機上點了直接撥號 */
+.hero-badge-card strong a {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--uch-bg-soft);
+  border: 1px solid var(--uch-border);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--uch-primary);
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.hero-badge-card strong a:hover {
+  background: var(--uch-primary);
+  border-color: var(--uch-primary);
+  color: var(--uch-white);
 }
 
 .hero-badge-card .badge-lines span {
