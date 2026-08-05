@@ -368,16 +368,16 @@ section { padding: 88px 0; }
 
 .hero-badge-card {
   position: absolute;
-  bottom: -22px;
+  bottom: -52px;
   left: -22px;
   background: var(--uch-white);
   border: 1px solid var(--uch-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
-  padding: 14px 18px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   z-index: 3;
 }
 
@@ -397,20 +397,23 @@ section { padding: 88px 0; }
 .badge-lines {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
 }
 
 .hero-badge-card strong {
   display: block;
-  font-size: 1rem;
+  font-size: 1.08rem;
   font-weight: 800;
   color: var(--uch-primary);
-  letter-spacing: 0.5px;
+  letter-spacing: 1.2px;
+  line-height: 1.3;
 }
 
 .hero-badge-card .badge-lines span {
-  font-size: 0.78rem;
-  line-height: 1.45;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.3px;
   color: var(--uch-text-muted);
   white-space: nowrap;
 }
@@ -418,6 +421,7 @@ section { padding: 88px 0; }
 .hero-badge-card .badge-lines span:first-of-type {
   color: var(--uch-secondary);
   font-weight: 700;
+  letter-spacing: 0.4px;
 }
 
 /* ===== 關於我 ===== */
@@ -991,7 +995,7 @@ footer .brand .brand-badge { background: var(--uch-secondary); }
   .hero .container { grid-template-columns: 1fr; }
   .hero-photo-wrap { order: -1; margin: 0 auto 20px; }
   .hero-photo-frame { width: min(300px, 78vw); margin: 0 auto; }
-  .hero-badge-card { left: 50%; transform: translateX(-50%); bottom: -20px; }
+  .hero-badge-card { left: 50%; transform: translateX(-50%); bottom: -40px; }
   .hero-quickfacts { justify-content: center; }
   .hero-actions { justify-content: center; }
   .hero h1, .hero-lead, .hero-eyebrow { text-align: center; margin-left: auto; margin-right: auto; }
