@@ -160,7 +160,9 @@ section { padding: 88px 0; }
 /* ===== Hero ===== */
 .hero {
   padding: 72px 0 96px;
-  background: linear-gradient(160deg, #0A2540 0%, #123A5F 52%, #1B4E7A 100%);
+  /* 取自油畫背景的霧感灰藍，比純深藍柔和；
+     刻意選畫作偏深的色域，確保白字與品牌綠仍有足夠對比 */
+  background: linear-gradient(160deg, #3B4A5E 0%, #2F3D50 50%, #253141 100%);
   overflow: hidden;
 }
 
