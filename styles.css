@@ -160,9 +160,7 @@ section { padding: 88px 0; }
 /* ===== Hero ===== */
 .hero {
   padding: 72px 0 96px;
-  /* 取自油畫背景的霧感灰藍，比純深藍柔和；
-     刻意選畫作偏深的色域，確保白字與品牌綠仍有足夠對比 */
-  background: linear-gradient(160deg, #3B4A5E 0%, #2F3D50 50%, #253141 100%);
+  background: linear-gradient(160deg, #0A2540 0%, #123A5F 52%, #1B4E7A 100%);
   overflow: hidden;
 }
 
@@ -451,7 +449,16 @@ section { padding: 88px 0; }
 }
 
 /* ===== 關於我 ===== */
-.about { background: var(--uch-bg-soft); }
+/* 取自參考油畫背景的霧感灰藍；選畫作偏深的色域，確保文字對比足夠 */
+.about {
+  background: linear-gradient(160deg, #3B4A5E 0%, #2F3D50 50%, #253141 100%);
+}
+
+/* 深底：標題改為淺色 */
+.about .section-title { color: var(--uch-white); }
+/* 小標籤是 13.6px 粗體，屬小文字（需 4.5:1）；
+   品牌綠 #4FAF38 在此底色僅 3.23:1，改用提亮版本 */
+.about .section-label { color: #7FD16A; }
 
 .about-grid {
   display: grid;
@@ -461,7 +468,7 @@ section { padding: 88px 0; }
 }
 
 .about-bio p {
-  color: var(--uch-text-muted);
+  color: #C3D2E0;
   font-size: 1.02rem;
   max-width: 560px;
 }
