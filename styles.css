@@ -15,11 +15,21 @@
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 8px;
+
+  /* 導覽列高度：錨點捲動的 scroll-margin-top 也用這個值，改高度時兩邊自動同步 */
+  --nav-height: 72px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; }
+
+/* 錨點跳轉（#booking 等）時預留固定導覽列的高度，
+   否則區塊標題會被 sticky 導覽列蓋住 */
+main[id],
+section[id] {
+  scroll-margin-top: calc(var(--nav-height) + 16px);
+}
 
 body {
   font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -85,7 +95,7 @@ section { padding: 88px 0; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 72px;
+  height: var(--nav-height);
 }
 
 .brand {
