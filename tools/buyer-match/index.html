@@ -559,6 +559,68 @@ select.control{
   font-size:.72rem;color:var(--text-faint);line-height:1.7;
 }
 
+/* ============ 591 搜尋 ============ */
+.sq-form{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.sq-form .btn{height:41px}
+.sq-scope{
+  font-size:.76rem;color:var(--text-faint);
+  padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--border);
+}
+.sq-state{
+  text-align:center;padding:40px 20px;
+  color:var(--text-faint);font-size:.9rem;
+}
+.sq-state.err{color:var(--accent);line-height:1.75}
+.sq-count{font-size:.85rem;color:var(--text-muted);margin-bottom:12px}
+.sq-count b{color:var(--primary);font-weight:800;font-size:1.05rem}
+.sq-hint{color:var(--text-faint);font-size:.78rem}
+
+.sq-item{
+  display:grid;grid-template-columns:96px 1fr auto;gap:14px;
+  padding:13px;margin-bottom:10px;
+  border:1.5px solid var(--border);border-radius:var(--r-md);
+  transition:border-color .18s,box-shadow .18s;
+}
+.sq-item:hover{border-color:var(--border-strong);box-shadow:var(--sh-sm)}
+.sq-photo{
+  width:96px;height:74px;border-radius:9px;object-fit:cover;
+  background:linear-gradient(135deg,#E8F0EA,#D6E6DB);flex:0 0 96px;
+}
+.sq-main{min-width:0}
+.sq-title{font-size:.98rem;font-weight:800;color:var(--primary);margin-bottom:3px}
+.sq-meta{font-size:.82rem;color:var(--text-muted);line-height:1.6}
+.sq-meta b{color:var(--text);font-weight:700}
+.sq-agent{font-size:.76rem;color:var(--text-faint);margin-top:4px}
+.sq-agent a{color:var(--secondary);font-weight:700}
+.sq-cut{
+  background:#FDF2F1;color:var(--accent);border:1px solid #F6DAD7;
+  padding:1px 7px;border-radius:5px;font-weight:700;
+}
+.sq-side{text-align:right;display:flex;flex-direction:column;gap:5px;align-items:flex-end;justify-content:center}
+.sq-price{font-size:1.16rem;font-weight:900;color:var(--accent);line-height:1.2}
+.sq-unit{font-size:.74rem;color:var(--text-faint);font-weight:600}
+.sq-side .btn{white-space:nowrap}
+
+/* 物件來源標記（只在她自己的物件庫出現） */
+.src-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:.68rem;font-weight:800;padding:2px 7px;border-radius:5px;
+  background:#EAF2FB;color:#2B6CB0;border:1px solid #D3E4F5;
+  vertical-align:middle;margin-left:6px;
+}
+.pcard-src{
+  font-size:.73rem;color:var(--text-faint);
+  margin:-4px 0 8px;
+}
+
+@media (max-width:640px){
+  .sq-item{grid-template-columns:72px 1fr}
+  .sq-photo{width:72px;height:58px;flex:0 0 72px}
+  .sq-side{grid-column:2;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;flex-wrap:wrap}
+  .sq-form .field{width:100%!important;flex:1 1 100%!important}
+  .sq-form .btn{width:100%}
+}
+
 /* ============ 客戶連結 Modal ============ */
 .share-desc{font-size:.9rem;color:var(--text-muted);line-height:1.75;margin-bottom:14px}
 .share-desc b{color:var(--primary);font-weight:800}
@@ -1028,6 +1090,47 @@ body.client-mode .report-wrap{max-width:900px}
   </div>
 </div>
 
+<!-- 591 搜尋 Modal -->
+<div class="modal-bg" id="sqBg">
+  <div class="modal" style="max-width:820px">
+    <div class="modal-head">
+      <h2>從 591 搜尋物件</h2>
+      <button class="x" id="sqClose" aria-label="關閉">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="sq-form">
+        <div class="field" style="flex:2;min-width:200px;margin-bottom:0">
+          <label>社區名或路段<span class="req">*</span></label>
+          <input class="control" id="sqKeyword" placeholder="例：青埔、領航北路、竹風青庭">
+        </div>
+        <div class="field" style="width:110px;margin-bottom:0">
+          <label>房數</label>
+          <select class="control" id="sqRooms">
+            <option value="">不限</option>
+            <option value="1">1 房</option>
+            <option value="2">2 房</option>
+            <option value="3">3 房</option>
+            <option value="4">4 房以上</option>
+          </select>
+        </div>
+        <div class="field" style="width:190px;margin-bottom:0">
+          <label>總價（萬）</label>
+          <div class="inline-row">
+            <input class="control" id="sqMin" type="number" min="0" placeholder="最低">
+            <span class="sep">～</span>
+            <input class="control" id="sqMax" type="number" min="0" placeholder="最高">
+          </div>
+        </div>
+        <button class="btn btn-primary" id="sqRun">搜尋</button>
+      </div>
+      <div class="sq-scope">搜尋範圍：桃園市．591 公開在售物件</div>
+      <div id="sqResults"></div>
+    </div>
+  </div>
+</div>
+
 <!-- 客戶連結 Modal -->
 <div class="modal-bg" id="shareBg">
   <div class="modal" style="max-width:560px">
@@ -1084,6 +1187,15 @@ const AGENT = {
 const AREAS = ['青埔／高鐵特區','中壢區','桃園區','蘆竹南崁','八德區','平鎮區','龜山區','大園區','觀音／新屋','龍潭區','其他'];
 const TYPES = ['電梯大樓','華廈','公寓','透天','別墅','店面','土地'];
 
+/* 591 查詢走 Netlify 函式代打（591 沒有 CORS，瀏覽器不能直接要）。
+   同站用相對路徑；官網掛在 GitHub Pages 時改打 Netlify 的絕對網址。 */
+const API_591 = (function(){
+  if(location.hostname.endsWith('netlify.app') || location.hostname === 'localhost'){
+    return '/api/591-search';
+  }
+  return (window.RITA_API_BASE || '') + '/api/591-search';
+})();
+
 /* 配對權重（只計算買方有填的條件，分母自動正規化） */
 const W = { budget:30, area:20, size:15, rooms:18, age:10, parking:10, floor:8, type:12 };
 
@@ -1129,6 +1241,163 @@ function unitPrice(p){
 function todayStr(){
   const d = new Date();
   return d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
+}
+
+/* ================= 591 匯入 ================= */
+
+/* 591 給的是「3房2廳2衛」「8F/21F」這種字串，拆成數字才進得了物件庫 */
+function parseRoom(s){
+  const t = String(s||'');
+  return {
+    rooms: Number(t.match(/(\d+)房/)?.[1] || 0),
+    halls: Number(t.match(/(\d+)廳/)?.[1] || 0),
+    baths: Number(t.match(/(\d+)衛/)?.[1] || 0)
+  };
+}
+function parseFloor(s){
+  const t = String(s||'');
+  const m = t.match(/(\d+)\s*F?\s*\/\s*(\d+)/);
+  if(m) return { floor:Number(m[1]), totalFloor:Number(m[2]) };
+  const one = t.match(/(\d+)/);
+  return { floor: one ? Number(one[1]) : null, totalFloor: null };
+}
+
+/* 青埔橫跨中壢與大園兩個行政區，看路段與社區名才判斷得出來 */
+const QINGPU_HINT = /青埔|高鐵|領航|青塘|大成路二段|A18|A19|橫峰|文中路/;
+function mapArea(h){
+  const hay = [h.section, h.address, h.community, h.title].join(' ');
+  if(QINGPU_HINT.test(hay)) return '青埔／高鐵特區';
+  const sec = h.section || '';
+  if(sec.includes('蘆竹') || sec.includes('南崁')) return '蘆竹南崁';
+  if(sec.includes('觀音') || sec.includes('新屋')) return '觀音／新屋';
+  const hit = AREAS.find(a => a === sec);
+  return hit || '其他';
+}
+function mapType(shape){
+  const s = String(shape||'');
+  if(s.includes('電梯')) return '電梯大樓';
+  if(s.includes('華廈')) return '華廈';
+  if(s.includes('公寓')) return '公寓';
+  if(s.includes('透天')) return '透天';
+  if(s.includes('別墅')) return '別墅';
+  if(s.includes('店面')) return '店面';
+  if(s.includes('土地') || s.includes('建地')) return '土地';
+  return '電梯大樓';
+}
+function mapParking(h){
+  if(!h.hasCarport) return '無';
+  const m = String(h.cartmodel||'');
+  if(m.includes('平面')) return m.includes('坡道') ? '坡道平面' : '平面';
+  if(m.includes('機械')) return m.includes('坡道') ? '坡道機械' : '機械';
+  return '平面';
+}
+
+/* 591 物件 → 物件庫欄位。
+   來源資訊（houseid、刊登房仲）只留給她自己看，客戶報告一律不出現。 */
+function houseToProperty(h){
+  const rm = parseRoom(h.room);
+  const fl = parseFloor(h.floor);
+  return {
+    id: uid(),
+    name: h.community || h.title || '591 物件',
+    area: mapArea(h),
+    addr: h.address || h.section || '',
+    type: mapType(h.shape),
+    status: '銷售中',
+    price: num(h.price),
+    size: num(h.area),
+    mainSize: num(h.mainarea),
+    age: num(h.age),
+    rooms: rm.rooms, halls: rm.halls, baths: rm.baths,
+    floor: fl.floor, totalFloor: fl.totalFloor,
+    parking: mapParking(h),
+    fee: null,
+    link: h.url,
+    photo: h.photo || '',
+    selling: (h.title || '').trim(),
+    source: '591',
+    sourceId: h.houseid,
+    sourceAgent: h.linkman || ''
+  };
+}
+
+let searchResults = [];
+let lastSearchMeta = { fetched:0, priceFiltered:false };
+
+async function run591Search(){
+  const q = $('#sqKeyword').value.trim();
+  if(!q){ toast('請輸入社區名或路段', true); $('#sqKeyword').focus(); return; }
+
+  const box = $('#sqResults');
+  box.innerHTML = '<div class="sq-state">查詢中…</div>';
+  $('#sqRun').disabled = true;
+
+  const p = new URLSearchParams({ q });
+  const rooms = $('#sqRooms').value;
+  const lo = $('#sqMin').value, hi = $('#sqMax').value;
+  if(rooms) p.set('rooms', rooms);
+  if(lo && hi){ p.set('minPrice', lo); p.set('maxPrice', hi); }
+
+  try{
+    const res = await fetch(API_591 + '?' + p.toString());
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || '查詢失敗');
+    searchResults = data.houses || [];
+    lastSearchMeta = { fetched: data.fetched || 0, priceFiltered: !!data.priceFiltered };
+    render591Results();
+  }catch(e){
+    const offSite = !/netlify\.app|localhost/.test(location.hostname) && !window.RITA_API_BASE;
+    box.innerHTML = '<div class="sq-state err">' +
+      esc(offSite
+        ? '這個網址沒有 591 查詢功能。請改用 Netlify 版網址開這個工具，591 搜尋才會運作。'
+        : '查詢失敗：' + e.message) +
+      '</div>';
+  }finally{
+    $('#sqRun').disabled = false;
+  }
+}
+
+function render591Results(){
+  const box = $('#sqResults');
+  if(!searchResults.length){
+    box.innerHTML = '<div class="sq-state">找不到符合的物件，換個關鍵字試試。</div>';
+    return;
+  }
+  const existing = new Set(state.properties.map(p=>p.sourceId).filter(Boolean));
+  box.innerHTML =
+    '<div class="sq-count">591 找到 <b>' + searchResults.length + '</b> 筆' +
+      (lastSearchMeta.priceFiltered
+        ? '<span class="sq-hint">（這批 ' + lastSearchMeta.fetched + ' 筆裡符合價格的；591 的關鍵字搜尋不吃價格條件，總價是抓回來後才篩的，放寬價格或用更精確的社區名可以看到更多）</span>'
+        : '<span class="sq-hint">　加入後資料就存在你的物件庫，可以自己改</span>') +
+    '</div>' +
+    searchResults.map((h,i) => {
+      const added = existing.has(h.houseid);
+      return '<div class="sq-item">' +
+        (h.photo ? '<img class="sq-photo" src="' + esc(h.photo) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">'
+                 : '<div class="sq-photo"></div>') +
+        '<div class="sq-main">' +
+          '<div class="sq-title">' + esc(h.community || h.title) + '</div>' +
+          '<div class="sq-meta">' +
+            esc(h.section) + (h.address ? '・' + esc(h.address) : '') + '　' + esc(h.shape) +
+          '</div>' +
+          '<div class="sq-meta">' +
+            '<b>' + (h.area ?? '—') + '</b> 坪　' + esc(h.room) + '　' + esc(h.floor) +
+            (h.age != null ? '　屋齡 ' + h.age + ' 年' : '') +
+            (h.hasCarport ? '　' + esc(h.cartmodel || '含車位') : '') +
+          '</div>' +
+          '<div class="sq-agent">刊登：' + esc(h.linkman || '未提供') +
+            (h.isDownPrice ? '　<span class="sq-cut">已降價</span>' : '') +
+            '　<a href="' + esc(h.url) + '" target="_blank" rel="noopener">在 591 開啟</a></div>' +
+        '</div>' +
+        '<div class="sq-side">' +
+          '<div class="sq-price">' + fmtPrice(h.price) + '<small> 萬</small></div>' +
+          (h.unitPrice ? '<div class="sq-unit">' + esc(h.unitPrice) + ' 萬/坪</div>' : '') +
+          '<button class="btn btn-sm ' + (added ? 'btn-ghost' : 'btn-green') + '" ' +
+            'data-add="' + i + '"' + (added ? ' disabled' : '') + '>' +
+            (added ? '已加入' : '加入物件庫') + '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
 }
 
 /* ================= 客戶檢視模式 =================
@@ -1184,8 +1453,10 @@ function packReport(r){
     if(p.totalFloor != null) o.tf = p.totalFloor;
     if(p.parking && p.parking !== '無') o.pk = p.parking;
     if(p.fee) o.fe = p.fee;
-    if(p.link) o.lk = p.link;
     if(p.selling) o.sl = p.selling;
+    /* 刻意不放 link / source / sourceAgent：
+       客戶連結是以她的名義發出的，不該把 591 原始刊登頁
+       和原刊登房仲的姓名電話一起送過去。 */
     const out = { p:o };
     if(it.score != null) out.s = it.score;
     if(it.hits && it.hits.length) out.h = it.hits;
@@ -1608,8 +1879,10 @@ function renderInventory(){
         '<span class="pcard-status' + sCls + '">' + esc(p.status) + '</span>' +
       '</div>' +
       '<div class="pcard-body">' +
-        '<h3>' + esc(p.name) + '</h3>' +
+        '<h3>' + esc(p.name) +
+          (p.source === '591' ? '<span class="src-badge">591</span>' : '') + '</h3>' +
         '<div class="pcard-loc">' + esc(p.area) + (p.addr ? '・' + esc(p.addr) : '') + '　' + esc(p.type||'') + '</div>' +
+        (p.sourceAgent ? '<div class="pcard-src">591 刊登：' + esc(p.sourceAgent) + '</div>' : '') +
         '<div class="pcard-price">' + fmtPrice(p.price) + '<small> 萬</small>' +
           (up ? '<span class="unit">單價 ' + up + ' 萬/坪</span>' : '') + '</div>' +
         '<div class="pcard-spec">' +
@@ -1707,7 +1980,10 @@ function renderReport(){
         it.hits.map(h => '<span class="mtag">' + esc(h) + '</span>').join('') +
         it.misses.map(m => '<span class="mtag ' + m.lv + '">' + esc(m.t) + '</span>').join('') +
       '</div>' +
-      (p.link ? '<a class="rp-link" href="' + esc(p.link) + '" target="_blank" rel="noopener">查看完整物件資訊 →</a>' : '') +
+      /* 來源連結只有她自己看得到；客戶檢視不顯示，避免導去 591 看到別人的名字 */
+      (!clientMode && p.link
+        ? '<a class="rp-link" href="' + esc(p.link) + '" target="_blank" rel="noopener">查看物件來源（僅自己可見）→</a>'
+        : '') +
     '</div>';
   }).join('');
 
@@ -1798,7 +2074,7 @@ function reportText(){
       '｜' + (p.parking || '無車位'));
     (p.selling||'').split('\n').map(s=>s.trim()).filter(Boolean).forEach(s => L.push('　- ' + s));
     if(it.score != null) L.push('　符合度 ' + it.score + '%');
-    if(p.link) L.push('　' + p.link);
+    /* 不附 591 連結：這段文字是直接貼給客戶的 */
     L.push('');
   });
   L.push('———');
@@ -1808,6 +2084,17 @@ function reportText(){
   L.push('※ 售況隨時異動，實際內容以現場與產權文件為準。');
   return L.join('\n');
 }
+
+/* ================= 591 搜尋 Modal ================= */
+function open591(){
+  $('#sqBg').classList.add('show');
+  if(!searchResults.length){
+    $('#sqResults').innerHTML =
+      '<div class="sq-state">輸入社區名或路段後按搜尋，例如「青埔」「領航北路」。</div>';
+  }
+  setTimeout(()=>$('#sqKeyword').focus(), 80);
+}
+function close591(){ $('#sqBg').classList.remove('show'); }
 
 /* ================= 客戶連結 ================= */
 function openShare(){
@@ -1924,7 +2211,11 @@ function switchView(v){
 
   const acts = $('#topActions');
   if(v === 'inventory'){
-    acts.innerHTML = '<button class="btn btn-primary" data-act="add">' +
+    acts.innerHTML =
+      '<button class="btn btn-ghost" data-act="search591">' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' +
+        '從 591 搜尋</button>' +
+      '<button class="btn btn-primary" data-act="add">' +
       '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新增物件</button>';
     renderInventory();
   }else if(v === 'report'){
@@ -2068,6 +2359,32 @@ function bindEvents(){
 
   $('#topActions').addEventListener('click', e => {
     if(e.target.closest('[data-act="add"]')) openModal();
+    if(e.target.closest('[data-act="search591"]')) open591();
+  });
+
+  /* 591 搜尋 Modal */
+  $('#sqClose').addEventListener('click', close591);
+  $('#sqBg').addEventListener('click', e => { if(e.target === $('#sqBg')) close591(); });
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && $('#sqBg').classList.contains('show')) close591();
+  });
+  $('#sqRun').addEventListener('click', run591Search);
+  $('#sqKeyword').addEventListener('keydown', e => { if(e.key === 'Enter') run591Search(); });
+  $('#sqResults').addEventListener('click', e => {
+    const btn = e.target.closest('[data-add]');
+    if(!btn) return;
+    const h = searchResults[Number(btn.dataset.add)];
+    if(!h) return;
+    if(state.properties.some(p => p.sourceId === h.houseid)){
+      toast('這筆已經在物件庫了', true);
+      return;
+    }
+    state.properties.unshift(houseToProperty(h));
+    save();
+    renderInventory();
+    renderMatch();
+    render591Results();
+    toast('已加入「' + (h.community || h.title) + '」');
   });
 
   /* Modal */

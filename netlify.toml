@@ -1,6 +1,7 @@
-# Netlify 部署設定：純靜態網站，不需要建置步驟
+# Netlify 部署設定：靜態網站 + 一支 591 查詢用的無伺服器函式
 [build]
   publish = "."
+  functions = "netlify/functions"
 
 # 基本安全標頭
 [[headers]]
