@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>屋主回報系統｜蕭沛縈 Rita．桃園房產顧問</title>
+<meta name="description" content="蕭沛縈屋主回報系統：記錄每期帶看、來電、網路曝光與買方回饋，帶入 591 同社區行情，一鍵產生可列印、可傳 LINE 的專業屋主回報單。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ===================================================================
+   屋主回報系統 — 蕭沛縈 Rita
+   跟買方配案同一套 CIS 與骨架，讓兩支工具用起來是同一個系統。
+=================================================================== */
+:root{
+  --primary:#005335;
+  --primary-deep:#0B2E20;
+  --secondary:#4FAF38;
+  --accent:#D8261C;
+  --amber:#C8811A;
+  --blue:#2B6CB0;
+
+  --bg:#F4F7F4;
+  --surface:#FFFFFF;
+  --border:#DFE9E2;
+  --border-strong:#C3D6CA;
+  --text:#173D30;
+  --text-muted:#6A7D74;
+  --text-faint:#95A69C;
+
+  --sh-sm:0 2px 8px rgba(0,83,53,.06);
+  --sh-md:0 6px 20px rgba(0,83,53,.09);
+  --sh-lg:0 16px 40px rgba(0,83,53,.14);
+
+  --r-lg:20px; --r-md:14px; --r-sm:9px;
+  --sidebar-w:248px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased;
+}
+ul{list-style:none} a{color:inherit;text-decoration:none} img{max-width:100%;display:block}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+:focus-visible{outline:2px solid var(--secondary);outline-offset:2px}
+
+.app{display:flex;min-height:100vh}
+
+/* ===== 側欄 ===== */
+.sidebar{
+  width:var(--sidebar-w);flex:0 0 var(--sidebar-w);
+  background:linear-gradient(170deg,#0B2E20 0%,#005335 55%,#00432B 100%);
+  color:#fff;display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.sb-brand{padding:26px 22px 20px;border-bottom:1px solid rgba(255,255,255,.12)}
+.sb-brand .mark{
+  width:44px;height:44px;border-radius:13px;
+  background:linear-gradient(145deg,var(--secondary),#2E8C22);
+  display:grid;place-items:center;font-weight:900;font-size:1.25rem;
+  box-shadow:0 4px 14px rgba(79,175,56,.35);margin-bottom:12px;
+}
+.sb-brand .name{font-weight:900;font-size:1.06rem}
+.sb-brand .role{font-size:.78rem;color:rgba(255,255,255,.62);margin-top:2px}
+.sb-tool{
+  margin-top:12px;display:inline-flex;
+  font-size:.72rem;font-weight:700;letter-spacing:.08em;
+  background:rgba(79,175,56,.2);color:#B8E8A8;padding:4px 10px;border-radius:99px;
+}
+.sb-nav{padding:16px 12px;flex:1}
+.sb-label{font-size:.68rem;letter-spacing:.16em;font-weight:700;color:rgba(255,255,255,.38);padding:0 10px;margin:6px 0 8px}
+.sb-item{
+  display:flex;align-items:center;gap:11px;width:100%;
+  padding:11px 12px;border-radius:11px;
+  color:rgba(255,255,255,.78);font-size:.92rem;font-weight:500;
+  transition:background .18s,color .18s;text-align:left;
+}
+.sb-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.sb-item.active{background:rgba(255,255,255,.14);color:#fff;font-weight:700}
+.sb-item .ico{width:19px;height:19px;flex:0 0 19px;opacity:.9}
+.sb-item .cnt{margin-left:auto;font-size:.72rem;font-weight:700;background:rgba(255,255,255,.16);padding:1px 8px;border-radius:99px}
+.sb-item.active .cnt{background:var(--secondary)}
+.sb-foot{padding:14px 16px 20px;border-top:1px solid rgba(255,255,255,.12)}
+.sb-link{
+  display:flex;align-items:center;gap:9px;font-size:.83rem;
+  color:rgba(255,255,255,.8);padding:7px 9px;border-radius:9px;transition:background .18s;
+}
+.sb-link:hover{background:rgba(255,255,255,.09);color:#fff}
+.sb-data{display:flex;gap:7px;margin-top:10px}
+.sb-data button{
+  flex:1;font-size:.75rem;font-weight:600;padding:7px 4px;border-radius:8px;
+  background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);transition:background .18s;
+}
+.sb-data button:hover{background:rgba(255,255,255,.2);color:#fff}
+
+/* ===== 主區 ===== */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{
+  background:rgba(255,255,255,.88);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);padding:16px 30px;
+  display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:40;
+}
+.topbar h1{font-size:1.24rem;font-weight:900;color:var(--primary)}
+.topbar .sub{font-size:.8rem;color:var(--text-muted);margin-top:1px}
+.topbar-actions{margin-left:auto;display:flex;gap:9px}
+.view{padding:26px 30px 80px;flex:1}
+
+/* ===== 元件 ===== */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 18px;border-radius:10px;font-size:.9rem;font-weight:700;
+  transition:transform .15s,box-shadow .18s,background .18s,border-color .18s;white-space:nowrap;
+}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(0,83,53,.22)}
+.btn-primary:hover{background:#00432B}
+.btn-green{background:var(--secondary);color:#fff;box-shadow:0 4px 14px rgba(79,175,56,.3)}
+.btn-green:hover{background:#43992E}
+.btn-ghost{background:var(--surface);color:var(--primary);border:1.5px solid var(--border-strong)}
+.btn-ghost:hover{border-color:var(--primary);background:#F2F7F3}
+.btn-sm{padding:7px 13px;font-size:.82rem;border-radius:8px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-sm)}
+.card-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.card-head h2{font-size:1.02rem;font-weight:800;color:var(--primary)}
+.card-head .hint{font-size:.78rem;color:var(--text-faint);margin-top:1px}
+.card-head .right{margin-left:auto;display:flex;gap:8px}
+.card-body{padding:22px}
+
+.field{margin-bottom:16px}
+.field label{display:block;font-size:.81rem;font-weight:700;color:var(--text-muted);margin-bottom:6px}
+.field .req{color:var(--accent);margin-left:2px}
+.control{
+  width:100%;padding:10px 13px;border:1.5px solid var(--border-strong);
+  border-radius:var(--r-sm);background:#fff;font-size:.92rem;
+  transition:border-color .18s,box-shadow .18s;
+}
+.control:focus{outline:none;border-color:var(--secondary);box-shadow:0 0 0 3px rgba(79,175,56,.13)}
+textarea.control{resize:vertical;min-height:74px;line-height:1.6}
+select.control{
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236A7D74' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:0 14px}
+.inline-row{display:flex;align-items:center;gap:9px}
+.inline-row .control{flex:1}
+.inline-row .sep{color:var(--text-faint);font-size:.85rem}
+.suffix{font-size:.82rem;color:var(--text-faint);flex:0 0 auto}
+
+/* ===== 委託物件 ===== */
+.lst-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+.lcard{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);
+  overflow:hidden;display:flex;flex-direction:column;
+  transition:box-shadow .18s,transform .18s,border-color .18s;
+}
+.lcard:hover{box-shadow:var(--sh-md);transform:translateY(-2px);border-color:var(--border-strong)}
+.lcard.sel{border-color:var(--secondary);box-shadow:0 0 0 3px rgba(79,175,56,.14)}
+.lcard-photo{height:126px;background:linear-gradient(135deg,#E8F0EA,#D6E6DB);position:relative}
+.lcard-photo img{width:100%;height:100%;object-fit:cover}
+.lcard-photo .ph{position:absolute;inset:0;display:grid;place-items:center;color:#A9C2B3;font-size:.78rem;font-weight:700}
+.lcard-tag{
+  position:absolute;top:10px;left:10px;font-size:.7rem;font-weight:800;
+  padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.94);
+  color:var(--primary);box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+.lcard-tag.t2{color:var(--amber)}
+.lcard-days{
+  position:absolute;bottom:10px;right:10px;font-size:.7rem;font-weight:700;
+  padding:3px 9px;border-radius:6px;background:rgba(11,46,32,.8);color:#fff;
+}
+.lcard-days.warn{background:rgba(200,129,26,.92)}
+.lcard-days.over{background:rgba(216,38,28,.92)}
+.lcard-body{padding:14px 16px;flex:1;display:flex;flex-direction:column}
+.lcard-body h3{font-size:1rem;font-weight:800;color:var(--primary);margin-bottom:2px}
+.lcard-loc{font-size:.78rem;color:var(--text-faint);margin-bottom:8px}
+.lcard-price{font-size:1.28rem;font-weight:900;color:var(--accent);margin-bottom:3px}
+.lcard-price small{font-size:.7rem;font-weight:700}
+.lcard-owner{font-size:.78rem;color:var(--text-muted);margin-bottom:9px}
+.lcard-spec{display:flex;flex-wrap:wrap;gap:3px 11px;font-size:.8rem;color:var(--text-muted);margin-bottom:10px}
+.lcard-spec b{color:var(--text);font-weight:700}
+.lcard-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);
+  border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:11px;
+}
+.lcard-stats div{background:#FAFCFA;padding:7px 4px;text-align:center}
+.lcard-stats .n{font-size:1rem;font-weight:900;color:var(--primary);line-height:1.2}
+.lcard-stats .k{font-size:.68rem;color:var(--text-faint);font-weight:600}
+.lcard-acts{display:flex;gap:7px;margin-top:auto;padding-top:10px;border-top:1px solid var(--border)}
+.lcard-acts button,.lcard-acts a{
+  flex:1;text-align:center;padding:6px;border-radius:7px;
+  font-size:.79rem;font-weight:700;color:var(--text-muted);transition:background .16s,color .16s;
+}
+.lcard-acts button:hover,.lcard-acts a:hover{background:#F2F7F3;color:var(--primary)}
+.lcard-acts .go{background:var(--primary);color:#fff}
+.lcard-acts .go:hover{background:#00432B;color:#fff}
+.lcard-acts .del:hover{background:#FDF1F0;color:var(--accent)}
+
+/* ===== 撰寫回報 ===== */
+.rp-layout{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start}
+.side-sticky{position:sticky;top:96px}
+.pick-listing{
+  display:flex;align-items:center;gap:12px;padding:14px 18px;margin-bottom:18px;
+  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);
+}
+.pick-listing .nm{font-weight:800;color:var(--primary);font-size:1rem}
+.pick-listing .sub{font-size:.8rem;color:var(--text-faint)}
+.pick-listing select{margin-left:auto;width:auto;min-width:230px}
+
+.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:6px}
+.metric{
+  background:#F7FAF8;border:1.5px solid var(--border);border-radius:var(--r-md);
+  padding:12px 14px;text-align:center;
+}
+.metric label{display:block;font-size:.76rem;font-weight:700;color:var(--text-muted);margin-bottom:6px}
+.metric input{
+  width:100%;border:none;background:transparent;text-align:center;
+  font-size:1.5rem;font-weight:900;color:var(--primary);padding:0;
+}
+.metric input:focus{outline:none}
+.metric .u{font-size:.7rem;color:var(--text-faint);font-weight:600}
+
+.fb-list{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
+.fb-item{
+  display:flex;gap:9px;align-items:flex-start;
+  background:#FAFCFA;border:1px solid var(--border);border-radius:10px;padding:10px 12px;
+}
+.fb-item select{width:104px;flex:0 0 104px;padding:6px 26px 6px 9px;font-size:.82rem}
+.fb-item input{flex:1;border:none;background:transparent;font-size:.87rem;padding:6px 0}
+.fb-item input:focus{outline:none}
+.fb-item .rm{
+  flex:0 0 26px;width:26px;height:26px;border-radius:7px;color:var(--text-faint);
+  display:grid;place-items:center;transition:background .16s,color .16s;
+}
+.fb-item .rm:hover{background:#FDF1F0;color:var(--accent)}
+
+.act-chips{display:flex;flex-wrap:wrap;gap:7px}
+.act-chip{
+  display:inline-flex;align-items:center;padding:7px 13px;border-radius:99px;
+  border:1.5px solid var(--border-strong);background:#fff;
+  font-size:.84rem;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .16s;
+}
+.act-chip input{position:absolute;opacity:0;pointer-events:none}
+.act-chip:hover{border-color:var(--secondary);color:var(--primary)}
+.act-chip:has(input:checked){background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* 歷史回報 */
+.hist{display:flex;flex-direction:column;gap:9px;max-height:420px;overflow-y:auto}
+.hist-item{
+  background:#FAFCFA;border:1px solid var(--border);border-radius:10px;padding:11px 13px;
+  font-size:.84rem;position:relative;
+}
+.hist-item .d{font-weight:800;color:var(--primary);font-size:.86rem;margin-bottom:4px}
+.hist-item .nums{color:var(--text-muted);font-size:.8rem}
+.hist-item .nums b{color:var(--text);font-weight:700}
+.hist-item .rm{
+  position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:6px;
+  color:var(--text-faint);display:grid;place-items:center;
+}
+.hist-item .rm:hover{background:#FDF1F0;color:var(--accent)}
+
+/* 競品行情 */
+.mk-row{
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  padding:9px 0;border-bottom:1px dashed var(--border);font-size:.85rem;
+}
+.mk-row:last-child{border-bottom:none}
+.mk-row .l{color:var(--text-muted);min-width:0}
+.mk-row .l b{color:var(--text);font-weight:700;display:block;font-size:.87rem}
+.mk-row .l span{font-size:.76rem;color:var(--text-faint)}
+.mk-row .p{font-weight:800;color:var(--accent);white-space:nowrap}
+.mk-row.mine{background:#EEF6F0;margin:0 -12px;padding:9px 12px;border-radius:8px;border-bottom:none}
+.mk-row.mine .p{color:var(--primary)}
+.mk-sum{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);
+  border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:12px;
+}
+.mk-sum div{background:#fff;padding:9px 6px;text-align:center}
+.mk-sum .n{font-size:1rem;font-weight:900;color:var(--primary)}
+.mk-sum .k{font-size:.68rem;color:var(--text-faint);font-weight:600}
+
+/* ===== 回報單 ===== */
+.doc-wrap{max-width:900px;margin:0 auto}
+.doc-tools{display:flex;gap:9px;justify-content:flex-end;margin-bottom:18px;flex-wrap:wrap}
+.doc{background:#fff;border-radius:var(--r-lg);box-shadow:var(--sh-lg);overflow:hidden}
+.doc-head{
+  background:linear-gradient(135deg,#0B2E20,#005335 60%,#00563A);
+  color:#fff;padding:32px 40px 28px;position:relative;overflow:hidden;
+}
+.doc-head::before{
+  content:'';position:absolute;right:-70px;top:-70px;width:250px;height:250px;border-radius:50%;
+  background:radial-gradient(circle,rgba(79,175,56,.3),transparent 70%);
+}
+.doc-brand{display:flex;align-items:center;gap:13px;margin-bottom:20px;position:relative;z-index:1}
+.doc-brand .mark{
+  width:46px;height:46px;border-radius:13px;
+  background:linear-gradient(145deg,var(--secondary),#2E8C22);
+  display:grid;place-items:center;font-weight:900;font-size:1.3rem;
+}
+.doc-brand .nm{font-weight:900;font-size:1.08rem;line-height:1.35}
+.doc-brand .rl{font-size:.78rem;color:rgba(255,255,255,.66)}
+.doc-title{position:relative;z-index:1}
+.doc-title .kicker{font-size:.74rem;font-weight:700;letter-spacing:.2em;color:#8FDD79;margin-bottom:7px}
+.doc-title h2{font-size:1.72rem;font-weight:900;margin-bottom:6px}
+.doc-title .to{font-size:.95rem;color:rgba(255,255,255,.82)}
+.doc-title .to b{color:#fff;font-weight:700}
+.doc-period{
+  position:absolute;top:32px;right:40px;z-index:1;text-align:right;
+  font-size:.78rem;color:rgba(255,255,255,.7);
+}
+.doc-period strong{display:block;font-size:.92rem;color:#fff;font-weight:700}
+
+.doc-sub{padding:20px 40px;background:#F5F9F6;border-bottom:1px solid var(--border)}
+.doc-sub .t{font-size:1.02rem;font-weight:800;color:var(--primary);margin-bottom:3px}
+.doc-sub .m{font-size:.84rem;color:var(--text-muted)}
+.doc-sub .m b{color:var(--text);font-weight:700}
+
+.doc-body{padding:26px 40px}
+.doc-sec{margin-bottom:26px;page-break-inside:avoid}
+.doc-sec-t{
+  font-size:.96rem;font-weight:800;color:var(--primary);
+  margin-bottom:14px;display:flex;align-items:center;gap:9px;
+}
+.doc-sec-t::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi-box{
+  border:1.5px solid var(--border);border-radius:var(--r-md);
+  padding:14px 10px;text-align:center;background:#FAFCFA;
+}
+.kpi-box .n{font-size:1.7rem;font-weight:900;color:var(--primary);line-height:1.15}
+.kpi-box .k{font-size:.76rem;color:var(--text-muted);font-weight:700;margin-top:2px}
+.kpi-box .d{font-size:.7rem;font-weight:700;margin-top:3px}
+.kpi-box .d.up{color:var(--secondary)}
+.kpi-box .d.dn{color:var(--accent)}
+.kpi-box .d.flat{color:var(--text-faint)}
+
+.fb-doc{display:flex;flex-direction:column;gap:8px}
+.fb-doc li{
+  display:flex;gap:10px;align-items:flex-start;
+  font-size:.88rem;color:var(--text-muted);line-height:1.65;
+}
+.fb-doc .tag{
+  flex:0 0 auto;font-size:.72rem;font-weight:800;padding:2px 9px;border-radius:5px;
+  background:#EEF6F0;color:var(--primary);border:1px solid #DDECE2;margin-top:2px;
+}
+.fb-doc .tag.price{background:#FDF2F1;color:var(--accent);border-color:#F6DAD7}
+
+.act-doc{display:flex;flex-wrap:wrap;gap:7px}
+.act-doc span{
+  font-size:.8rem;font-weight:700;padding:5px 12px;border-radius:99px;
+  background:#EEF6F0;color:var(--primary);border:1px solid #DDECE2;
+}
+
+.mk-tbl{width:100%;border-collapse:collapse;font-size:.86rem}
+.mk-tbl th{
+  background:#F5F9F6;color:var(--text-muted);font-size:.76rem;font-weight:700;
+  padding:9px 10px;text-align:left;border-bottom:1.5px solid var(--border);
+}
+.mk-tbl td{padding:9px 10px;border-bottom:1px solid var(--border)}
+.mk-tbl tr.mine td{background:#EEF6F0;font-weight:700;color:var(--primary)}
+.mk-tbl .r{text-align:right;white-space:nowrap}
+.mk-tbl .price{font-weight:800;color:var(--accent)}
+.mk-note{font-size:.76rem;color:var(--text-faint);margin-top:9px;line-height:1.7}
+
+.advice{
+  background:#F5F9F6;border-left:3px solid var(--secondary);
+  border-radius:0 10px 10px 0;padding:14px 18px;
+  font-size:.9rem;color:var(--text);line-height:1.85;white-space:pre-wrap;
+}
+
+.doc-foot{background:#F5F9F6;border-top:1px solid var(--border);padding:22px 40px}
+.doc-foot-grid{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.doc-foot .who{flex:1;min-width:220px}
+.doc-foot .who .n{font-size:1.06rem;font-weight:900;color:var(--primary)}
+.doc-foot .who .t{font-size:.82rem;color:var(--text-muted);margin-top:2px}
+.doc-foot .who .sv{font-size:.79rem;color:var(--text-faint);margin-top:6px}
+.doc-cta{display:flex;gap:9px;flex-wrap:wrap}
+.doc-cta a{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:9px;font-size:.86rem;font-weight:700}
+.doc-cta .tel{background:var(--primary);color:#fff}
+.doc-cta .line{background:#06C755;color:#fff}
+.doc-dis{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border-strong);font-size:.72rem;color:var(--text-faint);line-height:1.7}
+
+/* ===== 空狀態 / Modal / Toast ===== */
+.empty{
+  text-align:center;padding:64px 24px;color:var(--text-faint);
+  background:var(--surface);border:1.5px dashed var(--border-strong);border-radius:var(--r-lg);
+}
+.empty .ico{width:60px;height:60px;margin:0 auto 16px;border-radius:18px;background:#EEF6F0;display:grid;place-items:center;color:var(--secondary)}
+.empty h3{font-size:1.06rem;font-weight:800;color:var(--text-muted);margin-bottom:6px}
+.empty p{font-size:.88rem;max-width:390px;margin:0 auto 18px;line-height:1.7}
+
+.modal-bg{
+  position:fixed;inset:0;z-index:100;background:rgba(11,46,32,.5);backdrop-filter:blur(3px);
+  display:none;align-items:flex-start;justify-content:center;padding:36px 20px;overflow-y:auto;
+}
+.modal-bg.show{display:flex}
+.modal{background:var(--surface);border-radius:var(--r-lg);width:100%;max-width:720px;box-shadow:var(--sh-lg);animation:pop .22s cubic-bezier(.34,1.3,.64,1)}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+.modal-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center}
+.modal-head h2{font-size:1.1rem;font-weight:800;color:var(--primary)}
+.modal-head .x{margin-left:auto;width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:var(--text-faint)}
+.modal-head .x:hover{background:#F2F7F3;color:var(--text)}
+.modal-body{padding:22px 24px;max-height:calc(100vh - 220px);overflow-y:auto}
+.modal-foot{padding:15px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:#FAFCFA;border-radius:0 0 var(--r-lg) var(--r-lg)}
+.form-section{font-size:.76rem;font-weight:800;letter-spacing:.1em;color:var(--secondary);margin:22px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.form-section:first-child{margin-top:0}
+
+.share-desc{font-size:.9rem;color:var(--text-muted);line-height:1.75;margin-bottom:14px}
+.share-desc b{color:var(--primary);font-weight:800}
+.share-acts{display:flex;gap:9px;flex-wrap:wrap}
+.share-acts .btn{flex:1;min-width:130px}
+.share-tip{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border-strong);font-size:.78rem;color:var(--text-faint);line-height:1.7}
+
+.toast{
+  position:fixed;bottom:26px;left:50%;transform:translate(-50%,120px);
+  background:var(--primary-deep);color:#fff;padding:12px 22px;border-radius:11px;
+  font-size:.89rem;font-weight:600;z-index:200;box-shadow:var(--sh-lg);
+  transition:transform .3s cubic-bezier(.34,1.3,.64,1);
+}
+.toast.show{transform:translate(-50%,0)}
+.toast.err{background:var(--accent)}
+
+.helper-off{
+  text-align:center;padding:26px 20px;background:#FBF8F0;
+  border:1.5px dashed #E5D5B8;border-radius:var(--r-md);
+}
+.helper-off .t{font-size:.94rem;font-weight:800;color:var(--amber);margin-bottom:8px}
+.helper-off p{font-size:.83rem;color:var(--text-muted);line-height:1.75;max-width:400px;margin:0 auto 10px}
+.helper-off b{color:var(--primary);background:#EAF3EC;padding:2px 8px;border-radius:5px;font-weight:800}
+
+/* ===== 屋主檢視 ===== */
+body.owner-mode .sidebar,body.owner-mode .topbar{display:none}
+body.owner-mode .view{padding:26px 20px 60px}
+.owner-band{
+  max-width:900px;margin:0 auto 16px;display:flex;align-items:center;gap:11px;flex-wrap:wrap;
+  background:#fff;border:1px solid var(--border);border-radius:var(--r-md);
+  padding:13px 18px;box-shadow:var(--sh-sm);
+}
+.owner-band .mk{
+  width:36px;height:36px;border-radius:11px;flex:0 0 36px;
+  background:linear-gradient(145deg,var(--secondary),#2E8C22);
+  display:grid;place-items:center;color:#fff;font-weight:900;
+}
+.owner-band .tx{font-size:.87rem;color:var(--text-muted);line-height:1.5}
+.owner-band .tx b{color:var(--primary);font-weight:800;display:block;font-size:.95rem}
+.owner-band .cta{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.owner-band .cta a{display:inline-flex;align-items:center;padding:8px 15px;border-radius:9px;font-size:.85rem;font-weight:700}
+.owner-band .cta .tel{background:var(--primary);color:#fff}
+.owner-band .cta .line{background:#06C755;color:#fff}
+
+/* ===== RWD ===== */
+@media (max-width:1080px){ .rp-layout{grid-template-columns:1fr} .side-sticky{position:static} }
+@media (max-width:860px){
+  .app{flex-direction:column}
+  .sidebar{width:100%;flex:none;height:auto;position:sticky;top:0;z-index:60;flex-direction:row;align-items:center;overflow-x:auto;padding:0 12px}
+  .sb-brand{padding:12px 14px 12px 4px;border-bottom:none;border-right:1px solid rgba(255,255,255,.12);flex:0 0 auto}
+  .sb-brand .mark{width:34px;height:34px;font-size:1rem;margin-bottom:0;border-radius:10px}
+  .sb-brand .name,.sb-brand .role,.sb-tool{display:none}
+  .sb-nav{display:flex;gap:4px;padding:8px;flex:1;justify-content:space-between}
+  .sb-label{display:none}
+  .sb-item .ico{display:none}
+  .sb-item{padding:8px 10px;font-size:.85rem;white-space:nowrap}
+  .sb-foot{display:none}
+  .topbar{padding:13px 18px;flex-wrap:wrap;gap:10px}
+  .view{padding:18px 16px 80px}
+  .grid3,.grid4,.metric-row,.kpi{grid-template-columns:1fr 1fr}
+  .lst-grid{grid-template-columns:1fr}
+  .doc-head,.doc-sub,.doc-body,.doc-foot{padding-left:22px;padding-right:22px}
+  .doc-period{position:static;text-align:left;margin-bottom:12px}
+  .doc-title h2{font-size:1.36rem}
+  .pick-listing{flex-wrap:wrap}
+  .pick-listing select{margin-left:0;width:100%}
+  .mk-tbl{font-size:.8rem}
+  .mk-tbl th,.mk-tbl td{padding:7px 6px}
+}
+@media (max-width:520px){ .grid2,.grid3,.grid4,.metric-row,.kpi{grid-template-columns:1fr} }
+
+/* ===== 列印 ===== */
+@media print{
+  @page{size:A4;margin:11mm}
+  body{background:#fff}
+  .sidebar,.topbar,.doc-tools,.toast,.modal-bg,.owner-band{display:none!important}
+  .app{display:block} .view{padding:0} .doc-wrap{max-width:none}
+  .doc{box-shadow:none;border-radius:0}
+  .doc-head{background:#005335!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:22px 24px}
+  .doc-head::before{display:none}
+  .doc-sub,.doc-body,.doc-foot{padding:18px 24px}
+  .doc-sec,.kpi-box,.mk-tbl tr{page-break-inside:avoid}
+  .kpi-box,.act-doc span,.fb-doc .tag,.mk-tbl tr.mine td,.doc-cta a,.advice{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="mark">蕭</div>
+      <div class="name">蕭沛縈 Rita</div>
+      <div class="role">桃園房產顧問</div>
+      <span class="sb-tool">屋主回報系統</span>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-label">工作區</div>
+      <button class="sb-item active" data-view="listings">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><path d="M9 21V12h6v9"/></svg>
+        委託物件<span class="cnt" id="navCount">0</span>
+      </button>
+      <button class="sb-item" data-view="write">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 013 3L12 15l-4 1 1-4z"/></svg>
+        撰寫回報
+      </button>
+      <button class="sb-item" data-view="doc">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>
+        回報單
+      </button>
+    </nav>
+    <div class="sb-foot">
+      <a class="sb-link" href="../buyer-match/">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        切換到買方配案
+      </a>
+      <a class="sb-link" href="tel:0981456399">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.3-1.2a2 2 0 012.1-.5c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/></svg>
+        0981-456-399
+      </a>
+      <div class="sb-data">
+        <button id="btnExport">匯出備份</button>
+        <button id="btnImport">匯入資料</button>
+      </div>
+      <input type="file" id="fileImport" accept=".json,application/json" hidden>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="pageTitle">委託物件</h1>
+        <div class="sub" id="pageSub">你手上的委託案，以及每一案的回報次數與委託剩餘天數</div>
+      </div>
+      <div class="topbar-actions" id="topActions"></div>
+    </header>
+
+    <section class="view" id="view-listings">
+      <div class="lst-grid" id="lstGrid"></div>
+    </section>
+
+    <section class="view" id="view-write" hidden></section>
+
+    <section class="view" id="view-doc" hidden>
+      <div class="doc-wrap" id="docWrap"></div>
+    </section>
+  </div>
+</div>
+
+<!-- 委託物件 Modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">新增委託物件</h2>
+      <button class="x" id="modalClose" aria-label="關閉">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">物件資料</div>
+      <div class="grid2">
+        <div class="field"><label>社區／物件名稱<span class="req">*</span></label><input class="control" id="fName" placeholder="例：竹風青庭"></div>
+        <div class="field"><label>目前開價（萬）<span class="req">*</span></label><input class="control" id="fPrice" type="number" min="0" placeholder="1380"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>區域</label><select class="control" id="fArea"></select></div>
+        <div class="field"><label>路段／位置</label><input class="control" id="fAddr" placeholder="領航北路二段"></div>
+      </div>
+      <div class="grid3">
+        <div class="field"><label>權狀坪數<span class="req">*</span></label><div class="inline-row"><input class="control" id="fSize" type="number" step="0.01" placeholder="44.2"><span class="suffix">坪</span></div></div>
+        <div class="field"><label>屋齡</label><div class="inline-row"><input class="control" id="fAge" type="number" step="0.1" placeholder="4"><span class="suffix">年</span></div></div>
+        <div class="field"><label>類型</label><select class="control" id="fType"></select></div>
+      </div>
+      <div class="grid4">
+        <div class="field"><label>房</label><input class="control" id="fRooms" type="number" min="0" placeholder="3"></div>
+        <div class="field"><label>廳</label><input class="control" id="fHalls" type="number" min="0" placeholder="2"></div>
+        <div class="field"><label>衛</label><input class="control" id="fBaths" type="number" min="0" placeholder="2"></div>
+        <div class="field"><label>樓層／總樓</label><div class="inline-row"><input class="control" id="fFloor" type="number" min="0" placeholder="12"><span class="sep">/</span><input class="control" id="fTotalFloor" type="number" min="0" placeholder="18"></div></div>
+      </div>
+
+      <div class="form-section">委託資訊</div>
+      <div class="grid2">
+        <div class="field"><label>屋主稱呼<span class="req">*</span></label><input class="control" id="fOwner" placeholder="例：王先生"></div>
+        <div class="field"><label>委託方式</label><select class="control" id="fEntrust"><option>專任委託</option><option>一般委託</option></select></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>委託起日</label><input class="control" id="fStart" type="date"></div>
+        <div class="field"><label>委託迄日</label><input class="control" id="fEnd" type="date"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>原始開價（萬）<span style="font-weight:500;color:var(--text-faint)">（用來算調價幅度）</span></label><input class="control" id="fOrigPrice" type="number" min="0" placeholder="1480"></div>
+        <div class="field"><label>底價（萬）<span style="font-weight:500;color:var(--text-faint)">（只有你看得到）</span></label><input class="control" id="fFloorPrice" type="number" min="0" placeholder="1300"></div>
+      </div>
+      <div class="field" style="margin-bottom:0"><label>591 連結<span style="font-weight:500;color:var(--text-faint)">（選填）</span></label><input class="control" id="fLink" type="url" placeholder="https://"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="modalCancel">取消</button>
+      <button class="btn btn-primary" id="modalSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 屋主連結 Modal -->
+<div class="modal-bg" id="shareBg">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head">
+      <h2>傳給屋主的回報連結</h2>
+      <button class="x" id="shareClose" aria-label="關閉">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="share-desc">這是給 <b id="shareFor">屋主</b> 的專屬回報連結。屋主點開只會看到這一份回報，<b>看不到你的底價，也看不到其他委託案</b>。</p>
+      <div class="field" style="margin-bottom:10px">
+        <label>回報連結<span style="font-weight:500;color:var(--text-faint)">（長度 <span id="shareLen">0</span> 字元）</span></label>
+        <textarea class="control" id="shareUrl" rows="4" readonly style="font-size:.78rem;line-height:1.5;word-break:break-all"></textarea>
+      </div>
+      <div class="share-acts">
+        <button class="btn btn-primary btn-sm" id="shareCopy">複製連結</button>
+        <a class="btn btn-green btn-sm" id="shareLineBtn" target="_blank" rel="noopener">用 LINE 傳送</a>
+      </div>
+      <div class="share-tip">連結本身就包含整份回報，沒有存到任何伺服器。之後數字有更新要重新產生一次連結。</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+const KEY = 'rita-owner-report-v1';
+const PUBLIC_BASE = 'https://fen7229twtw-coder.github.io/rita-realtor/tools/owner-report/';
+
+const AGENT = {
+  name:'蕭沛縈 Rita', title:'桃園房產顧問',
+  tel:'0981-456-399', telRaw:'0981456399',
+  line:'ritahaiao', lineUrl:'https://line.me/ti/p/~ritahaiao',
+  services:'資產配置｜稅務諮詢｜簡易裝潢　深耕桃園．服務全省'
+};
+
+const AREAS = ['青埔／高鐵特區','中壢區','桃園區','蘆竹南崁','八德區','平鎮區','龜山區','大園區','觀音／新屋','龍潭區','其他'];
+const TYPES = ['電梯大樓','華廈','公寓','透天','別墅','店面','土地'];
+const ACTIONS = ['591 刊登更新','照片重拍','影片上架','社群貼文','LINE 群發','派報／DM','開放參觀','同業聯賣','電話陌開','買方回訪'];
+const FB_TYPES = ['價格','格局','樓層','採光','屋況','環境','學區','車位','其他'];
+
+/* 跟買方配案共用同一支本機小幫手 */
+const LOCAL_PORTS = [8899, 9100, 8900];
+let apiBase = null;
+
+async function findLocalHelper(){
+  if(location.hostname === 'localhost' || location.hostname === '127.0.0.1'){ apiBase = ''; return true; }
+  const probe = port => fetch(`http://localhost:${port}/api/591-search?q=ping`, {signal:AbortSignal.timeout(1800)})
+    .then(r => r.ok || r.status === 400 ? `http://localhost:${port}` : Promise.reject())
+    .catch(() => Promise.reject());
+  try{ apiBase = await Promise.any(LOCAL_PORTS.map(probe)); return true; }
+  catch{ apiBase = null; return false; }
+}
+
+let state = { listings:[], activeId:null, doc:null };
+let editingId = null;
+let ownerMode = false;
+let market = { loading:false, error:null, rows:null, forId:null };
+
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { const n = parseFloat(v); return isFinite(n) ? n : null; };
+const uid = () => 'L' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const today = () => new Date().toISOString().slice(0,10);
+
+function toast(m, err){
+  const t = $('#toast'); t.textContent = m; t.classList.toggle('err', !!err);
+  t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function fmtPrice(v){
+  if(v==null) return '—';
+  if(v>=10000) return (Math.round(v/10000*100)/100)+' 億';
+  return Math.round(v).toLocaleString('zh-TW');
+}
+function fmtDate(d){ return d ? String(d).replace(/-/g,'/') : '—'; }
+function daysLeft(end){
+  if(!end) return null;
+  return Math.ceil((new Date(end) - new Date()) / 86400000);
+}
+function unitPrice(l){ return (l.price && l.size) ? Math.round(l.price/l.size*10)/10 : null; }
+
+function save(){
+  if(ownerMode) return;
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch{ toast('儲存失敗，瀏覽器空間可能已滿', true); }
+}
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if(d){
+      state.listings = Array.isArray(d.listings) ? d.listings : [];
+      state.activeId = d.activeId || null;
+      state.doc = d.doc || null;
+      return true;
+    }
+  }catch{}
+  return false;
+}
+
+function seed(){
+  const start = new Date(Date.now() - 62*86400000).toISOString().slice(0,10);
+  const end = new Date(Date.now() + 28*86400000).toISOString().slice(0,10);
+  state.listings = [{
+    id: uid(),
+    /* 範例用真實社區名，「同社區行情」按下去才抓得到真的可比物件。
+       這整筆是示範資料，記得換成自己的委託案。 */
+    name:'竹風青庭', area:'青埔／高鐵特區', addr:'領航北路一段',
+    type:'電梯大樓', price:1880, origPrice:1980, floorPrice:1750,
+    size:45.8, age:9, rooms:3, halls:2, baths:2, floor:12, totalFloor:21,
+    owner:'王先生', entrust:'專任委託', start, end, link:'', photo:'',
+    reports:[
+      { date:new Date(Date.now()-28*86400000).toISOString().slice(0,10),
+        views:412, favs:18, calls:6, visits:3,
+        feedback:[{t:'價格',n:'買方認為總價高於同社區成交行情約 60 萬'},{t:'樓層',n:'喜歡高樓層視野，這點是加分'}],
+        actions:['591 刊登更新','社群貼文','開放參觀'],
+        advice:'開價從 1980 調整到 1880 後，來電明顯增加。建議維持目前價格再觀察兩週。' },
+      { date:new Date(Date.now()-14*86400000).toISOString().slice(0,10),
+        views:536, favs:24, calls:9, visits:5,
+        feedback:[{t:'價格',n:'兩組買方出價落在 1800 附近'},{t:'屋況',n:'裝潢完善是主要吸引點，幾乎不用再花錢'}],
+        actions:['591 刊登更新','影片上架','LINE 群發','同業聯賣'],
+        advice:'帶看轉化率提升，出價開始靠近您的期待。若本月內能成交，這個價格是相對好的時機。' }
+    ]
+  }];
+  state.activeId = state.listings[0].id;
+  save();
+}
+
+/* ============ 屋主連結：壓縮 ============ */
+function b64e(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin=''; for(let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function b64d(str){
+  let s = str.replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length%4) s += '=';
+  const bin = atob(s); const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+/* 屋主拿到的東西刻意不含底價、不含其他委託案 */
+function packDoc(d){
+  const l = d.listing, r = d.report;
+  const o = {
+    dt: d.date,
+    l: {
+      n:l.name, a:AREAS.indexOf(l.area), ad:l.addr, t:TYPES.indexOf(l.type),
+      p:l.price, sz:l.size, rm:l.rooms, hl:l.halls, bt:l.baths,
+      fl:l.floor, tf:l.totalFloor, g:l.age, ow:l.owner, et:l.entrust,
+      st:l.start, en:l.end
+    },
+    r: { d:r.date, v:r.views, f:r.favs, c:r.calls, s:r.visits,
+         fb:(r.feedback||[]).map(x=>[x.t,x.n]), ac:r.actions||[], ad:r.advice||'' }
+  };
+  if(l.origPrice) o.l.op = l.origPrice;
+  if(d.prev) o.pv = { v:d.prev.views, f:d.prev.favs, c:d.prev.calls, s:d.prev.visits };
+  if(d.market && d.market.length) o.mk = d.market.map(m=>[m.name, m.price, m.size, m.room, m.floor, m.mine?1:0]);
+  if(d.totals) o.tt = d.totals;
+  return o;
+}
+function unpackDoc(z){
+  const L = z.l || {}, R = z.r || {};
+  return {
+    date: z.dt,
+    listing: {
+      name:L.n, area:AREAS[L.a] || '', addr:L.ad || '', type:TYPES[L.t] || '',
+      price:L.p, origPrice:L.op ?? null, size:L.sz, rooms:L.rm, halls:L.hl, baths:L.bt,
+      floor:L.fl, totalFloor:L.tf, age:L.g, owner:L.ow, entrust:L.et, start:L.st, end:L.en
+    },
+    report: {
+      date:R.d, views:R.v, favs:R.f, calls:R.c, visits:R.s,
+      feedback:(R.fb||[]).map(x=>({t:x[0], n:x[1]})),
+      actions:R.ac || [], advice:R.ad || ''
+    },
+    prev: z.pv ? {views:z.pv.v, favs:z.pv.f, calls:z.pv.c, visits:z.pv.s} : null,
+    market: (z.mk||[]).map(m=>({name:m[0],price:m[1],size:m[2],room:m[3],floor:m[4],mine:!!m[5]})),
+    totals: z.tt || null
+  };
+}
+function buildShareUrl(){
+  if(!state.doc) return null;
+  return PUBLIC_BASE + '#o=' + b64e(JSON.stringify(packDoc(state.doc)));
+}
+
+/* ============ 委託物件 ============ */
+function renderListings(){
+  $('#navCount').textContent = state.listings.length;
+  const g = $('#lstGrid');
+  if(!state.listings.length){
+    g.style.gridTemplateColumns = '1fr';
+    g.innerHTML = '<div class="empty">' +
+      '<div class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><path d="M9 21V12h6v9"/></svg></div>' +
+      '<h3>還沒有委託物件</h3><p>把你手上的委託案建進來，之後每次回報只要填數字，回報單會自動排版好。</p>' +
+      '<button class="btn btn-primary" data-act="add">新增第一件委託</button>' +
+      '<button class="btn btn-ghost" data-act="seed" style="margin-left:8px">載入範例</button></div>';
+    return;
+  }
+  g.style.gridTemplateColumns = '';
+  g.innerHTML = state.listings.map(l => {
+    const dl = daysLeft(l.end);
+    const rs = l.reports || [];
+    const last = rs[rs.length-1];
+    const tot = rs.reduce((a,r)=>({v:a.v+(r.views||0), c:a.c+(r.calls||0), s:a.s+(r.visits||0)}), {v:0,c:0,s:0});
+    const dCls = dl==null ? '' : dl < 0 ? ' over' : dl <= 14 ? ' warn' : '';
+    const dTxt = dl==null ? '未設委託期' : dl < 0 ? '已到期 '+(-dl)+' 天' : '剩 '+dl+' 天';
+    return '<article class="lcard' + (l.id===state.activeId?' sel':'') + '" data-id="'+l.id+'">' +
+      '<div class="lcard-photo">' +
+        (l.photo ? '<img src="'+esc(l.photo)+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
+                 : '<div class="ph">尚未設定照片</div>') +
+        '<span class="lcard-tag' + (l.entrust==='一般委託'?' t2':'') + '">'+esc(l.entrust||'委託中')+'</span>' +
+        '<span class="lcard-days'+dCls+'">'+dTxt+'</span>' +
+      '</div>' +
+      '<div class="lcard-body">' +
+        '<h3>'+esc(l.name)+'</h3>' +
+        '<div class="lcard-loc">'+esc(l.area)+(l.addr?'・'+esc(l.addr):'')+'　'+esc(l.type||'')+'</div>' +
+        '<div class="lcard-price">'+fmtPrice(l.price)+'<small> 萬</small></div>' +
+        '<div class="lcard-owner">屋主：'+esc(l.owner||'—')+
+          (l.origPrice && l.origPrice>l.price ? '　<span style="color:var(--amber);font-weight:700">已調降 '+fmtPrice(l.origPrice-l.price)+' 萬</span>' : '')+'</div>' +
+        '<div class="lcard-spec">' +
+          '<span><b>'+(l.size??'—')+'</b> 坪</span>' +
+          '<span><b>'+(l.rooms??0)+'</b>房<b>'+(l.halls??0)+'</b>廳<b>'+(l.baths??0)+'</b>衛</span>' +
+          (l.floor?'<span>'+l.floor+(l.totalFloor?'/'+l.totalFloor:'')+' 樓</span>':'') +
+        '</div>' +
+        '<div class="lcard-stats">' +
+          '<div><div class="n">'+rs.length+'</div><div class="k">已回報</div></div>' +
+          '<div><div class="n">'+tot.s+'</div><div class="k">累計帶看</div></div>' +
+          '<div><div class="n">'+tot.c+'</div><div class="k">累計來電</div></div>' +
+        '</div>' +
+        '<div class="lcard-acts">' +
+          '<button class="go" data-act="write">寫回報</button>' +
+          '<button data-act="edit">編輯</button>' +
+          '<button class="del" data-act="del">刪除</button>' +
+        '</div>' +
+      '</div></article>';
+  }).join('');
+}
+
+/* ============ 撰寫回報 ============ */
+function activeListing(){ return state.listings.find(l=>l.id===state.activeId) || null; }
+
+function renderWrite(){
+  const v = $('#view-write');
+  if(!state.listings.length){
+    v.innerHTML = '<div class="empty"><h3>還沒有委託物件</h3><p>要先在「委託物件」建立案件，才能寫回報。</p>' +
+      '<button class="btn btn-primary" data-act="golist">前往委託物件</button></div>';
+    return;
+  }
+  const l = activeListing() || state.listings[0];
+  state.activeId = l.id;
+  const rs = l.reports || [];
+
+  v.innerHTML =
+    '<div class="pick-listing">' +
+      '<div><div class="nm">'+esc(l.name)+'</div>' +
+      '<div class="sub">屋主 '+esc(l.owner||'—')+'　開價 '+fmtPrice(l.price)+' 萬　已回報 '+rs.length+' 次</div></div>' +
+      '<select class="control" id="pickListing">' +
+        state.listings.map(x=>'<option value="'+x.id+'"'+(x.id===l.id?' selected':'')+'>'+esc(x.name)+'（'+esc(x.owner||'—')+'）</option>').join('') +
+      '</select>' +
+    '</div>' +
+
+    '<div class="rp-layout">' +
+      '<div class="card">' +
+        '<div class="card-head"><div><h2>本期數據</h2><div class="hint">沒有的欄位留空就好，回報單不會顯示</div></div>' +
+          '<div class="right"><button class="btn btn-green btn-sm" id="btnSaveReport">儲存本期並產生回報單</button></div></div>' +
+        '<div class="card-body">' +
+          '<div class="field"><label>回報日期</label><input class="control" id="rDate" type="date" value="'+today()+'" style="max-width:200px"></div>' +
+          '<div class="metric-row">' +
+            '<div class="metric"><label>591 點閱</label><input id="rViews" type="number" min="0" placeholder="0"><div class="u">次</div></div>' +
+            '<div class="metric"><label>收藏</label><input id="rFavs" type="number" min="0" placeholder="0"><div class="u">人</div></div>' +
+            '<div class="metric"><label>來電洽詢</label><input id="rCalls" type="number" min="0" placeholder="0"><div class="u">組</div></div>' +
+            '<div class="metric"><label>實際帶看</label><input id="rVisits" type="number" min="0" placeholder="0"><div class="u">組</div></div>' +
+          '</div>' +
+
+          '<div class="form-section">買方回饋</div>' +
+          '<div class="fb-list" id="fbList"></div>' +
+          '<button class="btn btn-ghost btn-sm" id="btnAddFb">+ 新增一則回饋</button>' +
+
+          '<div class="form-section">本期行銷動作</div>' +
+          '<div class="act-chips" id="actChips">' +
+            ACTIONS.map(a=>'<label class="act-chip"><input type="checkbox" value="'+esc(a)+'">'+esc(a)+'</label>').join('') +
+          '</div>' +
+
+          '<div class="form-section">給屋主的建議</div>' +
+          '<textarea class="control" id="rAdvice" rows="4" placeholder="例：這兩週帶看轉化率提升，出價開始靠近底價。若您可接受 1320 上下，本月內成交機會很高。"></textarea>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="side-sticky">' +
+        '<div class="card" style="margin-bottom:16px">' +
+          '<div class="card-head"><div><h2>同社區行情</h2><div class="hint">591 即時在售</div></div>' +
+            '<div class="right"><button class="btn btn-ghost btn-sm" id="btnMarket">查詢</button></div></div>' +
+          '<div class="card-body" id="marketBox"><div style="font-size:.85rem;color:var(--text-faint);text-align:center;padding:14px 0">按「查詢」抓 591 上同社區在賣的物件，會一起印在回報單上。</div></div>' +
+        '</div>' +
+        '<div class="card">' +
+          '<div class="card-head"><h2>過去回報</h2></div>' +
+          '<div class="card-body"><div class="hist" id="histList"></div></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  renderFb([]);
+  renderHist(l);
+  renderMarket();
+}
+
+let fbDraft = [];
+function renderFb(list){
+  fbDraft = list;
+  const box = $('#fbList');
+  if(!box) return;
+  box.innerHTML = fbDraft.length ? fbDraft.map((f,i)=>
+    '<div class="fb-item" data-i="'+i+'">' +
+      '<select class="control">' + FB_TYPES.map(t=>'<option'+(t===f.t?' selected':'')+'>'+t+'</option>').join('') + '</select>' +
+      '<input value="'+esc(f.n)+'" placeholder="買方說了什麼">' +
+      '<button class="rm" aria-label="刪除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
+    '</div>').join('')
+    : '<div style="font-size:.83rem;color:var(--text-faint);padding:4px 2px">還沒有回饋。買方看完說的話寫在這裡，屋主最在意這一段。</div>';
+}
+function readFb(){
+  return $$('#fbList .fb-item').map(el=>({
+    t: el.querySelector('select').value,
+    n: el.querySelector('input').value.trim()
+  })).filter(f=>f.n);
+}
+
+function renderHist(l){
+  const box = $('#histList');
+  if(!box) return;
+  const rs = (l.reports||[]).slice().reverse();
+  box.innerHTML = rs.length ? rs.map((r,i)=>
+    '<div class="hist-item" data-i="'+(rs.length-1-i)+'">' +
+      '<div class="d">'+fmtDate(r.date)+'</div>' +
+      '<div class="nums">點閱 <b>'+(r.views||0)+'</b>　收藏 <b>'+(r.favs||0)+'</b>　來電 <b>'+(r.calls||0)+'</b>　帶看 <b>'+(r.visits||0)+'</b></div>' +
+      '<button class="rm" aria-label="刪除"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
+    '</div>').join('')
+    : '<div style="font-size:.83rem;color:var(--text-faint)">還沒有回報紀錄。</div>';
+}
+
+/* ============ 同社區行情（591） ============ */
+async function loadMarket(){
+  const l = activeListing();
+  if(!l) return;
+  market = { loading:true, error:null, rows:null, forId:l.id };
+  renderMarket();
+  try{
+    if(apiBase === null && !(await findLocalHelper())) throw new Error('__helper__');
+    const res = await fetch(apiBase + '/api/591-search?q=' + encodeURIComponent(l.name));
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || '查詢失敗');
+    /* 同一戶常被好幾家房仲同時刊登，用「社區|格局|坪數|樓層」當指紋合併，
+       不然回報單上會出現五筆其實是同一戶的物件，屋主看了會覺得亂。 */
+    const seen = new Map();
+    (data.houses||[]).forEach(h=>{
+      if(!h.price) return;
+      /* 坪數取整數、房數只取數字：591 同一戶被不同房仲刊登時，
+         坪數常差 0.01、房數偶爾標不一樣，比對太嚴就合併不掉。
+         開價 + 坪數 + 樓層都一樣，實務上就是同一戶。 */
+      const key = [h.price, Math.round(Number(h.area)||0), String(h.floor||'')].join('|');
+      const row = seen.get(key);
+      if(row){ row.agencies++; return; }
+      seen.set(key, {
+        name: h.community || h.title,
+        price: h.price, size: h.area,
+        room: (String(h.room).match(/^\d+房/)||[''])[0],
+        floor: h.floor, unit: h.unitPrice, agencies: 1, mine: false
+      });
+    });
+    const rows = [...seen.values()].sort((a,b)=>a.price-b.price).slice(0,8);
+    market = { loading:false, error:null, rows, forId:l.id };
+  }catch(e){
+    apiBase = null;
+    market = { loading:false, error: e.message === '__helper__' ? '__helper__' : e.message, rows:null, forId:l.id };
+  }
+  renderMarket();
+}
+
+function renderMarket(){
+  const box = $('#marketBox');
+  if(!box) return;
+  const l = activeListing();
+  if(market.loading){ box.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text-faint);font-size:.85rem">查詢中…</div>'; return; }
+  if(market.error === '__helper__'){
+    box.innerHTML = '<div class="helper-off"><div class="t">591 小幫手沒有在跑</div>' +
+      '<p>桌面上的 <b>啟動591小幫手</b> 點兩下，黑色視窗出現後回來再按一次查詢。</p>' +
+      '<button class="btn btn-primary btn-sm" id="btnMarketRetry">重試</button></div>';
+    return;
+  }
+  if(market.error){ box.innerHTML = '<div style="color:var(--accent);font-size:.85rem;padding:10px 0">查詢失敗：'+esc(market.error)+'</div>'; return; }
+  if(!market.rows){ box.innerHTML = '<div style="font-size:.85rem;color:var(--text-faint);text-align:center;padding:14px 0">按「查詢」抓 591 上同社區在賣的物件，會一起印在回報單上。</div>'; return; }
+  if(!market.rows.length){ box.innerHTML = '<div style="font-size:.85rem;color:var(--text-faint);padding:10px 0">591 上目前查不到同社區的在售物件。</div>'; return; }
+
+  const ps = market.rows.map(r=>r.price);
+  const lo = Math.min(...ps), hi = Math.max(...ps);
+  const mid = ps.slice().sort((a,b)=>a-b)[Math.floor(ps.length/2)];
+  box.innerHTML =
+    '<div class="mk-sum">' +
+      '<div><div class="n">'+fmtPrice(lo)+'</div><div class="k">最低開價</div></div>' +
+      '<div><div class="n">'+fmtPrice(mid)+'</div><div class="k">中位開價</div></div>' +
+      '<div><div class="n">'+fmtPrice(hi)+'</div><div class="k">最高開價</div></div>' +
+    '</div>' +
+    (l ? '<div class="mk-row mine"><div class="l"><b>你的委託：'+esc(l.name)+'</b><span>'+(l.size??'—')+' 坪　'+(l.rooms??0)+'房</span></div><div class="p">'+fmtPrice(l.price)+' 萬</div></div>' : '') +
+    market.rows.map(r=>'<div class="mk-row"><div class="l"><b>'+esc(r.name)+'</b><span>'+(r.size??'—')+' 坪　'+esc(r.room||'')+'　'+esc(r.floor||'')+'</span></div><div class="p">'+fmtPrice(r.price)+' 萬</div></div>').join('');
+}
+
+/* ============ 回報單 ============ */
+function buildDoc(){
+  const l = activeListing();
+  if(!l) return;
+  const rs = l.reports || [];
+  const r = rs[rs.length-1];
+  if(!r){ toast('請先儲存一期回報', true); return; }
+  const prev = rs.length > 1 ? rs[rs.length-2] : null;
+  const totals = rs.reduce((a,x)=>({
+    views:a.views+(x.views||0), favs:a.favs+(x.favs||0),
+    calls:a.calls+(x.calls||0), visits:a.visits+(x.visits||0)
+  }), {views:0,favs:0,calls:0,visits:0});
+
+  state.doc = {
+    date: today(),
+    listing: JSON.parse(JSON.stringify(l)),
+    report: r, prev,
+    totals,
+    market: (market.rows && market.forId === l.id) ? market.rows : []
+  };
+  save();
+  switchView('doc');
+}
+
+function delta(cur, prev){
+  if(prev==null || cur==null) return '';
+  const d = cur - prev;
+  if(d === 0) return '<div class="d flat">與上期持平</div>';
+  return '<div class="d '+(d>0?'up':'dn')+'">'+(d>0?'▲ +':'▼ ')+d+' 較上期</div>';
+}
+
+function renderDoc(){
+  const w = $('#docWrap');
+  const d = state.doc;
+  if(!d){
+    w.innerHTML = '<div class="empty"><h3>還沒有回報單</h3><p>到「撰寫回報」填好本期數據並儲存，回報單就會出現在這裡。</p>' +
+      '<button class="btn btn-primary" data-act="gowrite">前往撰寫回報</button></div>';
+    return;
+  }
+  const l = d.listing, r = d.report, p = d.prev;
+  const dl = daysLeft(l.end);
+  const conv = r.visits && r.calls ? Math.round(r.visits/r.calls*100) : null;
+
+  const fb = (r.feedback||[]).map(f =>
+    '<li><span class="tag'+(f.t==='價格'?' price':'')+'">'+esc(f.t)+'</span><span>'+esc(f.n)+'</span></li>').join('');
+
+  const mkRows = (d.market||[]).map(m =>
+    '<tr><td>'+esc(m.name)+'</td><td class="r">'+(m.size??'—')+' 坪</td><td class="r">'+esc(m.room||'—')+'</td>' +
+    '<td class="r">'+esc(m.floor||'—')+'</td><td class="r price">'+fmtPrice(m.price)+' 萬</td></tr>').join('');
+
+  w.innerHTML =
+  (ownerMode
+    ? '<div class="doc-tools"><button class="btn btn-ghost btn-sm" data-act="print">列印／存成 PDF</button></div>'
+    : '<div class="doc-tools">' +
+        '<button class="btn btn-ghost btn-sm" data-act="copytext">複製 LINE 文字版</button>' +
+        '<button class="btn btn-ghost btn-sm" data-act="gowrite">回去改回報</button>' +
+        '<button class="btn btn-ghost btn-sm" data-act="print">列印／存成 PDF</button>' +
+        '<button class="btn btn-green btn-sm" data-act="share">產生屋主連結</button>' +
+      '</div>') +
+  '<div class="doc" id="docPaper">' +
+    '<div class="doc-head">' +
+      '<div class="doc-period">回報日期<strong>'+fmtDate(r.date)+'</strong></div>' +
+      '<div class="doc-brand"><div class="mark">蕭</div>' +
+        '<div><div class="nm">'+esc(AGENT.name)+'</div><div class="rl">'+esc(AGENT.title)+'</div></div></div>' +
+      '<div class="doc-title">' +
+        '<div class="kicker">PROPERTY OWNER REPORT</div>' +
+        '<h2>委託物件銷售回報</h2>' +
+        '<div class="to">致 <b>'+esc(l.owner||'屋主')+'</b>　這段期間您的物件市場反應如下</div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="doc-sub">' +
+      '<div class="t">'+esc(l.name)+'</div>' +
+      '<div class="m">'+esc(l.area)+(l.addr?'・'+esc(l.addr):'')+'　'+esc(l.type||'')+'　' +
+        '<b>'+(l.size??'—')+'</b> 坪　<b>'+(l.rooms??0)+'</b>房<b>'+(l.halls??0)+'</b>廳<b>'+(l.baths??0)+'</b>衛' +
+        (l.floor?'　'+l.floor+(l.totalFloor?'/'+l.totalFloor:'')+' 樓':'') +
+        '　目前開價 <b>'+fmtPrice(l.price)+' 萬</b>' +
+        (l.origPrice && l.origPrice>l.price ? '（原 '+fmtPrice(l.origPrice)+' 萬，已調降 '+fmtPrice(l.origPrice-l.price)+' 萬）' : '') +
+      '</div>' +
+      '<div class="m" style="margin-top:5px">'+esc(l.entrust||'委託')+'　'+fmtDate(l.start)+' ～ '+fmtDate(l.end)+
+        (dl!=null ? (dl<0 ? '　<b style="color:var(--accent)">已到期</b>' : '　<b>委託剩餘 '+dl+' 天</b>') : '') + '</div>' +
+    '</div>' +
+
+    '<div class="doc-body">' +
+      '<div class="doc-sec">' +
+        '<div class="doc-sec-t">本期市場反應</div>' +
+        '<div class="kpi">' +
+          '<div class="kpi-box"><div class="n">'+(r.views??0)+'</div><div class="k">網路點閱</div>'+delta(r.views, p&&p.views)+'</div>' +
+          '<div class="kpi-box"><div class="n">'+(r.favs??0)+'</div><div class="k">收藏人數</div>'+delta(r.favs, p&&p.favs)+'</div>' +
+          '<div class="kpi-box"><div class="n">'+(r.calls??0)+'</div><div class="k">來電洽詢（組）</div>'+delta(r.calls, p&&p.calls)+'</div>' +
+          '<div class="kpi-box"><div class="n">'+(r.visits??0)+'</div><div class="k">實際帶看（組）</div>'+delta(r.visits, p&&p.visits)+'</div>' +
+        '</div>' +
+        (d.totals ? '<div class="mk-note">委託期間累計：點閱 '+d.totals.views+' 次、來電 '+d.totals.calls+' 組、帶看 '+d.totals.visits+' 組' +
+          (conv!=null ? '。本期來電轉帶看率 '+conv+'%' : '') + '。</div>' : '') +
+      '</div>' +
+
+      (fb ? '<div class="doc-sec"><div class="doc-sec-t">買方看過後的回饋</div><ul class="fb-doc">'+fb+'</ul></div>' : '') +
+
+      ((r.actions||[]).length ? '<div class="doc-sec"><div class="doc-sec-t">本期我為您做的行銷</div>' +
+        '<div class="act-doc">'+r.actions.map(a=>'<span>'+esc(a)+'</span>').join('')+'</div></div>' : '') +
+
+      (mkRows ? '<div class="doc-sec"><div class="doc-sec-t">同社區目前在售行情</div>' +
+        '<table class="mk-tbl"><thead><tr><th>物件</th><th class="r">坪數</th><th class="r">格局</th><th class="r">樓層</th><th class="r">開價</th></tr></thead>' +
+        '<tbody><tr class="mine"><td>您的物件</td><td class="r">'+(l.size??'—')+' 坪</td><td class="r">'+(l.rooms??0)+'房</td>' +
+        '<td class="r">'+(l.floor?l.floor+(l.totalFloor?'/'+l.totalFloor:''):'—')+'</td><td class="r">'+fmtPrice(l.price)+' 萬</td></tr>' +
+        mkRows+'</tbody></table>' +
+        '<div class="mk-note">資料取自 591 公開在售資訊，整理於 '+fmtDate(d.date)+'，為賣方開價非成交價，僅供比較參考。</div></div>' : '') +
+
+      (r.advice ? '<div class="doc-sec"><div class="doc-sec-t">我的建議</div><div class="advice">'+esc(r.advice)+'</div></div>' : '') +
+    '</div>' +
+
+    '<div class="doc-foot">' +
+      '<div class="doc-foot-grid">' +
+        '<div class="who"><div class="n">'+esc(AGENT.name)+'</div><div class="t">'+esc(AGENT.title)+'</div>' +
+          '<div class="sv">'+esc(AGENT.services)+'</div></div>' +
+        '<div class="doc-cta">' +
+          '<a class="tel" href="tel:'+AGENT.telRaw+'">'+esc(AGENT.tel)+'</a>' +
+          '<a class="line" href="'+AGENT.lineUrl+'" target="_blank" rel="noopener">LINE：'+esc(AGENT.line)+'</a>' +
+        '</div>' +
+      '</div>' +
+      '<div class="doc-dis">本回報單依委託期間實際銷售狀況整理，資料整理於 '+fmtDate(d.date)+'。' +
+        '網路數據取自刊登平台後台，同社區行情為公開在售開價非成交價，實際成交價以正式契約為準。' +
+        '本文件僅供委託人參考，不構成價格保證。</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function docText(){
+  const d = state.doc; if(!d) return '';
+  const l = d.listing, r = d.report;
+  const L = [];
+  L.push('【'+(l.owner||'屋主')+' 您好，'+l.name+' 銷售回報】'+fmtDate(r.date));
+  L.push('');
+  L.push('物件：'+l.name+'　'+(l.size??'—')+' 坪　'+(l.rooms??0)+'房'+(l.halls??0)+'廳'+(l.baths??0)+'衛');
+  L.push('目前開價：'+fmtPrice(l.price)+' 萬');
+  L.push('');
+  L.push('本期市場反應：');
+  L.push('・網路點閱 '+(r.views??0)+' 次');
+  L.push('・收藏 '+(r.favs??0)+' 人');
+  L.push('・來電洽詢 '+(r.calls??0)+' 組');
+  L.push('・實際帶看 '+(r.visits??0)+' 組');
+  if((r.feedback||[]).length){
+    L.push('');
+    L.push('買方回饋：');
+    r.feedback.forEach(f=>L.push('・['+f.t+'] '+f.n));
+  }
+  if((r.actions||[]).length){
+    L.push('');
+    L.push('本期行銷動作：'+r.actions.join('、'));
+  }
+  if((d.market||[]).length){
+    L.push('');
+    L.push('同社區在售行情：');
+    d.market.slice(0,5).forEach(m=>L.push('・'+m.name+'　'+(m.size??'—')+' 坪　'+fmtPrice(m.price)+' 萬'));
+  }
+  if(r.advice){ L.push(''); L.push('我的建議：'); L.push(r.advice); }
+  L.push('');
+  L.push('———');
+  L.push(AGENT.name+'｜'+AGENT.title);
+  L.push('電話：'+AGENT.tel);
+  L.push('LINE：'+AGENT.lineUrl);
+  return L.join('\n');
+}
+
+/* ============ Modal ============ */
+function openModal(id){
+  editingId = id || null;
+  const l = id ? state.listings.find(x=>x.id===id) : null;
+  $('#modalTitle').textContent = l ? '編輯委託物件' : '新增委託物件';
+  const v = (s,x)=>{ $(s).value = x ?? ''; };
+  v('#fName',l?.name); v('#fPrice',l?.price); v('#fAddr',l?.addr);
+  $('#fArea').value = l?.area || AREAS[0];
+  $('#fType').value = l?.type || TYPES[0];
+  v('#fSize',l?.size); v('#fAge',l?.age);
+  v('#fRooms',l?.rooms); v('#fHalls',l?.halls); v('#fBaths',l?.baths);
+  v('#fFloor',l?.floor); v('#fTotalFloor',l?.totalFloor);
+  v('#fOwner',l?.owner);
+  $('#fEntrust').value = l?.entrust || '專任委託';
+  v('#fStart',l?.start); v('#fEnd',l?.end);
+  v('#fOrigPrice',l?.origPrice); v('#fFloorPrice',l?.floorPrice); v('#fLink',l?.link);
+  $('#modalBg').classList.add('show');
+  setTimeout(()=>$('#fName').focus(), 60);
+}
+function closeModal(){ $('#modalBg').classList.remove('show'); editingId = null; }
+
+function saveListing(){
+  const name = $('#fName').value.trim();
+  const price = num($('#fPrice').value);
+  const size = num($('#fSize').value);
+  const owner = $('#fOwner').value.trim();
+  if(!name){ toast('請填社區／物件名稱', true); $('#fName').focus(); return; }
+  if(price==null || price<=0){ toast('請填目前開價', true); $('#fPrice').focus(); return; }
+  if(size==null || size<=0){ toast('請填權狀坪數', true); $('#fSize').focus(); return; }
+  if(!owner){ toast('請填屋主稱呼', true); $('#fOwner').focus(); return; }
+
+  const data = {
+    name, price, size, owner,
+    area:$('#fArea').value, addr:$('#fAddr').value.trim(), type:$('#fType').value,
+    age:num($('#fAge').value),
+    rooms:num($('#fRooms').value)??0, halls:num($('#fHalls').value)??0, baths:num($('#fBaths').value)??0,
+    floor:num($('#fFloor').value), totalFloor:num($('#fTotalFloor').value),
+    entrust:$('#fEntrust').value, start:$('#fStart').value, end:$('#fEnd').value,
+    origPrice:num($('#fOrigPrice').value), floorPrice:num($('#fFloorPrice').value),
+    link:$('#fLink').value.trim()
+  };
+  if(editingId){
+    const i = state.listings.findIndex(x=>x.id===editingId);
+    if(i>-1) state.listings[i] = Object.assign({}, state.listings[i], data);
+    toast('已更新「'+name+'」');
+  }else{
+    state.listings.unshift(Object.assign({id:uid(), photo:'', reports:[]}, data));
+    state.activeId = state.listings[0].id;
+    toast('已新增「'+name+'」');
+  }
+  save(); closeModal(); renderListings();
+}
+
+/* ============ 屋主連結 ============ */
+function openShare(){
+  const url = buildShareUrl();
+  if(!url){ toast('請先產生回報單', true); return; }
+  const owner = state.doc.listing.owner || '屋主';
+  $('#shareUrl').value = url;
+  $('#shareLen').textContent = url.length.toLocaleString('zh-TW');
+  $('#shareFor').textContent = owner;
+  const msg = owner + ' 您好，這是 ' + state.doc.listing.name + ' 這期的銷售回報：\n' + url +
+    '\n\n蕭沛縈 Rita｜' + AGENT.tel;
+  $('#shareLineBtn').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(msg);
+  $('#shareBg').classList.add('show');
+  setTimeout(()=>$('#shareUrl').select(), 80);
+}
+function closeShare(){ $('#shareBg').classList.remove('show'); }
+
+/* ============ 檢視切換 ============ */
+let currentView = 'listings';
+const META = {
+  listings:{t:'委託物件', s:'你手上的委託案，以及每一案的回報次數與委託剩餘天數'},
+  write:{t:'撰寫回報', s:'填本期數字與買方回饋，可帶入 591 同社區行情'},
+  doc:{t:'回報單', s:'可列印、存 PDF、複製 LINE 文字，或產生屋主專屬連結'}
+};
+function switchView(v){
+  currentView = v;
+  ['listings','write','doc'].forEach(k=>{ $('#view-'+k).hidden = (k!==v); });
+  $$('.sb-item').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
+  $('#pageTitle').textContent = META[v].t;
+  $('#pageSub').textContent = META[v].s;
+  const acts = $('#topActions');
+  if(v==='listings'){
+    acts.innerHTML = '<button class="btn btn-primary" data-act="add">' +
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新增委託</button>';
+    renderListings();
+  }else{
+    acts.innerHTML = '';
+    if(v==='write') renderWrite(); else renderDoc();
+  }
+  $('#navCount').textContent = state.listings.length;
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+/* ============ 匯出入 ============ */
+function exportData(){
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'rita-屋主回報備份-' + today().replace(/-/g,'') + '.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  toast('已匯出備份檔');
+}
+function importData(file){
+  const fr = new FileReader();
+  fr.onload = () => {
+    try{
+      const d = JSON.parse(fr.result);
+      if(!d || !Array.isArray(d.listings)) throw new Error('格式不符');
+      if(!confirm('匯入會覆蓋目前所有資料（委託 '+state.listings.length+' 件），確定嗎？')) return;
+      state.listings = d.listings; state.activeId = d.activeId || null; state.doc = d.doc || null;
+      save(); switchView(currentView);
+      toast('已匯入 '+state.listings.length+' 件委託');
+    }catch{ toast('檔案格式不正確', true); }
+  };
+  fr.readAsText(file);
+}
+
+/* ============ 事件 ============ */
+function bind(){
+  $$('.sb-item').forEach(b=>b.addEventListener('click', ()=>switchView(b.dataset.view)));
+
+  $('#lstGrid').addEventListener('click', e=>{
+    const b = e.target.closest('[data-act]');
+    if(!b) return;
+    const a = b.dataset.act;
+    if(a==='add'){ openModal(); return; }
+    if(a==='seed'){ seed(); renderListings(); toast('已載入範例'); return; }
+    const card = b.closest('.lcard'); if(!card) return;
+    const id = card.dataset.id;
+    const l = state.listings.find(x=>x.id===id); if(!l) return;
+    if(a==='edit') openModal(id);
+    if(a==='write'){ state.activeId = id; save(); switchView('write'); }
+    if(a==='del'){
+      if(!confirm('確定刪除「'+l.name+'」？連同 '+(l.reports||[]).length+' 筆回報紀錄一起刪除，無法復原。')) return;
+      state.listings = state.listings.filter(x=>x.id!==id);
+      if(state.activeId===id) state.activeId = state.listings[0]?.id || null;
+      save(); renderListings(); toast('已刪除');
+    }
+  });
+
+  $('#topActions').addEventListener('click', e=>{
+    if(e.target.closest('[data-act="add"]')) openModal();
+  });
+
+  $('#view-write').addEventListener('click', e=>{
+    const b = e.target.closest('[data-act], #btnAddFb, #btnSaveReport, #btnMarket, #btnMarketRetry, .fb-item .rm, .hist-item .rm');
+    if(!b) return;
+    if(b.dataset && b.dataset.act==='golist'){ switchView('listings'); return; }
+    if(b.id==='btnAddFb'){ const cur=readFb(); cur.push({t:'價格',n:''}); renderFb(cur); return; }
+    if(b.id==='btnMarket' || b.id==='btnMarketRetry'){ if(b.id==='btnMarketRetry') apiBase=null; loadMarket(); return; }
+    if(b.classList.contains('rm')){
+      const fbItem = b.closest('.fb-item');
+      if(fbItem){ const cur=readFb(); cur.splice(Number(fbItem.dataset.i),1); renderFb(cur); return; }
+      const hi = b.closest('.hist-item');
+      if(hi){
+        const l = activeListing();
+        if(l && confirm('刪除這筆回報紀錄？')){
+          l.reports.splice(Number(hi.dataset.i),1);
+          save(); renderHist(l);
+        }
+      }
+      return;
+    }
+    if(b.id==='btnSaveReport'){
+      const l = activeListing(); if(!l) return;
+      const rec = {
+        date: $('#rDate').value || today(),
+        views:num($('#rViews').value)??0, favs:num($('#rFavs').value)??0,
+        calls:num($('#rCalls').value)??0, visits:num($('#rVisits').value)??0,
+        feedback: readFb(),
+        actions: $$('#actChips input:checked').map(i=>i.value),
+        advice: $('#rAdvice').value.trim()
+      };
+      l.reports = l.reports || [];
+      l.reports.push(rec);
+      l.reports.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+      save();
+      toast('已儲存本期回報');
+      buildDoc();
+    }
+  });
+
+  $('#view-write').addEventListener('change', e=>{
+    if(e.target.id === 'pickListing'){
+      state.activeId = e.target.value; save();
+      market = {loading:false,error:null,rows:null,forId:null};
+      renderWrite();
+    }
+  });
+
+  $('#docWrap').addEventListener('click', e=>{
+    const b = e.target.closest('[data-act]'); if(!b) return;
+    const a = b.dataset.act;
+    if(a==='gowrite') switchView('write');
+    if(a==='print') window.print();
+    if(a==='share') openShare();
+    if(a==='copytext'){
+      const t = docText();
+      if(navigator.clipboard?.writeText){
+        navigator.clipboard.writeText(t).then(()=>toast('已複製，可貼到 LINE')).catch(()=>fallbackCopy(t));
+      }else fallbackCopy(t);
+    }
+  });
+  function fallbackCopy(t){
+    const ta = document.createElement('textarea');
+    ta.value = t; ta.style.cssText = 'position:fixed;top:-9999px';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast('已複製，可貼到 LINE'); }
+    catch{ toast('複製失敗，請手動選取', true); }
+    document.body.removeChild(ta);
+  }
+
+  $('#modalClose').addEventListener('click', closeModal);
+  $('#modalCancel').addEventListener('click', closeModal);
+  $('#modalSave').addEventListener('click', saveListing);
+  $('#modalBg').addEventListener('click', e=>{ if(e.target===$('#modalBg')) closeModal(); });
+
+  $('#shareClose').addEventListener('click', closeShare);
+  $('#shareBg').addEventListener('click', e=>{ if(e.target===$('#shareBg')) closeShare(); });
+  $('#shareCopy').addEventListener('click', ()=>{
+    const u = $('#shareUrl').value;
+    if(navigator.clipboard?.writeText){
+      navigator.clipboard.writeText(u).then(()=>toast('已複製回報連結')).catch(()=>fallbackCopy(u));
+    }else fallbackCopy(u);
+  });
+
+  document.addEventListener('keydown', e=>{
+    if(e.key!=='Escape') return;
+    if($('#modalBg').classList.contains('show')) closeModal();
+    if($('#shareBg').classList.contains('show')) closeShare();
+  });
+
+  $('#btnExport').addEventListener('click', exportData);
+  $('#btnImport').addEventListener('click', ()=>$('#fileImport').click());
+  $('#fileImport').addEventListener('change', e=>{
+    const f = e.target.files[0]; if(f) importData(f); e.target.value='';
+  });
+
+  window.addEventListener('hashchange', ()=>{
+    if(/^#o=/.test(location.hash) && !ownerMode) location.reload();
+  });
+}
+
+/* ============ 屋主檢視 ============ */
+function initOwnerView(payload){
+  let d = null;
+  try{ d = unpackDoc(JSON.parse(b64d(payload))); }catch{ d = null; }
+  if(!d || !d.listing || !d.report){
+    toast('這個回報連結已失效，請跟我聯絡重新取得', true);
+    return false;
+  }
+  ownerMode = true;
+  document.body.classList.add('owner-mode');
+  document.title = (d.listing.owner || '屋主') + '　' + d.listing.name + ' 銷售回報｜蕭沛縈 Rita';
+  state.doc = d;
+  ['listings','write'].forEach(k=>{ $('#view-'+k).hidden = true; });
+  $('#view-doc').hidden = false;
+  currentView = 'doc';
+  renderDoc();
+
+  const band = document.createElement('div');
+  band.className = 'owner-band';
+  band.innerHTML = '<div class="mk">蕭</div>' +
+    '<div class="tx"><b>'+esc(AGENT.name)+'　'+esc(AGENT.title)+'</b>' +
+      '這是您委託物件這期的銷售回報，有任何問題歡迎直接聯絡我。</div>' +
+    '<div class="cta"><a class="tel" href="tel:'+AGENT.telRaw+'">'+esc(AGENT.tel)+'</a>' +
+      '<a class="line" href="'+AGENT.lineUrl+'" target="_blank" rel="noopener">加 LINE 詢問</a></div>';
+  $('#view-doc').prepend(band);
+  return true;
+}
+
+function init(){
+  $('#fArea').innerHTML = AREAS.map(a=>'<option>'+esc(a)+'</option>').join('');
+  $('#fType').innerHTML = TYPES.map(t=>'<option>'+esc(t)+'</option>').join('');
+
+  const m = location.hash.match(/^#o=(.+)$/);
+  if(m && initOwnerView(m[1])){
+    $('#docWrap').addEventListener('click', e=>{
+      if(e.target.closest('[data-act="print"]')) window.print();
+    });
+    return;
+  }
+
+  if(!load()) seed();
+  bind();
+  switchView('listings');
+}
+
+init();
+})();
+</script>
+</body>
+</html>
