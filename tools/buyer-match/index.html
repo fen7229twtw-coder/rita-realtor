@@ -571,6 +571,21 @@ select.control{
   color:var(--text-faint);font-size:.9rem;
 }
 .sq-state.err{color:var(--accent);line-height:1.75}
+.sq-offline{
+  text-align:center;padding:34px 26px;
+  background:#FBF8F0;border:1.5px dashed #E5D5B8;border-radius:var(--r-md);
+}
+.sq-offline-t{font-size:1rem;font-weight:800;color:var(--amber);margin-bottom:10px}
+.sq-offline p{
+  font-size:.86rem;color:var(--text-muted);line-height:1.8;
+  max-width:430px;margin:0 auto 10px;
+}
+.sq-offline .sq-offline-how{color:var(--text)}
+.sq-offline b{
+  color:var(--primary);font-weight:800;
+  background:#EAF3EC;padding:2px 8px;border-radius:5px;
+}
+.sq-offline .btn{margin-top:8px}
 .sq-count{font-size:.85rem;color:var(--text-muted);margin-bottom:12px}
 .sq-count b{color:var(--primary);font-weight:800;font-size:1.05rem}
 .sq-hint{color:var(--text-faint);font-size:.78rem}
@@ -1187,14 +1202,36 @@ const AGENT = {
 const AREAS = ['青埔／高鐵特區','中壢區','桃園區','蘆竹南崁','八德區','平鎮區','龜山區','大園區','觀音／新屋','龍潭區','其他'];
 const TYPES = ['電梯大樓','華廈','公寓','透天','別墅','店面','土地'];
 
-/* 591 查詢走 Netlify 函式代打（591 沒有 CORS，瀏覽器不能直接要）。
-   同站用相對路徑；官網掛在 GitHub Pages 時改打 Netlify 的絕對網址。 */
-const API_591 = (function(){
-  if(location.hostname.endsWith('netlify.app') || location.hostname === 'localhost'){
-    return '/api/591-search';
+/* 客戶連結一律指向這個公開網址，
+   即使她是在本機開工具，產出來的連結客戶也點得開。 */
+const PUBLIC_BASE = 'https://fen7229twtw-coder.github.io/rita-realtor/tools/buyer-match/';
+
+/* 591 沒有回任何 CORS 標頭，瀏覽器絕對打不到，一定要有人代打。
+   本機小幫手（.claude/serve-dev.mjs）就是代打的那個。
+   瀏覽器把 http://localhost 視為可信來源，所以就算這頁是 https，
+   也能直接打本機的 API，不會被混合內容擋掉。 */
+const LOCAL_PORTS = [8899, 9100, 8900];
+let apiBase = null;          /* 探測到的小幫手網址，null = 還沒找到 */
+
+async function findLocalHelper(){
+  if(location.hostname === 'localhost' || location.hostname === '127.0.0.1'){
+    apiBase = '';            /* 同站，直接用相對路徑 */
+    return true;
   }
-  return (window.RITA_API_BASE || '') + '/api/591-search';
-})();
+  const probe = port => fetch(`http://localhost:${port}/api/591-search?q=ping`, {
+      signal: AbortSignal.timeout(1800)
+    })
+    .then(r => r.ok || r.status === 400 ? `http://localhost:${port}` : Promise.reject())
+    .catch(() => Promise.reject());
+
+  try{
+    apiBase = await Promise.any(LOCAL_PORTS.map(probe));
+    return true;
+  }catch{
+    apiBase = null;
+    return false;
+  }
+}
 
 /* 配對權重（只計算買方有填的條件，分母自動正規化） */
 const W = { budget:30, area:20, size:15, rooms:18, age:10, parking:10, floor:8, type:12 };
@@ -1324,6 +1361,17 @@ function houseToProperty(h){
 let searchResults = [];
 let lastSearchMeta = { fetched:0, priceFiltered:false };
 
+function helperOfflineHTML(){
+  return '<div class="sq-offline">' +
+    '<div class="sq-offline-t">591 小幫手沒有在跑</div>' +
+    '<p>591 不允許網頁直接跟它要資料，所以要靠你電腦上的小幫手代打。' +
+       '它只在你自己的電腦上跑，資料不會經過任何別人的伺服器。</p>' +
+    '<p class="sq-offline-how">桌面上的 <b>啟動591小幫手</b> 點兩下，' +
+       '看到黑色視窗出現就好（不用關，讓它在旁邊開著），再回來按一次搜尋。</p>' +
+    '<button class="btn btn-primary btn-sm" id="sqRetry">我啟動好了，重試</button>' +
+  '</div>';
+}
+
 async function run591Search(){
   const q = $('#sqKeyword').value.trim();
   if(!q){ toast('請輸入社區名或路段', true); $('#sqKeyword').focus(); return; }
@@ -1332,26 +1380,30 @@ async function run591Search(){
   box.innerHTML = '<div class="sq-state">查詢中…</div>';
   $('#sqRun').disabled = true;
 
-  const p = new URLSearchParams({ q });
-  const rooms = $('#sqRooms').value;
-  const lo = $('#sqMin').value, hi = $('#sqMax').value;
-  if(rooms) p.set('rooms', rooms);
-  if(lo && hi){ p.set('minPrice', lo); p.set('maxPrice', hi); }
-
   try{
-    const res = await fetch(API_591 + '?' + p.toString());
+    if(apiBase === null && !(await findLocalHelper())){
+      box.innerHTML = helperOfflineHTML();
+      return;
+    }
+
+    const p = new URLSearchParams({ q });
+    const rooms = $('#sqRooms').value;
+    const lo = $('#sqMin').value, hi = $('#sqMax').value;
+    if(rooms) p.set('rooms', rooms);
+    if(lo && hi){ p.set('minPrice', lo); p.set('maxPrice', hi); }
+
+    const res = await fetch(apiBase + '/api/591-search?' + p.toString());
     const data = await res.json();
     if(!data.ok) throw new Error(data.error || '查詢失敗');
     searchResults = data.houses || [];
     lastSearchMeta = { fetched: data.fetched || 0, priceFiltered: !!data.priceFiltered };
     render591Results();
   }catch(e){
-    const offSite = !/netlify\.app|localhost/.test(location.hostname) && !window.RITA_API_BASE;
-    box.innerHTML = '<div class="sq-state err">' +
-      esc(offSite
-        ? '這個網址沒有 591 查詢功能。請改用 Netlify 版網址開這個工具，591 搜尋才會運作。'
-        : '查詢失敗：' + e.message) +
-      '</div>';
+    /* 小幫手中途被關掉也會走到這裡，下次重新探測 */
+    apiBase = null;
+    box.innerHTML = /Failed to fetch|NetworkError|timed out|aborted/i.test(e.message)
+      ? helperOfflineHTML()
+      : '<div class="sq-state err">查詢失敗：' + esc(e.message) + '</div>';
   }finally{
     $('#sqRun').disabled = false;
   }
@@ -1499,7 +1551,9 @@ function unpackReport(z){
 function buildShareUrl(){
   if(!state.report || !state.report.items.length) return null;
   const payload = b64e(JSON.stringify(packReport(state.report)));
-  return location.origin + location.pathname + '#r=' + payload;
+  /* 固定用公開網址，不用 location.origin：
+     她在本機開工具時產出的連結才不會變成客戶打不開的 localhost */
+  return PUBLIC_BASE + '#r=' + payload;
 }
 
 /* ================= 儲存 ================= */
@@ -2371,6 +2425,7 @@ function bindEvents(){
   $('#sqRun').addEventListener('click', run591Search);
   $('#sqKeyword').addEventListener('keydown', e => { if(e.key === 'Enter') run591Search(); });
   $('#sqResults').addEventListener('click', e => {
+    if(e.target.closest('#sqRetry')){ apiBase = null; run591Search(); return; }
     const btn = e.target.closest('[data-add]');
     if(!btn) return;
     const h = searchResults[Number(btn.dataset.add)];
