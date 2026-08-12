@@ -74,12 +74,8 @@ button{cursor:pointer;border:none;background:none}
   overflow-y:auto;
 }
 .sb-brand{padding:26px 22px 20px;border-bottom:1px solid rgba(255,255,255,.12)}
-.sb-brand .mark{
-  width:44px;height:44px;border-radius:13px;
-  background:linear-gradient(145deg,var(--secondary),#2E8C22);
-  display:grid;place-items:center;
-  font-weight:900;font-size:1.25rem;color:#fff;
-  box-shadow:0 4px 14px rgba(79,175,56,.35);
+.sb-brand .av{
+  box-shadow:0 4px 14px rgba(0,0,0,.28),0 0 0 2px rgba(255,255,255,.22);
   margin-bottom:12px;
 }
 .sb-brand .name{font-weight:900;font-size:1.06rem;letter-spacing:.02em}
@@ -162,6 +158,20 @@ button{cursor:pointer;border:none;background:none}
 .btn-danger{background:#FDF1F0;color:var(--accent);border:1.5px solid #F5D5D2}
 .btn-danger:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn[disabled]{opacity:.45;pointer-events:none}
+
+/* 形象照：圖載不出來時 <img> 會自己移除，露出底下的「蕭」字 */
+.av{
+  position:relative;display:inline-grid;place-items:center;flex:0 0 auto;
+  border-radius:50%;overflow:hidden;
+  background:linear-gradient(145deg,var(--secondary),#2E8C22);
+  color:#fff;font-weight:900;line-height:1;
+}
+/* 備用字用 ::after 畫，不放進 DOM，複製報告文字時才不會多一個「蕭」 */
+.av::after{content:'蕭'}
+.av img{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;object-position:center 12%}
+.av-md{width:44px;height:44px;font-size:1.1rem}
+.av-lg{width:52px;height:52px;font-size:1.3rem;box-shadow:0 0 0 2px rgba(255,255,255,.5)}
+.av-xl{width:66px;height:66px;font-size:1.6rem;box-shadow:0 0 0 3px #fff,0 4px 14px rgba(0,83,53,.16)}
 
 .card{
   background:var(--surface);
@@ -271,6 +281,14 @@ select.control{
 .pick-box.on svg{opacity:1}
 
 .mc-main{min-width:0}
+.mc-row{display:flex;gap:13px;align-items:flex-start}
+.mc-info{flex:1;min-width:0}
+.mc-thumb{
+  width:104px;height:78px;flex:0 0 104px;
+  border-radius:9px;object-fit:cover;
+  background:linear-gradient(135deg,#E8F0EA,#D6E6DB);
+  border:1px solid var(--border);
+}
 .mc-title{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:5px}
 .mc-title h3{font-size:1.04rem;font-weight:800;color:var(--primary)}
 .mc-price{font-size:1.18rem;font-weight:900;color:var(--accent);letter-spacing:-.01em}
@@ -349,6 +367,11 @@ select.control{
 }
 .pcard-status.s2{color:var(--amber)}
 .pcard-status.s3{color:var(--text-faint)}
+.pcard-pcount{
+  position:absolute;bottom:10px;right:10px;
+  font-size:.71rem;font-weight:700;padding:3px 9px;border-radius:99px;
+  background:rgba(11,46,32,.72);color:#fff;
+}
 .pcard-body{padding:14px 16px;flex:1;display:flex;flex-direction:column}
 .pcard-body h3{font-size:1rem;font-weight:800;color:var(--primary);margin-bottom:3px}
 .pcard-loc{font-size:.79rem;color:var(--text-faint);margin-bottom:9px}
@@ -420,6 +443,70 @@ select.control{
 }
 .form-section:first-child{margin-top:0}
 
+/* 物件照片編輯 */
+.photo-add{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:11px}
+.photo-add .control{flex:1;min-width:170px}
+.photo-add .btn{flex:0 0 auto;height:39px}
+.photo-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px}
+.photo-cell{
+  position:relative;aspect-ratio:4/3;border-radius:9px;overflow:hidden;
+  border:1.5px solid var(--border);
+  background:linear-gradient(135deg,#E8F0EA,#D6E6DB);
+}
+.photo-cell.main{border-color:var(--secondary);box-shadow:0 0 0 2px rgba(79,175,56,.18)}
+.photo-cell img{width:100%;height:100%;object-fit:cover}
+.photo-cell.bad::after{
+  content:'圖片載不出來';position:absolute;inset:0;
+  display:grid;place-items:center;text-align:center;
+  font-size:.72rem;font-weight:700;color:var(--accent);
+  background:#FDF1F0;padding:6px;
+}
+.photo-cell .tag{
+  position:absolute;top:6px;left:6px;z-index:2;
+  font-size:.66rem;font-weight:800;padding:2px 7px;border-radius:99px;
+  background:var(--secondary);color:#fff;
+}
+.photo-cell .tag.local{
+  left:auto;right:6px;background:rgba(11,46,32,.72);font-weight:700;
+}
+.photo-cell.main .tag.local{top:28px;right:6px}
+.photo-cell .ops{
+  position:absolute;left:0;right:0;bottom:0;z-index:2;
+  display:flex;gap:1px;background:rgba(11,46,32,.62);
+}
+.photo-cell .ops button{
+  flex:1;padding:4px 0;color:#fff;font-size:.9rem;font-weight:800;line-height:1.2;
+  transition:background .16s;
+}
+.photo-cell .ops button:hover{background:rgba(255,255,255,.2)}
+.photo-cell .ops .rm:hover{background:var(--accent)}
+.photo-empty{
+  grid-column:1/-1;padding:18px;text-align:center;
+  border:1.5px dashed var(--border-strong);border-radius:var(--r-sm);
+  font-size:.83rem;color:var(--text-faint);
+}
+.photo-hint{
+  font-size:.76rem;color:var(--text-muted);line-height:1.65;
+  margin-top:9px;
+}
+.photo-hint:empty{margin-top:0}
+
+/* 照片放大 */
+.lightbox{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(6,22,15,.92);
+  display:grid;place-items:center;padding:26px;cursor:zoom-out;
+}
+.lightbox[hidden]{display:none}
+.lightbox img{max-width:100%;max-height:100%;border-radius:10px;object-fit:contain}
+.lb-x{
+  position:absolute;top:16px;right:18px;
+  width:38px;height:38px;border-radius:11px;
+  display:grid;place-items:center;color:#fff;
+  background:rgba(255,255,255,.16);
+}
+.lb-x:hover{background:rgba(255,255,255,.3)}
+
 /* ============ 配案報告 ============ */
 .report-wrap{max-width:940px;margin:0 auto}
 .report-tools{
@@ -445,12 +532,12 @@ select.control{
   background:radial-gradient(circle,rgba(255,255,255,.07),transparent 70%);
 }
 .rp-brand{display:flex;align-items:center;gap:13px;margin-bottom:22px;position:relative;z-index:1}
-.rp-brand .mark{
-  width:46px;height:46px;border-radius:13px;
-  background:linear-gradient(145deg,var(--secondary),#2E8C22);
-  display:grid;place-items:center;font-weight:900;font-size:1.3rem;
-}
 .rp-brand .nm{font-weight:900;font-size:1.08rem;line-height:1.35}
+.rp-brand .nm .nk{
+  font-size:.76rem;font-weight:700;margin-left:8px;
+  color:#B8E8A8;background:rgba(79,175,56,.24);
+  padding:2px 8px;border-radius:99px;vertical-align:2px;
+}
 .rp-brand .rl{font-size:.78rem;color:rgba(255,255,255,.66)}
 .rp-title{position:relative;z-index:1}
 .rp-title .kicker{
@@ -508,6 +595,23 @@ select.control{
 .rp-item-head .pr .n small{font-size:.74rem}
 .rp-item-head .pr .u{font-size:.73rem;color:var(--text-faint);font-weight:600}
 
+/* 物件照片：主照一張大的，其餘排成一列小圖 */
+.rp-photos{margin:0 0 13px;display:grid;gap:7px}
+.rp-photos img{
+  width:100%;border-radius:10px;object-fit:cover;cursor:zoom-in;
+  background:linear-gradient(135deg,#E8F0EA,#D6E6DB);
+  border:1px solid var(--border);
+}
+.rp-photos .hero{aspect-ratio:16/9;max-height:340px}
+.rp-photos .thumbs{display:grid;gap:7px}
+.rp-photos .thumbs.t2{grid-template-columns:repeat(2,1fr)}
+.rp-photos .thumbs.t3{grid-template-columns:repeat(3,1fr)}
+.rp-photos .thumbs.t4{grid-template-columns:repeat(4,1fr)}
+.rp-photos .thumbs img{aspect-ratio:4/3}
+@media (max-width:520px){
+  .rp-photos .thumbs.t3,.rp-photos .thumbs.t4{grid-template-columns:repeat(2,1fr)}
+}
+
 .spec-tbl{
   display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));
   gap:1px;background:var(--border);
@@ -541,11 +645,21 @@ select.control{
   background:#F5F9F6;border-top:1px solid var(--border);
   padding:24px 40px;
 }
-.rp-foot-grid{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.rp-foot .who{flex:1;min-width:220px}
+.rp-foot-grid{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.rp-foot .who{flex:1;min-width:200px}
 .rp-foot .who .n{font-size:1.06rem;font-weight:900;color:var(--primary)}
+.rp-foot .who .n .nk{
+  font-size:.75rem;font-weight:700;margin-left:8px;vertical-align:2px;
+  color:#2E7D22;background:#E7F4E4;border:1px solid #CDE9C6;
+  padding:2px 9px;border-radius:99px;
+}
 .rp-foot .who .t{font-size:.82rem;color:var(--text-muted);margin-top:2px}
-.rp-foot .who .sv{font-size:.79rem;color:var(--text-faint);margin-top:6px}
+.rp-foot .who .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.rp-foot .who .tags span{
+  font-size:.73rem;font-weight:600;color:var(--primary);
+  background:#fff;border:1px solid var(--border-strong);
+  padding:2px 9px;border-radius:99px;
+}
 .rp-cta{display:flex;gap:9px;flex-wrap:wrap}
 .rp-cta a{
   display:inline-flex;align-items:center;gap:6px;
@@ -554,6 +668,21 @@ select.control{
 }
 .rp-cta .tel{background:var(--primary);color:#fff}
 .rp-cta .line{background:#06C755;color:#fff}
+
+.rp-contact{
+  margin-top:16px;padding-top:14px;border-top:1px solid var(--border-strong);
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px 22px;
+}
+.rp-contact a,.rp-contact span{
+  font-size:.84rem;color:var(--text);font-weight:600;
+  display:flex;align-items:baseline;gap:8px;min-width:0;
+}
+.rp-contact a{color:var(--primary)}
+.rp-contact a:hover{text-decoration:underline}
+.rp-contact .k{
+  flex:0 0 62px;font-size:.71rem;font-weight:700;
+  color:var(--text-faint);letter-spacing:.04em;
+}
 .rp-disclaimer{
   margin-top:16px;padding-top:14px;border-top:1px dashed var(--border-strong);
   font-size:.72rem;color:var(--text-faint);line-height:1.7;
@@ -666,11 +795,7 @@ body.client-mode .report-wrap{max-width:900px}
   background:#fff;border:1px solid var(--border);border-radius:var(--r-md);
   padding:13px 18px;box-shadow:var(--sh-sm);
 }
-.client-band .mk{
-  width:36px;height:36px;border-radius:11px;flex:0 0 36px;
-  background:linear-gradient(145deg,var(--secondary),#2E8C22);
-  display:grid;place-items:center;color:#fff;font-weight:900;
-}
+.client-band .av{box-shadow:0 0 0 2px #fff,0 2px 8px rgba(0,83,53,.15)}
 .client-band .tx{font-size:.87rem;color:var(--text-muted);line-height:1.5}
 .client-band .tx b{color:var(--primary);font-weight:800;display:block;font-size:.95rem}
 .client-band .cta{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
@@ -710,7 +835,7 @@ body.client-mode .report-wrap{max-width:900px}
     flex-direction:row;align-items:center;overflow-x:auto;padding:0 12px;
   }
   .sb-brand{padding:12px 14px 12px 4px;border-bottom:none;border-right:1px solid rgba(255,255,255,.12);flex:0 0 auto}
-  .sb-brand .mark{width:34px;height:34px;font-size:1rem;margin-bottom:0;border-radius:10px}
+  .sb-brand .av{width:34px;height:34px;font-size:1rem;margin-bottom:0}
   .sb-brand .name,.sb-brand .role,.sb-tool{display:none}
   .sb-nav{display:flex;gap:4px;padding:8px;flex:1;justify-content:space-between}
   .sb-label{display:none}
@@ -726,6 +851,7 @@ body.client-mode .report-wrap{max-width:900px}
   .picker-bar .acts{margin-left:0;width:100%}
   .picker-bar .acts .btn{flex:1}
   .mcard{grid-template-columns:auto 1fr;gap:12px}
+  .mc-thumb{width:80px;height:62px;flex:0 0 80px}
   .mc-score{grid-column:2;display:flex;align-items:center;gap:10px;padding-left:0;margin-top:4px}
   .ring{width:46px;height:46px;margin-bottom:0}
   .ring .val{font-size:.84rem}
@@ -745,7 +871,7 @@ body.client-mode .report-wrap{max-width:900px}
 @media print{
   @page{size:A4;margin:11mm}
   body{background:#fff}
-  .sidebar,.topbar,.picker-bar,.report-tools,.toast,.modal-bg{display:none !important}
+  .sidebar,.topbar,.picker-bar,.report-tools,.toast,.modal-bg,.lightbox{display:none !important}
   .app{display:block}
   .view{padding:0}
   .report-wrap{max-width:none}
@@ -758,7 +884,17 @@ body.client-mode .report-wrap{max-width:900px}
   .rp-head::before,.rp-head::after{display:none}
   .rp-need,.rp-body,.rp-foot{padding:18px 24px}
   .rp-item{page-break-inside:avoid}
-  .mtag,.rp-fit .sc,.rp-item-no,.rp-cta a,.spec-tbl{
+  /* 照片印出來才是重點，主照壓低一點讓整筆物件塞得進同一頁 */
+  .rp-photos{break-inside:avoid;page-break-inside:avoid;gap:5px}
+  .rp-photos img{cursor:default}
+  .rp-photos .hero{max-height:210px}
+  .rp-photos .thumbs{gap:5px}
+  .rp-contact{grid-template-columns:1fr 1fr;gap:6px 20px;margin-top:12px;padding-top:10px}
+  .rp-contact a{color:var(--text) !important;text-decoration:none}
+  .av img,.rp-photos img,.rp-foot .who .tags span{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .mtag,.rp-fit .sc,.rp-item-no,.rp-cta a,.spec-tbl,.av{
     -webkit-print-color-adjust:exact;print-color-adjust:exact;
   }
 }
@@ -771,7 +907,7 @@ body.client-mode .report-wrap{max-width:900px}
   <!-- ================= 側欄 ================= -->
   <aside class="sidebar">
     <div class="sb-brand">
-      <div class="mark">蕭</div>
+      <span class="av av-md"><img src="../../assets/photo.jpg" alt="蕭沛縈 Rita" onerror="this.remove()"></span>
       <div class="name">蕭沛縈 Rita</div>
       <div class="role">桃園房產顧問</div>
       <span class="sb-tool">買方配案系統</span>
@@ -796,6 +932,10 @@ body.client-mode .report-wrap{max-width:900px}
 
     <div class="sb-foot">
       <div class="sb-contact">
+        <a href="../owner-report/">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>
+          切換到屋主回報
+        </a>
         <a href="tel:0981456399">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.3-1.2a2 2 0 012.1-.5c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/></svg>
           0981-456-399
@@ -803,6 +943,14 @@ body.client-mode .report-wrap{max-width:900px}
         <a href="https://line.me/ti/p/~ritahaiao" target="_blank" rel="noopener">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 5.6 2 10c0 4 3.6 7.3 8.4 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6C21.6 13.2 22 11.7 22 10c0-4.4-4.5-8-10-8z"/></svg>
           LINE：ritahaiao
+        </a>
+        <a href="mailto:fen7229.tw.tw@gmail.com">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+          fen7229.tw.tw@gmail.com
+        </a>
+        <a href="https://fen7229twtw-coder.github.io/rita-realtor/card/" target="_blank" rel="noopener">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8.5" cy="11" r="2.2"/><path d="M5 17c.6-1.8 2-2.6 3.5-2.6S11.4 15.2 12 17M15 9.5h4M15 13h3"/></svg>
+          我的電子名片
         </a>
       </div>
       <div class="sb-data">
@@ -1093,9 +1241,20 @@ body.client-mode .report-wrap{max-width:900px}
           <input class="control" id="pLink" type="url" placeholder="https://">
         </div>
       </div>
+      <div class="form-section">物件照片</div>
       <div class="field" style="margin-bottom:0">
-        <label>照片網址<span style="font-weight:500;color:var(--text-faint)">（選填）</span></label>
-        <input class="control" id="pPhoto" type="url" placeholder="https://">
+        <label>照片<span style="font-weight:500;color:var(--text-faint)">（第一張是報告的主照，最多 6 張）</span></label>
+        <div class="photo-add">
+          <button type="button" class="btn btn-ghost btn-sm" id="pPhotoPick">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+            上傳照片
+          </button>
+          <input class="control" id="pPhotoUrl" type="url" placeholder="或貼上照片網址 https://">
+          <button type="button" class="btn btn-ghost btn-sm" id="pPhotoAdd">加入</button>
+        </div>
+        <div class="photo-strip" id="pPhotoStrip"></div>
+        <div class="photo-hint" id="pPhotoHint"></div>
+        <input type="file" id="pPhotoFile" accept="image/*" multiple hidden>
       </div>
     </div>
     <div class="modal-foot">
@@ -1160,6 +1319,7 @@ body.client-mode .report-wrap{max-width:900px}
         這是為 <b id="shareFor">買方</b> 產生的專屬連結，內含 <b id="shareItems">0</b> 件物件。
         客戶點開只會看到這份報告，<b>看不到也改不了你的物件庫</b>。
       </p>
+      <div class="share-note" id="shareWarnPhoto" hidden></div>
       <div class="share-note" id="shareWarn" hidden>
         目前是用電腦本機檔案開啟（file://），這種網址只有你自己的電腦打得開。
         把 <code>tools/buyer-match/</code> 上傳到官網之後，這裡才會產生客戶點得開的網址。
@@ -1180,6 +1340,14 @@ body.client-mode .report-wrap{max-width:900px}
   </div>
 </div>
 
+<!-- 照片放大 -->
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lb-x" id="lbClose" aria-label="關閉">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  </button>
+  <img id="lbImg" alt="">
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1191,13 +1359,28 @@ const KEY = 'rita-buyer-match-v1';
 
 const AGENT = {
   name: '蕭沛縈 Rita',
+  nickname: '青埔花媽',
   title: '桃園房產顧問',
   tel: '0981-456-399',
   telRaw: '0981456399',
   line: 'ritahaiao',
   lineUrl: 'https://line.me/ti/p/~ritahaiao',
-  services: '資產配置｜稅務諮詢｜簡易裝潢　深耕桃園．服務全省'
+  email: 'fen7229.tw.tw@gmail.com',
+  base: '桃園市桃園區．青埔（全省可服務）',
+  cardUrl: 'https://fen7229twtw-coder.github.io/rita-realtor/card/',
+  /* 相對路徑：官網與本機檔案都指得到同一張形象照 */
+  photo: '../../assets/photo.jpg',
+  services: '資產配置｜稅務諮詢｜簡易裝潢　深耕桃園．服務全省',
+  serviceTags: ['資產配置','稅務諮詢','簡易裝潢','買房','賣房']
 };
+
+/* 形象照載不出來時（離線、路徑被搬走）就退回原本的「蕭」字方塊，
+   報告版面不會因為一張圖破掉。 */
+function avatarHTML(cls){
+  return '<span class="av ' + cls + '">' +
+    '<img src="' + AGENT.photo + '" alt="' + esc(AGENT.name) + '" ' +
+      'onerror="this.remove()"></span>';
+}
 
 const AREAS = ['青埔／高鐵特區','中壢區','桃園區','蘆竹南崁','八德區','平鎮區','龜山區','大園區','觀音／新屋','龍潭區','其他'];
 const TYPES = ['電梯大樓','華廈','公寓','透天','別墅','店面','土地'];
@@ -1280,6 +1463,44 @@ function todayStr(){
   return d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
 }
 
+/* ================= 物件照片 ================= */
+const MAX_PHOTOS = 6;
+
+/* 舊資料只有單張 photo，新資料是 photos 陣列，讀取時一律當陣列用 */
+function photoList(p){
+  if(!p) return [];
+  const arr = Array.isArray(p.photos) ? p.photos : (p.photo ? [p.photo] : []);
+  return arr.map(s => String(s||'').trim()).filter(Boolean).slice(0, MAX_PHOTOS);
+}
+/* 上傳的照片是 data URL（存在她自己的瀏覽器），網址型的才是客戶端也載得到的 */
+const isLocalPhoto = u => /^data:/i.test(String(u||''));
+
+/* 手機拍的照片動輒 4～8MB，直接存會把 localStorage 塞爆，
+   一律縮到長邊 1280 再轉 JPEG。 */
+function compressImage(file){
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onerror = () => reject(new Error('read'));
+    fr.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('decode'));
+      img.onload = () => {
+        const MAX = 1280;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        const ctx = cv.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(cv.toDataURL('image/jpeg', 0.72));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
 /* ================= 591 匯入 ================= */
 
 /* 591 給的是「3房2廳2衛」「8F/21F」這種字串，拆成數字才進得了物件庫 */
@@ -1350,7 +1571,7 @@ function houseToProperty(h){
     parking: mapParking(h),
     fee: null,
     link: h.url,
-    photo: h.photo || '',
+    photos: h.photo ? [h.photo] : [],
     selling: (h.title || '').trim(),
     source: '591',
     sourceId: h.houseid,
@@ -1506,6 +1727,10 @@ function packReport(r){
     if(p.parking && p.parking !== '無') o.pk = p.parking;
     if(p.fee) o.fe = p.fee;
     if(p.selling) o.sl = p.selling;
+    /* 照片只帶網址型的，最多 3 張：
+       上傳的照片是 data URL，一張就好幾十 KB，塞進網址會長到 LINE 傳不出去。 */
+    const ph = photoList(p).filter(u => !isLocalPhoto(u)).slice(0,3);
+    if(ph.length) o.ph = ph;
     /* 刻意不放 link / source / sourceAgent：
        客戶連結是以她的名義發出的，不該把 591 原始刊登頁
        和原刊登房仲的姓名電話一起送過去。 */
@@ -1541,7 +1766,8 @@ function unpackReport(z){
         addr:o.ad || '', mainSize:o.ms ?? null, age:o.g ?? null,
         rooms:o.rm ?? 0, halls:o.hl ?? 0, baths:o.bt ?? 0,
         floor:o.fl ?? null, totalFloor:o.tf ?? null,
-        parking:o.pk || '無', fee:o.fe ?? null, link:o.lk || '', selling:o.sl || ''
+        parking:o.pk || '無', fee:o.fe ?? null, link:o.lk || '', selling:o.sl || '',
+        photos: Array.isArray(o.ph) ? o.ph : []
       }
     };
   });
@@ -1562,15 +1788,25 @@ function save(){
   try{
     localStorage.setItem(KEY, JSON.stringify(state));
   }catch(e){
-    toast('儲存失敗，瀏覽器空間可能已滿', true);
+    /* 幾乎都是上傳照片把空間吃滿造成的 */
+    toast('儲存失敗，瀏覽器空間已滿。請先刪掉幾張上傳的照片，或改用照片網址', true);
   }
 }
+/* 舊版單張 photo → 新版 photos 陣列，讀進來就順手轉掉 */
+function migratePhotos(list){
+  (list || []).forEach(p => {
+    if(!Array.isArray(p.photos)) p.photos = p.photo ? [p.photo] : [];
+    delete p.photo;
+  });
+  return list || [];
+}
+
 function load(){
   try{
     const raw = localStorage.getItem(KEY);
     if(raw){
       const d = JSON.parse(raw);
-      state.properties = Array.isArray(d.properties) ? d.properties : [];
+      state.properties = migratePhotos(Array.isArray(d.properties) ? d.properties : []);
       state.criteria = d.criteria || {};
       state.picked = Array.isArray(d.picked) ? d.picked : [];
       state.report = d.report || null;
@@ -1587,35 +1823,35 @@ function seed(){
       id: uid(), name:'高鐵特區．景觀三房', area:'青埔／高鐵特區', addr:'領航北路二段',
       type:'電梯大樓', status:'銷售中', price:1380, size:44.2, mainSize:29.5, age:4,
       rooms:3, halls:2, baths:2, floor:12, totalFloor:18, parking:'坡道平面', fee:3400,
-      link:'', photo:'',
+      link:'', photos:[],
       selling:'步行 8 分鐘到高鐵桃園站，機捷 A18 生活圈\n高樓層南向採光，客廳面寬 4 米整片落地窗\n全新裝潢未入住，含全室系統櫃與冷氣'
     },
     {
       id: uid(), name:'青塘園旁．兩房首購', area:'青埔／高鐵特區', addr:'高鐵南路三段',
       type:'電梯大樓', status:'銷售中', price:898, size:29.8, mainSize:19.2, age:6,
       rooms:2, halls:2, baths:1, floor:7, totalFloor:14, parking:'坡道機械', fee:2100,
-      link:'', photo:'',
+      link:'', photos:[],
       selling:'正對青塘園綠地，散步 3 分鐘到公園\n總價帶輕鬆，適合首購與小家庭\n屋況乾淨可直接入住，附機械車位'
     },
     {
       id: uid(), name:'中壢．學區四房電梯', area:'中壢區', addr:'中央西路二段',
       type:'電梯大樓', status:'銷售中', price:1188, size:48.6, mainSize:33.1, age:12,
       rooms:4, halls:2, baths:2, floor:6, totalFloor:12, parking:'平面', fee:2800,
-      link:'', photo:'',
+      link:'', photos:[],
       selling:'雙學區，走路到小學 5 分鐘\n四房格局方正，長輩房在一樓層採光面\n生活機能成熟，超市、市場、公車站都在旁邊'
     },
     {
       id: uid(), name:'南崁．透天三代宅', area:'蘆竹南崁', addr:'南崁路一段',
       type:'透天', status:'斡旋中', price:2280, size:76.4, mainSize:68.0, age:18,
       rooms:5, halls:2, baths:4, floor:1, totalFloor:4, parking:'平面', fee:0,
-      link:'', photo:'',
+      link:'', photos:[],
       selling:'四層透天含前後院，可停兩台車\n適合三代同堂，每層都有衛浴\n近南崁交流道，上高速公路 3 分鐘'
     },
     {
       id: uid(), name:'桃園藝文．小資兩房', area:'桃園區', addr:'中正路',
       type:'華廈', status:'銷售中', price:748, size:26.5, mainSize:18.8, age:22,
       rooms:2, halls:1, baths:1, floor:4, totalFloor:7, parking:'無', fee:1200,
-      link:'', photo:'',
+      link:'', photos:[],
       selling:'藝文特區生活圈，餐廳咖啡廳林立\n總價 700 萬出頭，租金投報率佳\n屋主自住保養良好，管線已更新'
     }
   ];
@@ -1849,6 +2085,7 @@ function renderMatch(){
     const sc = s.score;
     const rs = sc == null ? null : ringStyle(sc);
     const up = unitPrice(p);
+    const pics = photoList(p);
 
     const tags = []
       .concat(s.hits.slice(0,3).map(h => '<span class="mtag">' + esc(h) + '</span>'))
@@ -1860,7 +2097,12 @@ function renderMatch(){
         '<button class="pick-box' + (picked?' on':'') + '" data-act="pick" aria-label="挑選此物件">' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' +
         '</button>' +
-        '<div class="mc-main">' +
+        '<div class="mc-main"><div class="mc-row">' +
+          (pics.length
+            ? '<img class="mc-thumb" src="' + esc(pics[0]) + '" alt="' + esc(p.name) +
+              '" loading="lazy" onerror="this.remove()">'
+            : '') +
+          '<div class="mc-info">' +
           '<div class="mc-title">' +
             '<h3>' + esc(p.name) + '</h3>' +
             '<span class="mc-price">' + fmtPrice(p.price) + '<small>萬</small></span>' +
@@ -1874,7 +2116,7 @@ function renderMatch(){
             (up ? '<span style="color:var(--text-faint)">單價 ' + up + ' 萬/坪</span>' : '') +
           '</div>' +
           '<div class="mc-tags">' + tags.join('') + '</div>' +
-        '</div>' +
+        '</div></div></div>' +
         '<div class="mc-score">' +
           (sc == null
             ? '<div class="ring" style="background:#E8EFEA"><span class="val" style="color:#95A69C">—</span></div><div class="lbl">未設條件</div>'
@@ -1924,12 +2166,14 @@ function renderInventory(){
   grid.innerHTML = list.map(p => {
     const up = unitPrice(p);
     const sCls = p.status === '斡旋中' ? ' s2' : p.status === '已成交' ? ' s3' : '';
+    const pics = photoList(p);
     return '' +
     '<article class="pcard" data-id="' + p.id + '">' +
       '<div class="pcard-photo">' +
-        (p.photo
-          ? '<img src="' + esc(p.photo) + '" alt="' + esc(p.name) + '" loading="lazy" onerror="this.style.display=\'none\'">'
+        (pics.length
+          ? '<img src="' + esc(pics[0]) + '" alt="' + esc(p.name) + '" loading="lazy" onerror="this.style.display=\'none\'">'
           : '<div class="ph"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-5L5 19"/></svg>尚未設定照片</div>') +
+        (pics.length > 1 ? '<span class="pcard-pcount">' + pics.length + ' 張</span>' : '') +
         '<span class="pcard-status' + sCls + '">' + esc(p.status) + '</span>' +
       '</div>' +
       '<div class="pcard-body">' +
@@ -2000,7 +2244,19 @@ function renderReport(){
   const itemsHTML = r.items.map((it, i) => {
     const p = it.p;
     const up = unitPrice(p);
+    const pics = photoList(p);
     const sells = (p.selling||'').split('\n').map(s=>s.trim()).filter(Boolean);
+    const pic = (u, cls) => '<img class="' + cls + '" src="' + esc(u) + '" alt="' + esc(p.name) +
+      '" loading="lazy" data-zoom="' + esc(u) + '" onerror="this.remove()">';
+    const photosHTML = pics.length
+      ? '<div class="rp-photos">' + pic(pics[0], 'hero') +
+          (pics.length > 1
+            /* 只有一張副圖時給兩欄，免得它跟主照一樣寬、版面頭重腳輕 */
+            ? '<div class="thumbs t' + Math.max(2, Math.min(4, pics.length - 1)) + '">' +
+              pics.slice(1,5).map(u => pic(u, '')).join('') + '</div>'
+            : '') +
+        '</div>'
+      : '';
     const specs = [
       ['權狀坪數', (p.size ?? '—') + ' 坪'],
       ['主+陽', p.mainSize ? p.mainSize + ' 坪' : '—'],
@@ -2025,6 +2281,7 @@ function renderReport(){
           (up ? '<div class="u">單價 ' + up + ' 萬/坪</div>' : '') +
         '</div>' +
       '</div>' +
+      photosHTML +
       '<div class="spec-tbl">' +
         specs.map(s => '<div><div class="k">' + s[0] + '</div><div class="v">' + esc(s[1]) + '</div></div>').join('') +
       '</div>' +
@@ -2056,8 +2313,10 @@ function renderReport(){
     '<div class="rp-head">' +
       '<div class="rp-date">配案日期<strong>' + esc(r.date) + '</strong></div>' +
       '<div class="rp-brand">' +
-        '<div class="mark">蕭</div>' +
-        '<div><div class="nm">' + esc(AGENT.name) + '</div><div class="rl">' + esc(AGENT.title) + '</div></div>' +
+        avatarHTML('av-lg') +
+        '<div><div class="nm">' + esc(AGENT.name) +
+          '<span class="nk">' + esc(AGENT.nickname) + '</span></div>' +
+          '<div class="rl">' + esc(AGENT.title) + '　' + esc(AGENT.tel) + '</div></div>' +
       '</div>' +
       '<div class="rp-title">' +
         '<div class="kicker">PROPERTY MATCHING REPORT</div>' +
@@ -2082,17 +2341,30 @@ function renderReport(){
 
     '<div class="rp-foot">' +
       '<div class="rp-foot-grid">' +
+        avatarHTML('av-xl') +
         '<div class="who">' +
-          '<div class="n">' + esc(AGENT.name) + '</div>' +
+          '<div class="n">' + esc(AGENT.name) +
+            '<span class="nk">' + esc(AGENT.nickname) + '</span></div>' +
           '<div class="t">' + esc(AGENT.title) + '</div>' +
-          '<div class="sv">' + esc(AGENT.services) + '</div>' +
+          '<div class="tags">' +
+            AGENT.serviceTags.map(t => '<span>' + esc(t) + '</span>').join('') +
+          '</div>' +
         '</div>' +
         '<div class="rp-cta">' +
           '<a class="tel" href="tel:' + AGENT.telRaw + '">' +
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.3-1.2a2 2 0 012.1-.5c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/></svg>' +
             esc(AGENT.tel) + '</a>' +
-          '<a class="line" href="' + AGENT.lineUrl + '" target="_blank" rel="noopener">LINE：' + esc(AGENT.line) + '</a>' +
+          '<a class="line" href="' + AGENT.lineUrl + '" target="_blank" rel="noopener">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 5.6 2 10c0 4 3.6 7.3 8.4 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6C21.6 13.2 22 11.7 22 10c0-4.4-4.5-8-10-8z"/></svg>' +
+            '加 LINE 詢問</a>' +
         '</div>' +
+      '</div>' +
+      '<div class="rp-contact">' +
+        '<a href="tel:' + AGENT.telRaw + '"><span class="k">電話</span>' + esc(AGENT.tel) + '</a>' +
+        '<a href="' + AGENT.lineUrl + '" target="_blank" rel="noopener"><span class="k">LINE ID</span>' + esc(AGENT.line) + '</a>' +
+        '<a href="mailto:' + esc(AGENT.email) + '"><span class="k">Email</span>' + esc(AGENT.email) + '</a>' +
+        '<span><span class="k">服務據點</span>' + esc(AGENT.base) + '</span>' +
+        '<a href="' + AGENT.cardUrl + '" target="_blank" rel="noopener"><span class="k">電子名片</span>掃一下就存進通訊錄 →</a>' +
       '</div>' +
       '<div class="rp-disclaimer">' +
         '本報告依您提供的需求條件，自 ' + esc(AGENT.name) + ' 現有委託物件中篩選製作，資料整理於 ' + esc(r.date) + '。' +
@@ -2132,9 +2404,11 @@ function reportText(){
     L.push('');
   });
   L.push('———');
-  L.push(AGENT.name + '｜' + AGENT.title);
+  L.push(AGENT.name + '（' + AGENT.nickname + '）｜' + AGENT.title);
   L.push('電話：' + AGENT.tel);
   L.push('LINE：' + AGENT.lineUrl);
+  L.push('Email：' + AGENT.email);
+  L.push('電子名片：' + AGENT.cardUrl);
   L.push('※ 售況隨時異動，實際內容以現場與產權文件為準。');
   return L.join('\n');
 }
@@ -2161,6 +2435,18 @@ function openShare(){
   $('#shareLen').textContent = url.length.toLocaleString('zh-TW');
   $('#shareFor').textContent = name;
   $('#shareItems').textContent = state.report.items.length;
+
+  /* 上傳的照片進不了連結，先講清楚，免得她以為客戶看得到 */
+  const dropped = state.report.items
+    .reduce((n, it) => n + photoList(it.p).filter(isLocalPhoto).length, 0);
+  const warnP = $('#shareWarnPhoto');
+  warnP.hidden = !dropped;
+  if(dropped){
+    warnP.textContent = '這份報告有 ' + dropped + ' 張是「上傳的照片」，不會出現在客戶連結裡' +
+      '（會讓網址長到 LINE 傳不出去）。客戶端只看得到網址型照片。' +
+      '想讓客戶看到全部照片，改用「列印／存成 PDF」傳給他。';
+  }
+
   $('#shareWarn').hidden = !isFile;
   $('#shareLineBtn').hidden = isFile;
   if(!isFile){
@@ -2173,6 +2459,28 @@ function openShare(){
 }
 function closeShare(){ $('#shareBg').classList.remove('show'); }
 
+/* ================= 照片放大 =================
+   客戶多半用手機看，報告裡的照片一定要點得開放大。 */
+function openLightbox(src){
+  $('#lbImg').src = src;
+  $('#lightbox').hidden = false;
+}
+function closeLightbox(){
+  $('#lightbox').hidden = true;
+  /* 用 removeAttribute，設成空字串瀏覽器會當成「載入本頁網址」再打一次 */
+  $('#lbImg').removeAttribute('src');
+}
+function bindLightbox(){
+  $('#reportWrap').addEventListener('click', e => {
+    const img = e.target.closest('[data-zoom]');
+    if(img) openLightbox(img.dataset.zoom);
+  });
+  $('#lightbox').addEventListener('click', closeLightbox);
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && !$('#lightbox').hidden) closeLightbox();
+  });
+}
+
 /* ================= 選取列 ================= */
 function updatePicker(){
   const n = state.picked.length;
@@ -2181,6 +2489,51 @@ function updatePicker(){
 }
 
 /* ================= Modal ================= */
+
+/* 編輯中的照片先放這裡，按「儲存物件」才寫進物件庫 */
+let draftPhotos = [];
+
+function renderPhotoStrip(){
+  const box = $('#pPhotoStrip');
+  const hint = $('#pPhotoHint');
+  if(!draftPhotos.length){
+    box.innerHTML = '<div class="photo-empty">還沒有照片。有照片的物件在配案報告上會明顯好看很多。</div>';
+    hint.textContent = '';
+    return;
+  }
+  box.innerHTML = draftPhotos.map((u, i) =>
+    '<div class="photo-cell' + (i===0 ? ' main' : '') + '">' +
+      '<img src="' + esc(u) + '" alt="" onerror="this.closest(\'.photo-cell\').classList.add(\'bad\')">' +
+      (i===0 ? '<span class="tag">主照</span>' : '') +
+      (isLocalPhoto(u) ? '<span class="tag local">本機</span>' : '') +
+      '<div class="ops">' +
+        (i>0 ? '<button type="button" data-pmove="' + i + '" title="往前移">‹</button>' : '') +
+        (i<draftPhotos.length-1 ? '<button type="button" data-pmove2="' + i + '" title="往後移">›</button>' : '') +
+        '<button type="button" class="rm" data-pdel="' + i + '" title="刪除">×</button>' +
+      '</div>' +
+    '</div>').join('');
+
+  const localN = draftPhotos.filter(isLocalPhoto).length;
+  hint.textContent = localN
+    ? '其中 ' + localN + ' 張是上傳的照片，只存在你這台電腦。列印／PDF 會完整帶著，但不會放進客戶連結（會讓網址長到傳不出去）。'
+    : '';
+}
+
+function addPhotos(urls){
+  let added = 0, full = false;
+  urls.forEach(u => {
+    u = String(u||'').trim();
+    if(!u) return;
+    if(draftPhotos.length >= MAX_PHOTOS){ full = true; return; }
+    if(draftPhotos.includes(u)) return;
+    draftPhotos.push(u);
+    added++;
+  });
+  renderPhotoStrip();
+  if(full) toast('照片最多 ' + MAX_PHOTOS + ' 張，超過的沒有加入', true);
+  else if(added) toast('已加入 ' + added + ' 張照片');
+}
+
 function openModal(id){
   editingId = id || null;
   const p = id ? state.properties.find(x=>x.id===id) : null;
@@ -2195,7 +2548,10 @@ function openModal(id){
   v('#pRooms', p?.rooms); v('#pHalls', p?.halls); v('#pBaths', p?.baths);
   v('#pFloor', p?.floor); v('#pTotalFloor', p?.totalFloor);
   $('#pParking').value = p?.parking || '無';
-  v('#pSelling', p?.selling); v('#pFee', p?.fee); v('#pLink', p?.link); v('#pPhoto', p?.photo);
+  v('#pSelling', p?.selling); v('#pFee', p?.fee); v('#pLink', p?.link);
+  draftPhotos = photoList(p);
+  $('#pPhotoUrl').value = '';
+  renderPhotoStrip();
   $('#modalBg').classList.add('show');
   setTimeout(()=>$('#pName').focus(), 60);
 }
@@ -2227,7 +2583,7 @@ function saveProperty(){
     parking: $('#pParking').value,
     fee: num($('#pFee').value),
     link: $('#pLink').value.trim(),
-    photo: $('#pPhoto').value.trim(),
+    photos: draftPhotos.slice(),
     selling: $('#pSelling').value.trim()
   };
 
@@ -2301,7 +2657,7 @@ function importData(file){
       const d = JSON.parse(fr.result);
       if(!d || !Array.isArray(d.properties)) throw new Error('格式不符');
       if(!confirm('匯入會覆蓋目前所有資料（物件 ' + state.properties.length + ' 筆），確定要繼續嗎？')) return;
-      state.properties = d.properties;
+      state.properties = migratePhotos(d.properties);
       state.criteria = d.criteria || {};
       state.picked = Array.isArray(d.picked) ? d.picked : [];
       state.report = d.report || null;
@@ -2442,6 +2798,43 @@ function bindEvents(){
     toast('已加入「' + (h.community || h.title) + '」');
   });
 
+  /* 物件照片 */
+  $('#pPhotoPick').addEventListener('click', () => $('#pPhotoFile').click());
+  $('#pPhotoFile').addEventListener('change', async e => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if(!files.length) return;
+    const room = MAX_PHOTOS - draftPhotos.length;
+    if(room <= 0){ toast('照片已經滿 ' + MAX_PHOTOS + ' 張了', true); return; }
+    toast('照片處理中…');
+    const out = [];
+    for(const f of files.slice(0, room)){
+      try{ out.push(await compressImage(f)); }
+      catch(err){ toast('有一張照片讀不進來，換一張試試', true); }
+    }
+    if(out.length) addPhotos(out);
+  });
+  $('#pPhotoAdd').addEventListener('click', () => {
+    const u = $('#pPhotoUrl').value.trim();
+    if(!u){ $('#pPhotoUrl').focus(); return; }
+    if(!/^https?:\/\//i.test(u)){ toast('照片網址要以 http:// 或 https:// 開頭', true); return; }
+    addPhotos([u]);
+    $('#pPhotoUrl').value = '';
+  });
+  $('#pPhotoUrl').addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); $('#pPhotoAdd').click(); }
+  });
+  $('#pPhotoStrip').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const swap = (a, b) => { const t = draftPhotos[a]; draftPhotos[a] = draftPhotos[b]; draftPhotos[b] = t; };
+    if(btn.dataset.pmove != null) swap(Number(btn.dataset.pmove), Number(btn.dataset.pmove) - 1);
+    else if(btn.dataset.pmove2 != null) swap(Number(btn.dataset.pmove2), Number(btn.dataset.pmove2) + 1);
+    else if(btn.dataset.pdel != null) draftPhotos.splice(Number(btn.dataset.pdel), 1);
+    else return;
+    renderPhotoStrip();
+  });
+
   /* Modal */
   $('#modalClose').addEventListener('click', closeModal);
   $('#modalCancel').addEventListener('click', closeModal);
@@ -2565,7 +2958,7 @@ function initClientView(payload){
   const band = document.createElement('div');
   band.className = 'client-band';
   band.innerHTML =
-    '<div class="mk">蕭</div>' +
+    avatarHTML('av-md') +
     '<div class="tx"><b>' + esc(AGENT.name) + '　' + esc(AGENT.title) + '</b>' +
       '這份配案報告是依您的需求整理，有任何問題歡迎直接聯絡我。</div>' +
     '<div class="cta">' +
@@ -2581,10 +2974,11 @@ function init(){
 
   const m = location.hash.match(/^#r=(.+)$/);
   if(m && initClientView(m[1])){
-    /* 客戶檢視：只綁報告區的列印按鈕，其餘功能一律不啟用 */
+    /* 客戶檢視：只綁報告區的列印按鈕與照片放大，其餘功能一律不啟用 */
     $('#reportWrap').addEventListener('click', e => {
       if(e.target.closest('[data-act="print"]')) window.print();
     });
+    bindLightbox();
     return;
   }
 
@@ -2592,6 +2986,7 @@ function init(){
   if(!had) seed();
   writeCriteria(state.criteria);
   bindEvents();
+  bindLightbox();
   switchView('match');
 
   /* 已經開著工具時才貼上客戶連結，只改 hash 不會重跑一次程式，
