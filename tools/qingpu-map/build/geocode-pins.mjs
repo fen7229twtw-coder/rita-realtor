@@ -22,6 +22,9 @@ const LEJU_TSV = join(HERE, '..', '..', 'qingpu-communities', 'data', 'leju-cros
 
 const CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 
+// 判斷預售案交屋了沒要用今天當基準，跑一次算一次
+const NOW = new Date();
+
 /* 路名正規化：資料庫寫「青峰路1段」，OSM 寫「青峰路一段」。 */
 function normRoad(s) {
   if (!s) return '';
@@ -243,6 +246,28 @@ function parseLejuAddr(raw) {
   }
   if (!roads.length) return null;
   return { roads, no };
+}
+
+/* 樂居「屋齡或完工」欄的交屋時程，寫法有五種：
+     2026年Q1完工 / 2026年第四季度完工 / 2028年12月完工 /
+     2025年下半年完工 / 2029年8月28日完工
+   全部拆成年月，順便產一個短標籤 —— 卡片上那一格只有一行寬，塞不下原文。
+   抓月底當基準：寫「2026年Q4」的話整個 12 月都還算沒交屋。 */
+function parseEta(raw) {
+  const s = String(raw || '');
+  const ym = s.match(/(\d{4})/);
+  if (!ym) return null;
+  const y = +ym[1];
+  let mon = null;
+  let label = null;
+  const q = s.match(/Q([1-4])|第([一二三四])季/);
+  if (q) { const n = q[1] ? +q[1] : '一二三四'.indexOf(q[2]) + 1; mon = n * 3; label = `${y} Q${n}`; }
+  const md = s.match(/年\s*0?(\d{1,2})\s*月/);
+  if (md) { mon = +md[1]; label = `${y}/${String(mon).padStart(2, '0')}`; }
+  if (/上半年/.test(s)) { mon = 6; label = `${y} 上半年`; }
+  if (/下半年/.test(s)) { mon = 12; label = `${y} 下半年`; }
+  if (mon == null) { mon = 12; label = String(y); }
+  return { y, mon, label, date: new Date(y, mon, 0) };   // 該月最後一天
 }
 
 /** 兩條路中心線彼此最靠近的位置（街角）。用來定位只給四至、沒給門牌的建案。 */
@@ -521,8 +546,13 @@ async function main() {
       totalFloor: c.totalFloor,
       upMedian: c.upMedian,
       trend: c.trend,
-      deals1y: c.deals1yHome ?? c.deals1y,
-      dealsAll: c.dealsHome ?? c.dealsAll,
+      /* 統計基準要跟著社區的產品類型走。住宅社區看「住家類」才準（排掉車位與店面），
+         但商辦社區的住家類本來就是 0 —— 直接用 ?? 接不到（0 不是 nullish），
+         結果 T1站前之星 卡片上寫「累計 0 筆」，它其實有 25 筆商辦成交、單價 47.2 萬。
+         客戶問「這裡有沒有在交易」會照著答錯。 */
+      deals1y: c.statBase === '住家' ? (c.deals1yHome ?? c.deals1y) : c.deals1y,
+      dealsAll: c.statBase === '住家' ? (c.dealsHome ?? c.dealsAll) : c.dealsAll,
+      statBase: c.statBase,                           // 卡片要講「住家成交」還是「商辦成交」
       rooms: c.rooms,
       parkMedian: c.parkMedian,
       propertyKind: c.propertyKind,
@@ -624,11 +654,21 @@ async function main() {
     }
 
     /* 「2026年第四季度完工」這種是還沒交屋的預售案，跟成屋要分得開 ——
-       帶看時講法完全不同，圖上會另外標一個「預售」記號。
-       樂居的屋齡欄只有數字（例：「3」）就是已完工的成屋。 */
-    const ageTxt = lj.age || '';
-    const presale = /202[6-9]|20[3-9]\d|完工|交屋|年底|季度/.test(ageTxt) && !/^\d+$/.test(ageTxt.trim());
-    const ageNum = /^\d+$/.test(ageTxt.trim()) ? +ageTxt.trim() : undefined;
+       帶看時講法完全不同，圖上另外標一個「預售」記號。
+       樂居的屋齡欄只有數字（例：「3」）就是已完工的成屋。
+
+       但那個時程也可能早就過了：實測 35 筆標成預售的裡面有 7 筆已經交屋，
+       威均峰澤 寫的是「2024年1月完工」。照字面當預售，帶看時會講錯。
+       所以解析出年月跟今天比，已經過去的換算成屋齡、當成屋處理。 */
+    const ageTxt = (lj.age || '').trim();
+    const eta = parseEta(ageTxt);
+    let ageNum = /^\d+$/.test(ageTxt) ? +ageTxt : undefined;
+    let presale = false;
+    let doneEta;
+    if (eta && !/^\d+$/.test(ageTxt)) {
+      if (eta.date > NOW) { presale = true; doneEta = eta.label; }
+      else if (ageNum == null) ageNum = Math.max(0, NOW.getFullYear() - eta.y);
+    }
 
     pins.push({
       id: 'leju-' + lejuSeq,
@@ -639,6 +679,7 @@ async function main() {
       publicRatio: lj.ratio,
       lejuAddr: lj.addr,
       lejuAge: lj.age,
+      doneEta,                                        // 「2026 Q4」這種短標籤，卡片直接顯示
       lejuBlock: lj.block,
       lat: +pos.lat.toFixed(6),
       lon: +pos.lon.toFixed(6),

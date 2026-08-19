@@ -172,6 +172,8 @@ body{
 }
 .tag.leju{background:#3E8E63; color:#fff}
 .tag.presale{background:#CFE7D8; color:#1F5F3F; border:1px solid #3E8E63}
+/* 商辦的每坪單價跟住宅不是同一個量級，標出來免得照著住宅行情講 */
+.tag.office{background:#DCE3EE; color:#2B4A73; border:1px solid #8FA6C4}
 /* 樂居補的社區沒有成交紀錄，用這塊說明原因，不要讓人以為資料掉了 */
 .src-note{
   margin:8px 0 0; padding:8px 10px; border-radius:8px;
@@ -258,6 +260,44 @@ body{
 }
 .pop-x:hover{background:var(--border); color:var(--text)}
 .pop-body{padding:14px 18px 18px; overflow-y:auto; overscroll-behavior:contain}
+/* ---------- 今天的帶看行程 ----------
+   地圖上每段路中間有標時間，但那是小字、在密集區還會擠在一起。
+   客戶要的是一份看得懂的清單：先去哪、開多久、再去哪。
+   放在側欄第一塊 —— 手機上側欄就在地圖正下方，客戶滑一下就看到。 */
+.trip{list-style:none; margin:0; padding:0}
+.trip .stop{display:flex; align-items:center; gap:9px; padding:7px 0}
+.trip .no{
+  flex:none; width:24px; height:24px; border-radius:50%;
+  background:var(--accent); color:#fff; font-size:.76rem; font-weight:800;
+  display:flex; align-items:center; justify-content:center;
+}
+.trip .who{flex:1; min-width:0}
+.trip .who b{display:block; font-size:.84rem; font-weight:700; color:var(--text); line-height:1.35}
+.trip .who span{display:block; font-size:.66rem; color:var(--text-faint); margin-top:1px}
+.trip .px{flex:none; font-size:.76rem; font-weight:800; color:var(--accent)}
+.trip .go{
+  display:flex; align-items:center; gap:7px; margin-left:11px;
+  padding:5px 0 5px 13px; border-left:2px dashed var(--amber);
+  font-size:.72rem; font-weight:700; color:#8A5A12;
+}
+.trip .go .far{font-weight:600; color:var(--text-faint)}
+.trip .go.na{border-color:var(--border); color:var(--text-faint); font-weight:600}
+.trip-total{
+  margin-top:9px; padding:8px 11px; border-radius:9px;
+  background:#FDF0DC; border:1px solid var(--amber);
+  font-size:.76rem; font-weight:700; color:#8A5A12; line-height:1.5;
+}
+.trip-total small{display:block; font-weight:600; color:#A07430; font-size:.66rem; margin-top:2px}
+.trip-acts{display:flex; gap:7px; margin-top:9px}
+.trip-acts button{
+  flex:1; font:inherit; font-size:.72rem; font-weight:700; cursor:pointer;
+  padding:9px 6px; border-radius:8px;
+  border:1px solid var(--border-strong); background:var(--surface); color:var(--text);
+}
+.trip-acts button:hover{background:var(--bg)}
+.trip-acts button.ok{background:var(--secondary); border-color:var(--secondary); color:#fff}
+@media print{ #tripBox{display:none} }
+
 /* 帶看時客戶必問的四個數字，放在最上面一排，不用在兩個區塊之間找 */
 .stats{
   display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
@@ -266,7 +306,8 @@ body{
 .stats .st{background:var(--surface); padding:8px 4px; text-align:center}
 .stats .k{font-size:.6rem; font-weight:700; color:var(--text-faint); letter-spacing:.08em}
 .stats .v{font-size:1rem; font-weight:800; color:var(--primary-deep); line-height:1.3; margin-top:2px}
-.stats .v.na{color:var(--text-faint); font-weight:600}
+/* 空格子不印「—」而是講原因（「樂居沒這欄」），字要小一號才排得下 */
+.stats .v.na{color:var(--text-faint); font-weight:600; font-size:.68rem; line-height:1.45}
 .stats .v small{font-size:.62rem; font-weight:700; margin-left:1px}
 
 /* 地址單獨一列，右邊掛複製與導航 —— 帶看當天最常用的兩個動作 */
@@ -396,7 +437,7 @@ body{
    加上品牌列與帶看列，客戶得滑過 669px 才看得到地圖。 */
 #tourEdit{display:none}
 .guest .toolbar{display:none}
-.guest #tourClear, .guest #tourExit{display:none}
+.guest #tourClear, .guest #tourExit, .guest #tourOpt{display:none}
 .guest #tourEdit{display:inline-flex}
 /* 資料視窗下面那四顆是我自己的工具，客戶不該看到：
    「加入帶看」會改到我排好的路線、「設定樂居連結」是後台設定，
@@ -586,6 +627,7 @@ body{
     </div>
     <div class="tb-list" id="tourList"></div>
     <div class="tb-acts">
+      <button class="btn btn-sm amber" id="tourOpt">🔀 排出最順的路線</button>
       <button class="btn btn-sm" id="tourClear">清空</button>
       <button class="btn btn-sm" id="tourShare">📋 複製連結</button>
       <button class="btn btn-sm green" id="tourPng">📷 存成圖片</button>
@@ -599,6 +641,16 @@ body{
     <div class="mapwrap"><svg id="map" xmlns="http://www.w3.org/2000/svg"></svg></div>
 
     <aside class="side">
+      <!-- 帶看行程：有挑社區才出現，排在最前面（手機上就在地圖正下方） -->
+      <section id="tripBox" hidden>
+        <h2>今 天 的 行 程</h2>
+        <ol class="trip" id="tripList"></ol>
+        <div class="trip-total" id="tripTotal"></div>
+        <div class="trip-acts">
+          <button id="tripCopy">💬 複製行程文字</button>
+        </div>
+      </section>
+
       <section>
         <h2>圖　例</h2>
         <div class="legend" id="legend"></div>
@@ -1032,24 +1084,29 @@ function showCard(id) {
     `<span class="${p.trend > 0 ? 'up' : 'dn'}">${p.trend > 0 ? '▲' : '▼'} ${Math.abs(p.trend)}%</span>`;
 
   const isLeju = p.src === 'leju';
+  const isOffice = p.propertyKind && p.propertyKind !== '住宅';
   $('#popName').innerHTML = esc(p.name)
     + (isLeju ? `<span class="tag leju">樂居</span>` : '')
-    + (p.presale ? `<span class="tag presale">預售</span>` : '');
+    + (p.presale ? `<span class="tag presale">預售</span>` : '')
+    + (isOffice ? `<span class="tag office">${esc(p.propertyKind)}</span>` : '');
 
   /* 排版順序照「帶看時會用到的先後」：
        第幾站 → 單價 → 四個必問數字 → 地址（可複製可導航） → 明細 → 來源
      原本戶數與公設比放在最下面的樂居區塊，客戶當面問的時候要往下捲才找得到。 */
-  const st = (k, v, unit) =>
+  /* 第四個參數是「沒資料時要講的原因」。
+     一排「—」看起來像系統壞掉，寫清楚是哪一邊沒收這筆，才知道要不要自己去補。 */
+  const st = (k, v, unit, naText) =>
     `<div class="st"><div class="k">${k}</div>`
-    + (v == null || v === '' ? `<div class="v na">—</div>` : `<div class="v">${esc(String(v))}${unit ? `<small>${unit}</small>` : ''}</div>`)
+    + (v == null || v === ''
+        ? `<div class="v na">${naText ? esc(naText) : '—'}</div>`
+        : `<div class="v">${esc(String(v))}${unit ? `<small>${unit}</small>` : ''}</div>`)
     + `</div>`;
 
   // 屋齡兩個來源都可能有：實價登錄算得出來的優先，沒有才用樂居那欄
-  const ageTxt = p.age != null ? String(p.age)
-    : (p.lejuAge && /^\d+$/.test(p.lejuAge) ? p.lejuAge : null);
-  const ageUnit = ageTxt != null ? '年' : '';
-  // 樂居的屋齡欄有時候寫的是「2028年下半年完工」這種預售案的交屋時程，不是數字
-  const ageNote = (ageTxt == null && p.lejuAge) ? esc(p.lejuAge) : null;
+  /* 第一格：成屋講屋齡，預售講交屋時程（geocode 那邊已經把「2026年第四季度完工」
+     整理成「2026 Q4」，而且時程已經過去的會換算成屋齡、不再標預售）。 */
+  const ageTxt = p.age != null ? String(p.age) : null;
+  const noteUnpublished = /未公開/.test(p.name);
 
   const addrFull = p.lejuAddr || [p.road, p.addrRange].filter(Boolean).join(' ');
   /* 導航目的地：有門牌號就用地址（Google 會帶到門口），只有路名就用座標 —— 
@@ -1057,7 +1114,10 @@ function showCard(id) {
   const navTo = /號/.test(p.lejuAddr || '') ? `桃園市${p.dist || ''}${p.lejuAddr}` : `${p.lat},${p.lon}`;
 
   const srcBits = [];
-  if (!isLeju) srcBits.push('單價、屋齡、樓高、格局與成交筆數來自實價登錄');
+  if (!isLeju) {
+    srcBits.push('單價、屋齡、樓高、格局與成交筆數來自實價登錄'
+      + (isOffice ? `（這個社區的統計基準是${esc(p.statBase || p.propertyKind)}，不是住家）` : ''));
+  }
   /* 同一句話對客戶要換人稱 —— 客戶看到「你人工核對來的」會愣住 */
   if (lejuHit(p)) srcBits.push(guestMode()
     ? '戶數、公設比與地址整理自樂居'
@@ -1074,12 +1134,16 @@ function showCard(id) {
 
     /* 四個必問數字 */
     + `<div class="stats">`
-    +   st('屋齡', ageTxt, ageUnit)
-    +   st('樓高', p.totalFloor, '層')
-    +   st('戶數', p.households, '戶')
-    +   st('公設比', p.publicRatio, '%')
+    +   (p.presale
+          ? st('交屋', p.doneEta, '')
+          : st('屋齡', ageTxt, '年', noteUnpublished ? '還沒公布' : (isLeju ? '樂居沒登' : null)))
+    +   st('樓高', p.totalFloor, '層', isLeju ? '樂居沒這欄' : null)
+    +   st('戶數', p.households, '戶', isLeju ? '樂居沒登' : (!lejuHit(p) ? '名字沒對上' : null))
+    +   st('公設比', p.publicRatio, '%', isLeju ? '樂居沒登' : (!lejuHit(p) ? '名字沒對上' : null))
     + `</div>`
-    + (ageNote ? `<div class="from">交屋時程：${ageNote}</div>` : '')
+    /* 還沒公開銷售的案子，樂居通常只登得到戶數，其他要等建商公布 */
+    + (noteUnpublished
+        ? `<div class="from">這個案子還沒公開銷售，樂居目前只查得到戶數，其他要等建商公布。</div>` : '')
 
     /* 地址 + 複製 + 導航 */
     + (addrFull
@@ -1104,7 +1168,9 @@ function showCard(id) {
         + (p.doneRoc ? `<dt>完工</dt><dd>民國 ${p.doneRoc} 年</dd>` : '')
         + `<dt>格局</dt><dd>${rooms}</dd>`
         + (p.parkMedian ? `<dt>車位</dt><dd>約 ${p.parkMedian} 萬</dd>` : '')
-        + `<dt>成交</dt><dd>近一年 ${p.deals1y || 0} 筆／累計 ${p.dealsAll || 0} 筆</dd>`
+        + `<dt>成交</dt><dd>近一年 ${p.deals1y || 0} 筆／累計 ${p.dealsAll || 0} 筆`
+        +   (isOffice ? `<small style="color:var(--text-faint)">（${esc(p.statBase || p.propertyKind)}類）</small>` : '')
+        +   `</dd>`
         + `</dl>`)
 
     /* 沒對到樂居的社區要講清楚是「還沒對上名字」，不然看起來像功能壞了 */
@@ -1782,35 +1848,99 @@ function snapNode(pin) {
   return r;
 }
 
-/** 最短路徑，回傳 {m, s, nodes[]} —— nodes 是要畫在圖上的那條線 */
-function routeBetween(a, b) {
-  if (!GRAPH) return null;
-  const s0 = snapNode(a);
-  const s1 = snapNode(b);
-  if (s0.node < 0 || s1.node < 0) return null;
+/* ---------- 最短路徑 ----------
+   原本每一段路各跑一次 Dijkstra，而且每一輪都掃過全部 1816 個節點找最小值。
+   排「最順的路線」要先知道任兩個社區之間要開多久 —— 8 個社區就是 56 對，
+   照原本的做法是 56 × 330 萬次比較，手機會整個卡住。
 
+   改兩件事：
+     ① 一個起點只跑一次，把到全圖的時間與距離都算出來存著（56 次變 8 次）
+     ② 找最小值改用小根堆，一輪從「掃 1816 個」變成「取堆頂」 */
+
+/** 小根堆，存 [秒數, 節點] */
+function heapPush(h, sec, node) {
+  h.push([sec, node]);
+  let i = h.length - 1;
+  while (i > 0) {
+    const p = (i - 1) >> 1;
+    if (h[p][0] <= h[i][0]) break;
+    [h[p], h[i]] = [h[i], h[p]];
+    i = p;
+  }
+}
+function heapPop(h) {
+  const top = h[0];
+  const last = h.pop();
+  if (h.length) {
+    h[0] = last;
+    let i = 0;
+    for (;;) {
+      const l = i * 2 + 1;
+      const r = l + 1;
+      let m = i;
+      if (l < h.length && h[l][0] < h[m][0]) m = l;
+      if (r < h.length && h[r][0] < h[m][0]) m = r;
+      if (m === i) break;
+      [h[m], h[i]] = [h[i], h[m]];
+      i = m;
+    }
+  }
+  return top;
+}
+
+const spCache = new Map();
+/** 從某個路網節點出發，到全圖每個節點的最短時間／距離／前一站 */
+function shortestFrom(start) {
+  if (spCache.has(start)) return spCache.get(start);
   const N = GRAPH.nodes.length;
   const sec = new Float64Array(N).fill(Infinity);
   const dist = new Float64Array(N).fill(Infinity);
   const prev = new Int32Array(N).fill(-1);
   const done = new Uint8Array(N);
-  sec[s0.node] = 0; dist[s0.node] = 0;
-
-  for (;;) {
-    let u = -1;
-    let best = Infinity;
-    for (let i = 0; i < N; i++) if (!done[i] && sec[i] < best) { best = sec[i]; u = i; }
-    if (u < 0 || u === s1.node) break;
+  sec[start] = 0;
+  dist[start] = 0;
+  const h = [];
+  heapPush(h, 0, start);
+  while (h.length) {
+    const [su, u] = heapPop(h);
+    if (done[u]) continue;            // 堆裡可能有同一個節點的舊紀錄，跳過
     done[u] = 1;
     for (const [v, d, sc] of ADJ.get(u) || []) {
-      if (sec[u] + sc < sec[v]) { sec[v] = sec[u] + sc; dist[v] = dist[u] + d; prev[v] = u; }
+      const nd = su + sc;
+      if (nd < sec[v]) {
+        sec[v] = nd;
+        dist[v] = dist[u] + d;
+        prev[v] = u;
+        heapPush(h, nd, v);
+      }
     }
   }
-  if (!isFinite(sec[s1.node])) return null;
+  const r = { sec, dist, prev };
+  spCache.set(start, r);
+  return r;
+}
 
+/** 兩個社區之間的最短路徑，回傳 {m, s, nodes[]} —— nodes 是要畫在圖上的那條線 */
+function routeBetween(a, b) {
+  if (!GRAPH) return null;
+  const s0 = snapNode(a);
+  const s1 = snapNode(b);
+  if (s0.node < 0 || s1.node < 0) return null;
+  const sp = shortestFrom(s0.node);
+  if (!isFinite(sp.sec[s1.node])) return null;
   const path = [];
-  for (let n = s1.node; n !== -1; n = prev[n]) path.unshift(n);
-  return { m: Math.round(dist[s1.node] + s0.off + s1.off), s: Math.round(sec[s1.node]), nodes: path };
+  for (let x = s1.node; x !== -1; x = sp.prev[x]) path.unshift(x);
+  // 社區本身到最近路口那一小段（off）也要算進去，不然短程會低估
+  return { m: Math.round(sp.dist[s1.node] + s0.off + s1.off), s: Math.round(sp.sec[s1.node]), nodes: path };
+}
+
+/** 兩個社區之間要開多久（秒）。排順序時只要這個數字，不需要整條路徑。 */
+function secBetween(a, b) {
+  if (!GRAPH) return Infinity;
+  const s0 = snapNode(a);
+  const s1 = snapNode(b);
+  if (s0.node < 0 || s1.node < 0) return Infinity;
+  return shortestFrom(s0.node).sec[s1.node];
 }
 
 /** 一段路程的白話說明 */
@@ -1821,7 +1951,123 @@ function legLabel(leg) {
   return `${min} 分 ‧ ${dist}`;
 }
 
+/* ---------- 排出最順的路線 ----------
+   照實際道路的行車時間排，不是直線距離 —— 青埔中間隔著老街溪、高鐵軌道與國道 2 號，
+   直線很近但要繞一大圈的狀況很多。
+
+   8 站以內：每一種走法都算過（最多 40320 種，瞬間算完），保證是最省時間的那條。
+   9 站以上：先用「每次挑最近的下一站」開個頭，再用 2-opt 把交叉的路段解開 ——
+             不保證最佳，但 9 站以上的帶看實務上不會發生，留著只是不讓它算到當掉。 */
+function bestOrder(ids) {
+  const pins = ids.map((id) => PINS.pins.find((x) => x.id === id)).filter(Boolean);
+  const k = pins.length;
+  if (k < 3 || !GRAPH) return null;
+
+  // 先把兩兩之間的時間算好（k 個起點各跑一次最短路徑）
+  const cost = Array.from({ length: k }, () => new Float64Array(k));
+  for (let i = 0; i < k; i++) {
+    for (let j = 0; j < k; j++) cost[i][j] = i === j ? 0 : secBetween(pins[i], pins[j]);
+  }
+  const total = (o) => {
+    let t = 0;
+    for (let i = 0; i < o.length - 1; i++) t += cost[o[i]][o[i + 1]];
+    return t;
+  };
+
+  let best = null;
+  let bestT = Infinity;
+
+  if (k <= 8) {
+    const idx = [...Array(k).keys()];
+    const perm = (arr, cur) => {
+      if (!arr.length) {
+        const t = total(cur);
+        if (t < bestT) { bestT = t; best = [...cur]; }
+        return;
+      }
+      for (let i = 0; i < arr.length; i++) {
+        perm([...arr.slice(0, i), ...arr.slice(i + 1)], [...cur, arr[i]]);
+      }
+    };
+    perm(idx, []);
+  } else {
+    // 最近鄰居開頭：每個起點都試一次，取最好的
+    for (let st = 0; st < k; st++) {
+      const left = new Set([...Array(k).keys()]);
+      left.delete(st);
+      const o = [st];
+      while (left.size) {
+        let bi = -1;
+        let bd = Infinity;
+        for (const c of left) if (cost[o[o.length - 1]][c] < bd) { bd = cost[o[o.length - 1]][c]; bi = c; }
+        o.push(bi);
+        left.delete(bi);
+      }
+      const t = total(o);
+      if (t < bestT) { bestT = t; best = o; }
+    }
+    // 2-opt：把任兩段之間整段反轉，只要總時間有變短就留下
+    for (let again = true; again;) {
+      again = false;
+      for (let i = 0; i < k - 1; i++) {
+        for (let j = i + 1; j < k; j++) {
+          const cand = [...best.slice(0, i), ...best.slice(i, j + 1).reverse(), ...best.slice(j + 1)];
+          const t = total(cand);
+          if (t < bestT - 0.5) { bestT = t; best = cand; again = true; }
+        }
+      }
+    }
+  }
+  return { order: best.map((i) => pins[i].id), sec: bestT };
+}
+
+/* 按「排出最順的路線」之前的順序，讓她可以一鍵還原 —— 她可能是刻意先看某一間 */
+let tourBefore = null;
+
+/* 按鈕文字跟著狀態走：排過之後變成「還原」，名單一動就變回去 */
+function setOptBtn() {
+  const b = document.querySelector('#tourOpt');
+  if (b) b.textContent = tourBefore ? '↩ 還原我原本的順序' : '🔀 排出最順的路線';
+}
+
+function optimizeTour() {
+  if (tourBefore) {                                  // 這次是按「還原」
+    tour = tourBefore;
+    tourBefore = null;
+    renderTour();
+    setOptBtn();
+    $('#status').textContent = '已還原成你原本排的順序';
+    return;
+  }
+  if (tour.length < 3) {
+    $('#status').textContent = '要 3 個社區以上才排得出順序';
+    return;
+  }
+  const beforeSec = tour.slice(0, -1).reduce((t, id, i) => {
+    const a = PINS.pins.find((x) => x.id === id);
+    const b = PINS.pins.find((x) => x.id === tour[i + 1]);
+    return t + (a && b ? secBetween(a, b) : 0);
+  }, 0);
+
+  const r = bestOrder(tour);
+  if (!r) { $('#status').textContent = '路網資料還沒載入，排不了順序'; return; }
+
+  const same = r.order.join(',') === tour.join(',');
+  if (same) {
+    $('#status').textContent = '你排的順序已經是最省時間的走法了';
+    return;
+  }
+  tourBefore = [...tour];
+  tour = r.order;
+  renderTour();
+  setOptBtn();
+  const m = (x) => Math.max(1, Math.round(x / 60));
+  $('#status').textContent =
+    `已排成最省時間的走法：全程車程 ${m(beforeSec)} 分 → ${m(r.sec)} 分（省 ${m(beforeSec) - m(r.sec)} 分）`;
+}
+
 function toggleTour(id) {
+  tourBefore = null;                 // 名單一動，剛才那個「還原」就失效了
   const i = tour.indexOf(id);
   if (i >= 0) tour.splice(i, 1);
   else tour.push(id);
@@ -1832,6 +2078,7 @@ function renderTour() {
   const box = $('#tourList');
   if (!tour.length) {
     box.innerHTML = '<span class="tb-empty">還沒挑社區 —— 點地圖上的圓圈加入</span>';
+    hideTrip();
   } else {
     box.innerHTML = tour.map((id, i) => {
       const p = PINS.pins.find(x => x.id === id);
@@ -1914,13 +2161,73 @@ function renderTour() {
     // 帶看列上顯示總車程
     const tot = $('#tourTotal');
     if (tot) {
-      tot.textContent = stops.length > 1 && totalSec
-        ? `全程車程約 ${Math.round(totalSec / 60)} 分鐘（實際道路，非直線）`
+      // 跟行程清單同一套算法：每段各自進位再加總，兩邊數字才會對得起來
+      const sumMin = legs.reduce((t, l) => t + (l ? Math.max(1, Math.round(l.s / 60)) : 0), 0);
+      tot.textContent = stops.length > 1 && sumMin
+        ? `全程車程約 ${sumMin} 分鐘（實際道路，非直線）`
         : '';
     }
+    renderTrip(stops, legs, totalSec);
+    setOptBtn();
     fitTour();
   }
   saveTourHash();
+}
+
+/* 側欄的行程清單：先去哪、開多久、再去哪。
+   地圖上雖然標了時間，但那是小字又會被路名擠到，客戶看不懂。 */
+function renderTrip(stops, legs, totalSec) {
+  /* 總時間要等於每一段加起來。
+     原本總計用秒數直接除 60、每段各自四捨五入，會出現「1 分 + 2 分 = 2 分」
+     這種客戶一看就覺得算錯的數字。 */
+  const legMin = (l) => (l ? Math.max(1, Math.round(l.s / 60)) : 0);
+  const sumMin = legs.reduce((t, l) => t + legMin(l), 0);
+  const box = $('#tripBox');
+  if (!box) return;
+  if (!stops.length) { box.hidden = true; return; }
+  box.hidden = false;
+
+  const addrOf = (p) => p.lejuAddr || [p.road, p.addrRange === p.road ? '' : p.addrRange].filter(Boolean).join(' ');
+  let html = '';
+  stops.forEach((p, i) => {
+    const wan = p.upMedian ? `${(p.upMedian / 10000).toFixed(1)}萬` : '';
+    html += `<li class="stop"><span class="no">${i + 1}</span>`
+      + `<span class="who"><b>${esc(p.name)}</b><span>${esc(addrOf(p))}</span></span>`
+      + (wan ? `<span class="px">${wan}</span>` : '')
+      + `</li>`;
+    const leg = legs[i];
+    if (i < stops.length - 1) {
+      html += leg
+        ? `<li class="go"><span>🚗 開車 ${legMin(leg)} 分鐘</span><span class="far">‧</span>`
+          + `<span class="far">${leg.m >= 1000 ? (leg.m / 1000).toFixed(1) + ' 公里' : leg.m + ' 公尺'}</span></li>`
+        : `<li class="go na">🚗 這兩點之間的路線算不出來（路網資料沒接上）</li>`;
+    }
+  });
+  $('#tripList').innerHTML = html;
+
+  $('#tripTotal').innerHTML = stops.length > 1 && totalSec
+    ? `全程車程約 ${sumMin} 分鐘 ‧ ${(legs.reduce((m, l) => m + (l?.m || 0), 0) / 1000).toFixed(1)} 公里`
+      + `<small>走實際道路算的，不是直線。不含每間看房的時間。</small>`
+    : `<small>再挑一個社區就會算出車程</small>`;
+}
+
+/** 行程複製成 LINE 貼得出去的文字 */
+function tripText() {
+  const stops = tour.map((id) => PINS.pins.find((x) => x.id === id)).filter(Boolean);
+  if (!stops.length) return '';
+  const lines = ['【今天的帶看行程】'];
+  stops.forEach((p, i) => {
+    const addr = p.lejuAddr || [p.road, p.addrRange === p.road ? '' : p.addrRange].filter(Boolean).join(' ');
+    lines.push(`${i + 1}. ${p.name}${addr ? '（' + addr + '）' : ''}`);
+    if (i < stops.length - 1) {
+      const leg = routeBetween(stops[i], stops[i + 1]);
+      if (leg) lines.push(`　　↓ 開車約 ${Math.max(1, Math.round(leg.s / 60))} 分鐘`);
+    }
+  });
+  lines.push('');
+  lines.push('地圖：' + location.href);
+  lines.push('青埔花媽 Rita ‧ 0981-456-399');
+  return lines.join('\n');
 }
 
 /** 把視野縮放到剛好框住挑選的社區，四周留一點餘裕看得到路名 */
@@ -1944,6 +2251,12 @@ function fitTour() {
 }
 
 /* 分享連結：把挑選編進網址，客戶點開看到的就是同一份帶看地圖 */
+function hideTrip() {
+  const box = $('#tripBox');
+  if (box) box.hidden = true;
+  setOptBtn();          // 清空之後按鈕不該還留著「還原」
+}
+
 function saveTourHash() {
   const h = tour.length ? '#v=' + tour.join(',') : '';
   history.replaceState(null, '', location.pathname + location.search + h);
@@ -1994,6 +2307,8 @@ function bindTour() {
   $('#tourBtn').onclick = () => (tourOn() ? exitTour() : enterTour());
   $('#tourExit').onclick = exitTour;
   $('#tourClear').onclick = () => { tour = []; renderTour(); };
+  $('#tourOpt').onclick = optimizeTour;
+  $('#tripCopy').onclick = (e) => copyText(tripText(), e.target);
   $('#tourList').addEventListener('click', e => {
     const id = e.target.dataset?.drop;
     if (id) toggleTour(id);
