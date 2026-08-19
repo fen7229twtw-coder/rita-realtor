@@ -218,6 +218,81 @@ body{
 .card-acts .db:hover{background:var(--primary-deep)}
 @media print{ .card-acts{display:none} }
 
+/* ---------- 社區資料視窗 ----------
+   原本資料印在右側欄。手機上側欄在地圖底下很遠的地方，
+   點了圓點畫面看起來像沒反應 —— 客戶會以為壞掉。改成點一下就跳出來。
+
+   手機：從底部滑上來的抽屜，蓋一層暗背景（拇指按得到、看得專心）
+   桌機：浮在右邊的卡片，不蓋背景 —— 地圖照樣點得動，可以連著點好幾個社區比較 */
+.pop-wrap{position:fixed; inset:0; z-index:60; display:flex; pointer-events:none}
+.pop-wrap[hidden]{display:none}
+.pop-bd{
+  position:absolute; inset:0; display:none; pointer-events:auto;
+  background:rgba(18,34,26,.44); animation:pop-fade .18s ease-out;
+}
+@supports (backdrop-filter:blur(2px)){ .pop-bd{backdrop-filter:blur(2px)} }
+.pop{
+  position:relative; pointer-events:auto;
+  margin:auto 26px auto auto;                 /* 桌機：垂直置中、靠右浮著 */
+  width:min(400px, calc(100vw - 32px)); max-height:min(76vh, 660px);
+  display:flex; flex-direction:column;
+  background:var(--surface); border:1px solid var(--border); border-radius:16px;
+  box-shadow:0 24px 60px rgba(0,0,0,.26), 0 2px 10px rgba(0,0,0,.12);
+  animation:pop-in .2s cubic-bezier(.2,.9,.3,1);
+}
+@keyframes pop-fade{from{opacity:0} to{opacity:1}}
+@keyframes pop-in{from{opacity:0; transform:translateY(14px) scale(.97)} to{opacity:1; transform:none}}
+.pop-grip{display:none}
+.pop-head{
+  display:flex; align-items:flex-start; gap:10px;
+  padding:15px 14px 11px 18px; border-bottom:1px solid var(--border);
+}
+.pop-name{flex:1; min-width:0; font-size:1.06rem; font-weight:800; color:var(--primary-deep); line-height:1.35}
+.pop-x{
+  flex:none; width:34px; height:34px; border-radius:50%; cursor:pointer; font:inherit; font-size:.85rem;
+  border:1px solid var(--border-strong); background:var(--bg); color:var(--text-muted);
+  display:flex; align-items:center; justify-content:center;
+}
+.pop-x:hover{background:var(--border); color:var(--text)}
+.pop-body{padding:14px 18px 18px; overflow-y:auto; overscroll-behavior:contain}
+/* 已經排進今天路線的社區，一進來就先講這件事 */
+.pop-tour{
+  margin:0 0 11px; padding:8px 11px; border-radius:8px; font-size:.76rem; font-weight:700;
+  background:#FDF0DC; border:1px solid var(--amber); color:#8A5A12;
+}
+@media (max-width:900px){
+  .pop-bd{display:block}
+  .pop{
+    margin:auto 0 0; width:100%; max-height:82vh;
+    border-radius:18px 18px 0 0; border-bottom:0;
+    animation:pop-up .24s cubic-bezier(.2,.9,.3,1);
+  }
+  @keyframes pop-up{from{transform:translateY(100%)} to{transform:none}}
+  /* 抽屜上緣的握把：往下滑就關掉，拇指不必移到右上角那顆 ✕ */
+  .pop-grip{display:block; flex:none; width:44px; height:4px; border-radius:99px; background:var(--border-strong); margin:9px auto 1px}
+  .pop-grip, .pop-head{touch-action:none}
+  .pop-head{padding:5px 12px 10px 16px}
+  .pop-body{padding:13px 16px calc(20px + env(safe-area-inset-bottom, 0px))}
+}
+.pop.dragging{animation:none}          /* 手指拖著的時候不要再套進場動畫 */
+/* 系統設定成「減少動態效果」時直接定位，不要滑進來 */
+@media (prefers-reduced-motion: reduce){ .pop, .pop-bd, #pin-focus circle{animation:none} }
+@media print{ .pop-wrap{display:none !important} }
+.shooting .pop-wrap{display:none}      /* 存成圖片時不要把視窗照進去 */
+
+/* 被點到的社區加一圈會呼吸的光暈，一眼知道跳出來的是圖上哪一顆 */
+#pin-focus circle{
+  fill:none; stroke:var(--accent); pointer-events:none;
+  transform-box:fill-box; transform-origin:center;
+  animation:halo 1.7s ease-out infinite;
+}
+@keyframes halo{
+  0%{opacity:.75; transform:scale(.55)}
+  70%{opacity:0; transform:scale(1.7)}
+  100%{opacity:0; transform:scale(1.7)}
+}
+@media print{ #pin-focus{display:none} }
+
 /* 校正模式 */
 .editing #pins circle{cursor:move}
 .editing .mapwrap{outline:3px solid var(--amber); outline-offset:-3px}
@@ -279,6 +354,12 @@ body{
 .guest .toolbar{display:none}
 .guest #tourClear, .guest #tourExit{display:none}
 .guest #tourEdit{display:inline-flex}
+/* 資料視窗下面那四顆是我自己的工具，客戶不該看到：
+   「加入帶看」會改到我排好的路線、「設定樂居連結」是後台設定，
+   「完整資料」指到 tools/qingpu-communities/，那支沒發佈到官網，客戶點下去是 404。 */
+.guest .card-acts{display:none}
+/* 定位精度的提醒也是寫給我自己看的（還叫我去開校正模式），客戶看了只會覺得資料不牢靠 */
+.guest .card .warn{display:none}
 /* 客戶檢視時品牌列也壓扁一點，把空間讓給地圖 */
 @media (max-width:900px){
   .guest .brand{padding:10px 14px; gap:10px}
@@ -453,11 +534,6 @@ body{
         <div class="note" id="priceNote"></div>
       </section>
 
-      <section id="cardBox" hidden>
-        <h2>社 區 資 料</h2>
-        <div class="card" id="card"></div>
-      </section>
-
       <section>
         <h2>重 大 建 設</h2>
         <div class="poi-list" id="poiList"></div>
@@ -478,6 +554,19 @@ body{
     <span id="footSrc"></span>
     <span>蕭沛縈 Rita ‧ 0981-456-399 ‧ LINE ritahaiao</span>
   </footer>
+</div>
+
+<!-- 點社區圓點跳出來的資料視窗 -->
+<div class="pop-wrap" id="popWrap" hidden>
+  <div class="pop-bd" data-close="1"></div>
+  <div class="pop" id="pop" role="dialog" aria-modal="true" aria-labelledby="popName">
+    <div class="pop-grip" id="popGrip"></div>
+    <div class="pop-head" id="popHead">
+      <div class="pop-name" id="popName"></div>
+      <button class="pop-x" id="popX" data-close="1" aria-label="關閉">✕</button>
+    </div>
+    <div class="pop-body" id="popBody"><div class="card" id="card"></div></div>
+  </div>
 </div>
 
 <script type="module">
@@ -755,6 +844,9 @@ function renderPins(svg, placer) {
   }
   svg.appendChild(gHit);
 
+  // 被點到的社區的光暈：畫在社區點之上、觸控層之上都可以，反正它不吃點擊
+  svg.appendChild(group('pin-focus'));
+
   // 標籤：擠不下的就不畫，寧缺勿糊
   for (const p of sorted) {
     const spot = placer.place(p.name, 10.5, p._x, p._y, 7);
@@ -864,11 +956,13 @@ function showCard(id) {
     `<span class="${p.trend > 0 ? 'up' : 'dn'}">${p.trend > 0 ? '▲' : '▼'} ${Math.abs(p.trend)}%</span>`;
 
   const isLeju = p.src === 'leju';
+  $('#popName').innerHTML = esc(p.name)
+    + (isLeju ? `<span class="tag leju">樂居</span>` : '')
+    + (p.presale ? `<span class="tag presale">預售</span>` : '');
+
   $('#card').innerHTML =
-    `<div class="nm">${esc(p.name)}`
-    +   (isLeju ? `<span class="tag leju">樂居</span>` : '')
-    +   (p.presale ? `<span class="tag presale">預售</span>` : '')
-    + `</div>`
+    /* 已經排進路線的，第一行就講清楚是第幾站 —— 客戶看到的也是這句 */
+    (tour.includes(p.id) ? `<div class="pop-tour">✓ 今天的帶看路線　第 ${tour.indexOf(p.id) + 1} 站</div>` : '')
     + `<div class="sub">${esc(p.dist)} ${esc(p.road)}　${esc(p.addrRange || '')}　${esc(p.block)}</div>`
     + (wan
         ? `<div class="px">${wan} 萬 / 坪 ${trend}</div>`
@@ -928,13 +1022,75 @@ function showCard(id) {
     +   `<button class="act setleju" data-setleju="${p.id}" title="貼上這個社區在樂居的網址，以後就直接跳過去">`
     +     `${lejuLinks[p.id] ? '✎ 改樂居連結' : '🔗 設定樂居連結（一次就好）'}</button>`
     + `</div>`;
-  $('#cardBox').hidden = false;
+  openPop(id);
+}
 
-  document.querySelectorAll('#pins circle').forEach(c => {
-    const on = c.dataset.id === id;
-    c.setAttribute('r', on ? 9 : 5.5);
-    c.setAttribute('stroke-width', on ? 3 : 1.6);
+/* ---------- 社區資料視窗的開關 ---------- */
+function openPop(id) {
+  const pop = $('#pop');
+  $('#popWrap').hidden = false;
+  pop.classList.remove('dragging');
+  pop.style.transform = '';
+  $('#popBody').scrollTop = 0;
+  markFocus(id);
+}
+
+function closePop() {
+  if ($('#popWrap').hidden) return;
+  $('#popWrap').hidden = true;
+  markFocus(null);
+}
+
+/* 被點到的那一顆：放大 + 一圈呼吸的光暈。
+   不加的話跳出視窗卻不知道是圖上哪一點，尤其青埔這種密度。 */
+function markFocus(id) {
+  document.querySelectorAll('#pins circle').forEach(c =>
+    c.classList.toggle('sel', !!id && c.dataset.id === id));
+  const g = $('#pin-focus');
+  if (!g) return;
+  g.textContent = '';
+  const p = id && PINS?.pins.find(x => x.id === id);
+  if (p) {
+    const c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', p._x);
+    c.setAttribute('cy', p._y);
+    g.appendChild(c);
+  }
+  rescale();                              // 光暈與放大後的圓點都要照螢幕尺寸重算
+}
+
+function bindPop() {
+  const wrap = $('#popWrap');
+  const pop = $('#pop');
+  wrap.addEventListener('click', e => { if (e.target.dataset?.close) closePop(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closePop();
   });
+
+  /* 手機：抓著上緣往下滑就關掉 */
+  let sw = null;
+  const start = e => {
+    if (window.innerWidth > 900) return;
+    sw = { y: e.clientY, dy: 0 };
+    pop.classList.add('dragging');
+  };
+  $('#popGrip').addEventListener('pointerdown', start);
+  $('#popHead').addEventListener('pointerdown', start);
+  pop.addEventListener('pointermove', e => {
+    if (!sw) return;
+    sw.dy = Math.max(0, e.clientY - sw.y);
+    pop.style.transform = `translateY(${sw.dy}px)`;
+  });
+  const end = () => {
+    if (!sw) return;
+    const far = sw.dy > 70;
+    sw = null;
+    pop.classList.remove('dragging');
+    pop.style.transform = '';
+    if (far) closePop();
+  };
+  pop.addEventListener('pointerup', end);
+  pop.addEventListener('pointercancel', end);
 }
 
 /* ---------- 標籤避讓 ----------
@@ -1128,9 +1284,12 @@ function rescale() {
   const badge = 15 * k;
 
   document.querySelectorAll('#pins circle').forEach(c => {
-    c.setAttribute('r', c.classList.contains('on') ? dot * 1.5 : dot);
-    c.setAttribute('stroke-width', Math.max(1, 1.6 * k));
+    const sel = c.classList.contains('sel');           // 現在跳出視窗的那一顆
+    c.setAttribute('r', sel ? dot * 1.8 : (c.classList.contains('on') ? dot * 1.5 : dot));
+    c.setAttribute('stroke-width', Math.max(1, (sel ? 2.6 : 1.6) * k));
   });
+  const halo = $('#pin-focus circle');
+  if (halo) { halo.setAttribute('r', 15 * k); halo.setAttribute('stroke-width', 3 * k); }
   document.querySelectorAll('#pin-hits circle').forEach(c => c.setAttribute('r', hit));
   document.querySelectorAll('#pin-labels text').forEach(t => t.style.fontSize = pinFont + 'px');
   document.querySelectorAll('#pois text.poi-label').forEach(t => t.style.fontSize = poiFont + 'px');
@@ -1164,6 +1323,12 @@ function bindMap() {
      用放開手指的位置自己找出點到誰，不依賴瀏覽器的 click 目標。 */
   const TAP_SLOP = 4;
   let drag = null;
+  /* 瀏覽器在 pointerup 之後一定會再補一顆 click。
+     下面那個 click 後備如果照樣跑，等於同一根手指處理兩次：
+     一次用「離手指最近的圓點」（對的），一次用 click 的目標（密集區常是隔壁社區）。
+     實測後果：帶看模式點一下冒出兩個社區；客戶點編號徽章跳出隔壁社區的資料。
+     所以記下 pointerup 的時間，緊接著那顆 click 直接忽略。 */
+  let lastTapAt = 0;
   svg.addEventListener('pointerdown', e => {
     drag = { px: e.clientX, py: e.clientY, vx: view.x, vy: view.y, moved: false, id: e.pointerId };
   });
@@ -1184,6 +1349,7 @@ function bindMap() {
   });
   svg.addEventListener('pointerup', e => {
     if (!drag) return;
+    lastTapAt = Date.now();
     const wasTap = !drag.moved;
     const px = e.clientX;
     const py = e.clientY;
@@ -1194,7 +1360,7 @@ function bindMap() {
 
     // 自己從放開的位置找出點到哪個社區
     const id = pinNear(px, py) || document.elementFromPoint(px, py)?.dataset?.id;
-    if (!id) return;
+    if (!id) { closePop(); return; }       // 點圖上空白處＝關掉視窗（桌機沒有暗背景可按）
     if (tourOn() && !guestMode()) { toggleTour(id); showCard(id); }
     else showCard(id);
   });
@@ -1207,7 +1373,7 @@ function bindMap() {
   $('#zoomIn').onclick  = () => zoom(0.75, view.x + view.w/2, view.y + view.h/2);
   $('#zoomOut').onclick = () => zoom(1.33, view.x + view.w/2, view.y + view.h/2);
   $('#reset').onclick   = () => { view = { ...home }; apply(); };
-  $('#print').onclick   = () => window.print();
+  $('#print').onclick   = () => { closePop(); window.print(); };   // 光暈與放大的圓點不要印出來
   $('#svg').onclick     = exportSVG;
 
   $('#tgBldg').onchange  = e => $('#buildings').style.display = e.target.checked ? '' : 'none';
@@ -1236,6 +1402,8 @@ function bindMap() {
   /* 點社區圈圈的處理在上面的 pointerup 裡（要自己分辨拖曳與點選）。
      這裡留一個 click 後備，給不送 pointer 事件的環境（例如程式模擬點擊）。 */
   svg.addEventListener('click', e => {
+    // 手指或滑鼠剛剛才放開 → 上面已經處理過了，這顆是瀏覽器補的，不要再算一次
+    if (Date.now() - lastTapAt < 700) return;
     const id = e.target.dataset?.id;
     if (!id || $('#tgEdit')?.checked) return;
     if (tourOn() && !guestMode()) { toggleTour(id); showCard(id); }
@@ -1694,6 +1862,7 @@ async function exportPNG() {
   const vb = svg.getAttribute('viewBox').split(' ').map(Number);
 
   const clone = svg.cloneNode(true);
+  clone.querySelector('#pin-focus')?.remove();   // 光暈是螢幕上的提示，不要存進圖片
   const cs = getComputedStyle(document.documentElement);
   clone.setAttribute('width', vb[2]);
   clone.setAttribute('height', vb[3]);
@@ -1788,6 +1957,7 @@ async function exportPNG() {
    CSS 變數要換成實際色碼，字型樣式要內嵌，SVG 才能獨立開啟。 */
 function exportSVG() {
   const clone = $('#map').cloneNode(true);
+  clone.querySelector('#pin-focus')?.remove();
   clone.setAttribute('viewBox', `0 0 ${MAP.meta.canvas.w} ${MAP.meta.canvas.h}`);
   clone.setAttribute('width', MAP.meta.canvas.w);
   clone.setAttribute('height', MAP.meta.canvas.h);
@@ -1869,13 +2039,14 @@ try {
 
   render(MAP);
   bindMap();
+  bindPop();
   rescale();
   /* 第一次載入時 SVG 常常還沒完成版面計算，寬度量到 0 —— rescale 會直接 return，
      圓點就停在原始的 5.5 單位、觸控範圍只剩該有的一半，等使用者去縮放才修正。
      ResizeObserver 在元素第一次拿到尺寸時就會叫一次，補掉這個空窗。 */
   if (window.ResizeObserver) new ResizeObserver(() => rescale()).observe($('#map'));
   else requestAnimationFrame(rescale);
-  // 轉向或改視窗大小時要重算，不然橫turn直之後圓點又變回點不到
+  // 轉向或改視窗大小時要重算，不然橫轉直之後圓點又變回點不到
   window.addEventListener('resize', rescale);
   $('#status').textContent = statusLine();
 } catch (err) {
