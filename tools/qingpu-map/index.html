@@ -147,6 +147,8 @@ body{
 .btn.green{background:var(--primary); border-color:var(--primary); color:#fff}
 .btn.green:hover{background:var(--primary-deep)}
 .toolbar .sp{flex:1}
+/* 手機專用的工具列開關，桌機一行排得下就不需要 */
+#tbMore{display:none}
 .toggle{display:flex; align-items:center; gap:5px; font-size:.74rem; color:var(--text-muted); cursor:pointer}
 .hint{font-size:.72rem; color:var(--text-faint)}
 .search{
@@ -308,6 +310,9 @@ body{
   background:#FFF8EC; border-bottom:2px solid var(--amber);
   padding:11px 18px; display:flex; flex-direction:column; gap:9px;
 }
+/* display:flex 的特異性比 [hidden] 的預設 display:none 高，沒這一行的話
+   「沒在帶看」時這條列還是佔著 126px，手機上等於白白把地圖往下推。 */
+.tourbar[hidden]{display:none}
 .tb-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
 .tb-head b{font-size:.9rem; color:#8A5A12}
 .tb-hint{font-size:.72rem; color:#A9884F}
@@ -369,10 +374,19 @@ body{
   .guest #map, .guest .mapwrap{height:70vh; min-height:70vh}
 }
 
-/* 帶看模式下，沒被挑到的社區與標籤淡掉，客戶的視線只會落在今天要看的那幾間 */
-.touring #pins circle:not(.on){opacity:.2}
-.touring #pin-labels text:not(.on){opacity:.13}
-.touring #pin-labels path{opacity:.13}
+/* 帶看模式下，沒被挑到的社區與標籤淡掉，客戶的視線只會落在今天要看的那幾間。
+   但這只在「客戶那一端」與「存成圖片」才做 —— 我自己排路線時還沒挑完，
+   一選第一個其他社區就全部淡掉，等於看不到下一個要選哪個。
+   我自己的畫面照樣全亮，被挑到的那幾個靠放大＋編號徽章區隔就夠了。 */
+.guest.touring #pins circle:not(.on),
+.shooting.touring #pins circle:not(.on){opacity:.2}
+.guest.touring #pin-labels text:not(.on),
+.shooting.touring #pin-labels text:not(.on){opacity:.13}
+.guest.touring #pin-labels path,
+.shooting.touring #pin-labels path{opacity:.13}
+
+/* 我自己排路線時，被挑到的社區改用「更粗的白邊 + 琥珀外框」凸顯，不靠把別人壓暗 */
+.touring:not(.guest) #pins circle.on{stroke:var(--amber)}
 
 /* 截圖時（存成圖片）不需要操作列 */
 .shooting .toolbar, .shooting .tourbar{display:none}
@@ -437,6 +451,28 @@ body{
   /* 手機上地圖要夠大才點得到、看得懂。
      不設高度的話它會照 1400×1354 的比例縮成一小塊（實測只有 288×279），
      圓點變成 1 像素，整個功能等於廢掉。 */
+  /* ---------- 自己用的手機版：讓地圖第一眼就看得到 ----------
+     原本要往下捲 607px 才看得到地圖：工具列 20 個東西排成 10 行佔 214px，
+     品牌列 267px，加上沒在帶看卻照樣佔位的帶看列 126px。
+     手機一屏才 812px —— 打開來滿滿都是按鈕，地圖在摺線外。
+     頁首那排 logo、標題、QR 是印 A2 海報用的排場，列印時（@media print）
+     完全不受這裡影響，螢幕上先收起來。 */
+  .brand{padding:9px 14px; gap:10px}
+  .brand-title{display:none}             /* 標題是海報用的，自己看不需要 */
+  .brand-qr{display:none}                /* QR 是給客戶掃的，自己不用掃自己 */
+  .brand-co .co-sub{display:none}
+  .brand-logo img{height:24px}
+  .brand-me .who{font-size:.7rem; line-height:1.5}
+  .brand-me .who b{font-size:.92rem; margin-bottom:1px}
+
+  /* 工具列收成一行：只留「搜尋 + 帶看 + ⚙」，其餘按 ⚙ 才展開。
+     留這三個是因為帶看當下真正會用的就這些，其他（圖層開關、匯出、列印）
+     都是坐在電腦前才會做的事。 */
+  .toolbar{padding:8px 12px; gap:6px}
+  #tbMore{display:block}
+  .toolbar:not(.open) > :not(.search):not(#tourBtn):not(#tbMore){display:none}
+  .toolbar .search{flex:1; min-width:0; width:auto}
+
   .poster{margin:0; border-radius:0}
   .mapwrap{min-height:62vh}
   #map{height:62vh}
@@ -456,6 +492,7 @@ body{
   <label class="toggle"><input type="checkbox" id="tgPrice" checked> 行情色階</label>
   <input class="search" id="search" placeholder="搜尋社區…" autocomplete="off">
   <button class="btn amber" id="tourBtn">🚗 帶看地圖</button>
+  <button class="btn" id="tbMore" type="button" aria-expanded="false" aria-label="展開其他工具">⚙ 更多</button>
   <label class="toggle"><input type="checkbox" id="tgEdit"> 校正模式</label>
   <button class="btn" id="exportPins" hidden>匯出校正檔</button>
   <span class="sp"></span>
@@ -1369,6 +1406,16 @@ function bindMap() {
     drag = null;
     svg.classList.remove('dragging');
   });
+
+  /* 手機上工具列預設只留三顆，這裡負責展開收合。
+     展開後要重算一次：工具列變高會把地圖往下推，圓點的螢幕座標跟著變。 */
+  $('#tbMore').onclick = () => {
+    const tb = document.querySelector('.toolbar');
+    const open = tb.classList.toggle('open');
+    $('#tbMore').setAttribute('aria-expanded', String(open));
+    $('#tbMore').textContent = open ? '⚙ 收起來' : '⚙ 更多';
+    rescale();
+  };
 
   $('#zoomIn').onclick  = () => zoom(0.75, view.x + view.w/2, view.y + view.h/2);
   $('#zoomOut').onclick = () => zoom(1.33, view.x + view.w/2, view.y + view.h/2);
