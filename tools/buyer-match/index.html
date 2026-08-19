@@ -936,6 +936,10 @@ body.client-mode .report-wrap{max-width:900px}
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>
           切換到屋主回報
         </a>
+        <a href="../property-survey/">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+          切換到物調生成
+        </a>
         <a href="tel:0981456399">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.3-1.2a2 2 0 012.1-.5c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/></svg>
           0981-456-399
@@ -1383,7 +1387,10 @@ function avatarHTML(cls){
 }
 
 const AREAS = ['青埔／高鐵特區','中壢區','桃園區','蘆竹南崁','八德區','平鎮區','龜山區','大園區','觀音／新屋','龍潭區','其他'];
-const TYPES = ['電梯大樓','華廈','公寓','透天','別墅','店面','土地'];
+/* 新增類型一律往後加，不要插在中間或重排：
+   分享連結把類型存成這個陣列的索引，動了順序會讓已經寄出去的
+   買方配案與屋主回報連結顯示成別的類型。 */
+const TYPES = ['電梯大樓','華廈','公寓','透天','別墅','店面','土地','辦公室','一般事務所'];
 
 /* 客戶連結一律指向這個公開網址，
    即使她是在本機開工具，產出來的連結客戶也點得開。 */
@@ -1540,6 +1547,10 @@ function mapType(shape){
   if(s.includes('別墅')) return '別墅';
   if(s.includes('店面')) return '店面';
   if(s.includes('土地') || s.includes('建地')) return '土地';
+  /* 事務所要排在辦公之前：591 的「一般事務所」不含「辦公」，
+     但商辦/辦公室都要落到辦公室 */
+  if(s.includes('事務所')) return '一般事務所';
+  if(s.includes('辦公') || s.includes('商辦')) return '辦公室';
   return '電梯大樓';
 }
 function mapParking(h){

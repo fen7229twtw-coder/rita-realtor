@@ -530,6 +530,10 @@ body.owner-mode .view{padding:26px 20px 60px}
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         切換到買方配案
       </a>
+      <a class="sb-link" href="../property-survey/">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+        切換到物調生成
+      </a>
       <a class="sb-link" href="tel:0981456399">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.3-1.2a2 2 0 012.1-.5c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/></svg>
         0981-456-399
@@ -657,7 +661,10 @@ const AGENT = {
 };
 
 const AREAS = ['青埔／高鐵特區','中壢區','桃園區','蘆竹南崁','八德區','平鎮區','龜山區','大園區','觀音／新屋','龍潭區','其他'];
-const TYPES = ['電梯大樓','華廈','公寓','透天','別墅','店面','土地'];
+/* 新增類型一律往後加，不要插在中間或重排：
+   分享連結把類型存成這個陣列的索引，動了順序會讓已經寄出去的
+   買方配案與屋主回報連結顯示成別的類型。 */
+const TYPES = ['電梯大樓','華廈','公寓','透天','別墅','店面','土地','辦公室','一般事務所'];
 const ACTIONS = ['591 刊登更新','照片重拍','影片上架','社群貼文','LINE 群發','派報／DM','開放參觀','同業聯賣','電話陌開','買方回訪'];
 const FB_TYPES = ['價格','格局','樓層','採光','屋況','環境','學區','車位','其他'];
 
