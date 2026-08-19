@@ -14,6 +14,7 @@
 :root{
   --primary:#005335; --primary-deep:#0B2E20; --secondary:#4FAF38;
   --accent:#D8261C; --amber:#C8811A; --blue:#2B6CB0;
+  --tour:#0B7A4B;                      /* 帶看編號徽章與光暈的綠 */
   --bg:#F4F7F4; --surface:#FFFFFF; --border:#DFE9E2; --border-strong:#C3D6CA;
   --text:#173D30; --text-muted:#6A7D74; --text-faint:#95A69C;
 
@@ -268,7 +269,7 @@ body{
 .trip .stop{display:flex; align-items:center; gap:9px; padding:7px 0}
 .trip .no{
   flex:none; width:24px; height:24px; border-radius:50%;
-  background:var(--accent); color:#fff; font-size:.76rem; font-weight:800;
+  background:var(--tour); color:#fff; font-size:.76rem; font-weight:800;
   display:flex; align-items:center; justify-content:center;
 }
 .trip .who{flex:1; min-width:0}
@@ -364,14 +365,14 @@ body{
 
 /* 被點到的社區加一圈會呼吸的光暈，一眼知道跳出來的是圖上哪一顆 */
 #pin-focus circle{
-  fill:none; stroke:var(--accent); pointer-events:none;
+  fill:none; stroke:var(--tour); pointer-events:none;
   transform-box:fill-box; transform-origin:center;
   animation:halo 1.7s ease-out infinite;
 }
 @keyframes halo{
-  0%{opacity:.75; transform:scale(.55)}
-  70%{opacity:0; transform:scale(1.7)}
-  100%{opacity:0; transform:scale(1.7)}
+  0%{opacity:.8; transform:scale(.6)}
+  70%{opacity:0; transform:scale(1.35)}
+  100%{opacity:0; transform:scale(1.35)}
 }
 @media print{ #pin-focus{display:none} }
 
@@ -466,7 +467,7 @@ body{
 .shooting.touring #pin-labels path{opacity:.13}
 
 /* 我自己排路線時，被挑到的社區改用「更粗的白邊 + 琥珀外框」凸顯，不靠把別人壓暗 */
-.touring:not(.guest) #pins circle.on{stroke:var(--amber)}
+.touring:not(.guest) #pins circle.on{stroke:var(--tour)}
 
 /* 截圖時（存成圖片）不需要操作列 */
 .shooting .toolbar, .shooting .tourbar{display:none}
@@ -1505,7 +1506,7 @@ function rescale() {
   const hit = 22 * k;                         // 觸控：螢幕上固定 22px 半徑（直徑 44px）
   const pinFont = 11 * k;
   const poiFont = 13 * k;
-  const badge = 15 * k;
+  const badge = 11 * k;                       // 編號的字：螢幕上固定 11px
 
   document.querySelectorAll('#pins circle').forEach(c => {
     const sel = c.classList.contains('sel');           // 現在跳出視窗的那一顆
@@ -1513,12 +1514,16 @@ function rescale() {
     c.setAttribute('stroke-width', Math.max(1, (sel ? 2.6 : 1.6) * k));
   });
   const halo = $('#pin-focus circle');
-  if (halo) { halo.setAttribute('r', 15 * k); halo.setAttribute('stroke-width', 3 * k); }
+  if (halo) { halo.setAttribute('r', 11 * k); halo.setAttribute('stroke-width', 2.5 * k); }
   document.querySelectorAll('#pin-hits circle').forEach(c => c.setAttribute('r', hit));
   document.querySelectorAll('#pin-labels text').forEach(t => t.style.fontSize = pinFont + 'px');
   document.querySelectorAll('#pois text.poi-label').forEach(t => t.style.fontSize = poiFont + 'px');
   document.querySelectorAll('#green-labels text').forEach(t => t.style.fontSize = (11 * k) + 'px');
-  document.querySelectorAll('#tour-badges circle, #tour-badges path').forEach(() => {});
+  /* 編號徽章：螢幕上固定 10px 半徑（直徑 20px），剛好蓋住社區圓點又不會變成一顆大球 */
+  document.querySelectorAll('#tour-badges circle').forEach(c => {
+    c.setAttribute('r', 10 * k);
+    c.setAttribute('stroke-width', 2 * k);
+  });
   document.querySelectorAll('#tour-badges text').forEach(t => t.style.fontSize = badge + 'px');
   document.querySelectorAll('.leg-label').forEach(t => t.style.fontSize = (12.5 * k) + 'px');
 }
@@ -2150,14 +2155,24 @@ function renderTour() {
     }
     svg.appendChild(gPath);
 
+    /* 編號徽章。
+       半徑與字級都交給 rescale 照螢幕像素換算 —— 原本寫死 13 個 SVG 單位，
+       帶看模式會自動放大到只框住那幾站，13 單位在螢幕上就變成一顆大球。 */
     const gBadge = group('tour-badges');
     stops.forEach((p, i) => {
-      gBadge.appendChild(path(`M${p._x} ${p._y}m-13 0a13 13 0 1 0 26 0a13 13 0 1 0 -26 0`,
-        'var(--accent)', '#fff', 2.5));
+      const c = document.createElementNS(svgNS, 'circle');
+      c.setAttribute('cx', p._x);
+      c.setAttribute('cy', p._y);
+      c.setAttribute('r', 10);
+      c.setAttribute('fill', 'var(--tour)');
+      c.setAttribute('stroke', '#fff');
+      gBadge.appendChild(c);
       const t = document.createElementNS(svgNS, 'text');
-      t.setAttribute('x', p._x); t.setAttribute('y', p._y + 5);
+      t.setAttribute('x', p._x);
+      t.setAttribute('y', p._y);
       t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('style', 'font-size:14px;font-weight:800;fill:#fff');
+      t.setAttribute('dominant-baseline', 'central');
+      t.setAttribute('style', 'font-weight:800;fill:#fff');
       t.textContent = i + 1;
       gBadge.appendChild(t);
     });
@@ -2230,7 +2245,7 @@ function tripText() {
     }
   });
   lines.push('');
-  lines.push('地圖：' + location.href);
+  lines.push('地圖：' + shareUrl());
   lines.push('青埔花媽 Rita ‧ 0981-456-399');
   return lines.join('\n');
 }
@@ -2262,6 +2277,30 @@ function hideTrip() {
   setOptBtn();          // 清空之後按鈕不該還留著「還原」
 }
 
+/* ---------- 分享連結 ----------
+   一定要指向公開官網，不能用 location.href。
+
+   實際踩到的事：Rita 從中控台（localhost:9000）開地圖，按「複製連結」複製到的是
+   http://localhost:9000/tools/qingpu-map/#v=... —— localhost 是「這台電腦自己」，
+   客戶手機打開只會連到他自己的手機，一片空白。她傳了兩次都被退回來。
+
+   ⚠ 下面這串網址在官網搬家時要跟著換。不要手改，跑 scripts/switch-domain.mjs。 */
+const PUBLIC_MAP = 'https://fen7229twtw-coder.github.io/rita-realtor/tools/qingpu-map/';
+
+/** 現在是不是就開在公開網站上（不是本機、也不是離線單檔） */
+function onPublicSite() {
+  return /^https?:$/.test(location.protocol)
+    && !/^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(location.hostname);
+}
+
+/** 要傳給客戶的網址 */
+function shareUrl() {
+  const hash = tour.length ? '#v=' + tour.join(',') : '';
+  // 已經在公開網站上就沿用現在的網址 —— 之後換自訂網域也不必再改這裡
+  return (onPublicSite() ? location.origin + location.pathname : PUBLIC_MAP) + hash;
+}
+
+/* 把挑選編進網址列，重新整理不會掉 */
 function saveTourHash() {
   const h = tour.length ? '#v=' + tour.join(',') : '';
   history.replaceState(null, '', location.pathname + location.search + h);
@@ -2321,10 +2360,14 @@ function bindTour() {
 
   $('#tourShare').onclick = async () => {
     if (!tour.length) { toastTour('先挑幾個社區'); return; }
-    const url = location.href;
+    const url = shareUrl();
     try {
       await navigator.clipboard.writeText(url);
-      toastTour(`已複製連結（${tour.length} 個社區），貼到 LINE 傳給客戶`);
+      toastTour(onPublicSite()
+        ? `已複製連結（${tour.length} 個社區），貼到 LINE 傳給客戶`
+        : `已複製「客戶看得到的網址」（${tour.length} 個社區）—— 不是這台電腦上的位址`);
+      // 把網址整串印出來，她可以自己看一眼是不是 localhost
+      $('#status').textContent = '傳給客戶的連結：' + url;
     } catch {
       // 有些瀏覽器不給剪貼簿權限，退回選取讓她自己複製
       prompt('複製這個連結傳給客戶：', url);
