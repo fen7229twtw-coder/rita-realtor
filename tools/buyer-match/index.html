@@ -568,6 +568,11 @@ select.control{
   font-size:.85rem;color:var(--text-muted);line-height:1.7;
 }
 
+/* 物件位置圖：夾在購屋需求與物件清單之間，先給空間感再看細節 */
+.rp-map{padding:22px 40px 6px}
+.rp-map svg{border:1px solid var(--border);border-radius:10px}
+@media print{ .rp-map{break-inside:avoid; page-break-inside:avoid} }
+
 .rp-body{padding:28px 40px}
 .rp-sec-title{
   font-size:.98rem;font-weight:800;color:var(--primary);
@@ -935,6 +940,10 @@ body.client-mode .report-wrap{max-width:900px}
         <a href="../owner-report/">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>
           切換到屋主回報
+        </a>
+        <a href="../qingpu-map/">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5.4 2.3A1 1 0 012 21.4V6.6a1 1 0 01.6-.9L9 3m0 17l6-3m-6 3V3m6 14l5.4 2.3a1 1 0 001.6-.9V3.6a1 1 0 00-.6-.9L15 1m0 16V1m0 0L9 3"/></svg>
+          切換到青埔地圖
         </a>
         <a href="../property-survey/">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
@@ -2345,6 +2354,13 @@ function renderReport(){
       (c.note ? '<div class="rp-note">' + esc(c.note).replace(/\n/g,'<br>') + '</div>' : '') +
     '</div>' : '') +
 
+    /* 物件位置圖。社區名對不到就整塊不顯示（renderQingpuMap 回傳 false），
+       寧可沒有，也不要給客戶一張標錯位置的圖。 */
+    '<div class="rp-map" id="rpMap" hidden>' +
+      '<div class="rp-sec-title">物件位置</div>' +
+      '<div id="rpMapBox"></div>' +
+    '</div>' +
+
     '<div class="rp-body">' +
       '<div class="rp-sec-title">為您挑選的物件</div>' +
       itemsHTML +
@@ -2384,6 +2400,36 @@ function renderReport(){
       '</div>' +
     '</div>' +
   '</div>';
+
+  drawReportMap(r);
+}
+
+/* 配案表的物件位置圖。
+   比對是拿物件名稱去對青埔社區資料庫，所以物件名要含社區名（例：「竹風青庭 3房」）才標得出來。
+   對不到就整塊不顯示 —— 客戶寧可沒有地圖，也不能拿到一張標錯位置的。
+   刻意不顯示周邊成交行情：買方拿到那張圖，回頭就是拿它來殺這幾個案子。 */
+async function drawReportMap(r){
+  const box = $('#rpMapBox');
+  if(!box) return;
+  try{
+    const { renderQingpuMap } = await import('../qingpu-map/embed.js');
+    const names = r.items.map(it => it.p.name);
+    /* 先顯示再畫：地圖要量得到容器寬度才裁得出跟版面同比例的視野，
+       還藏著（display:none）量到的是 0。畫不出來下面再藏回去。 */
+    $('#rpMap').hidden = false;
+    const ok = await renderQingpuMap(box, { highlight:names, showPrices:false, height:340 });
+    $('#rpMap').hidden = !ok;
+    if(!ok && !clientMode){
+      /* 只有她自己看得到這行，客戶檢視不顯示 */
+      box.innerHTML = '<div style="font-size:.78rem;color:#8A5A12;background:#FDF3E7;padding:9px 11px;border-radius:8px;line-height:1.6">'
+        + '這批物件的名稱對不到青埔社區資料庫，所以沒有產生位置圖。'
+        + '物件名稱裡帶上社區名（例：<b>竹風青庭 3房</b>）就會自動標出來。</div>';
+      $('#rpMap').hidden = false;
+    }
+  }catch(err){
+    /* 地圖是加分項，載不出來不能拖垮整張配案表 */
+    $('#rpMap').hidden = true;
+  }
 }
 
 function reportText(){

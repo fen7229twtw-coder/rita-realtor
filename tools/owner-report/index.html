@@ -530,6 +530,10 @@ body.owner-mode .view{padding:26px 20px 60px}
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         切換到買方配案
       </a>
+      <a class="sb-link" href="../qingpu-map/">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5.4 2.3A1 1 0 012 21.4V6.6a1 1 0 01.6-.9L9 3m0 17l6-3m-6 3V3m6 14l5.4 2.3a1 1 0 001.6-.9V3.6a1 1 0 00-.6-.9L15 1m0 16V1m0 0L9 3"/></svg>
+        切換到青埔地圖
+      </a>
       <a class="sb-link" href="../property-survey/">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
         切換到物調生成
@@ -1141,6 +1145,13 @@ function renderDoc(){
         mkRows+'</tbody></table>' +
         '<div class="mk-note">資料取自 591 公開在售資訊，整理於 '+fmtDate(d.date)+'，為賣方開價非成交價，僅供比較參考。</div></div>' : '') +
 
+      /* 社區位置與區域行情。591 是「在售開價」，這張圖是「實價成交」，
+         兩個併在一起，談調價才有依據。社區名對不到就整塊不顯示。 */
+      '<div class="doc-sec" id="docMap" hidden>' +
+        '<div class="doc-sec-t">社區位置與區域成交行情</div>' +
+        '<div id="docMapBox"></div>' +
+      '</div>' +
+
       (r.advice ? '<div class="doc-sec"><div class="doc-sec-t">我的建議</div><div class="advice">'+esc(r.advice)+'</div></div>' : '') +
     '</div>' +
 
@@ -1158,6 +1169,27 @@ function renderDoc(){
         '本文件僅供委託人參考，不構成價格保證。</div>' +
     '</div>' +
   '</div>';
+
+  drawDocMap(l.name);
+}
+
+/* 回報單的社區位置圖，帶周邊實價成交色階。
+   跟屋主談調價時，「你的社區在區域裡是什麼水位」用圖講比用嘴講有力。
+   買方配案那邊刻意關掉色階，這裡刻意打開 —— 兩邊利害相反，不要對調。 */
+async function drawDocMap(name){
+  const box = $('#docMapBox');
+  if(!box) return;
+  try{
+    const { renderQingpuMap } = await import('../qingpu-map/embed.js');
+    /* 先顯示再畫：地圖要量得到容器寬度才裁得出跟版面同比例的視野，
+       還藏著（display:none）量到的是 0。畫不出來下面再藏回去。 */
+    $('#docMap').hidden = false;
+    const ok = await renderQingpuMap(box, { highlight:[name], showPrices:true, height:330 });
+    $('#docMap').hidden = !ok;
+  }catch(err){
+    /* 地圖是加分項，載不出來不能拖垮整張回報單 */
+    $('#docMap').hidden = true;
+  }
 }
 
 function docText(){

@@ -12,6 +12,9 @@ rita-591-console/
 # 同樣受 netlify.toml publish = "." 影響，必須整包排除。
 realtor-competitor-board/
 
+# 中控後台：只在本機跑的管理台，會讀上面幾個私人專案的資料。
+rita-hub/
+
 # 本機 Node.js 免安裝執行環境（121MB，不該進版控）
 .tools/
 
@@ -25,3 +28,45 @@ _bgremove.html
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# 青埔社區資料庫：產生的資料檔與我的私人註記。
+# 資料檔可以隨時用「更新青埔資料.cmd」重跑產生，沒必要進版控；
+# my-notes.json 是屋主聯絡方式與帶看心得，受 publish = "." 影響絕對不可公開。
+tools/qingpu-communities/data/
+
+# 物調自動生成：純內部作業工具，且 template.docx 是有巢氏的表格範本。
+# netlify.toml publish = "." 會把根目錄進版控的檔案發佈到公開官網，所以整包排除。
+# 排除後仍可從 localhost:8899/tools/property-survey/ 與中控台正常使用。
+tools/property-survey/
+
+# 青埔地圖：只排除 Overpass 原始快取（2.5MB，隨時可用「更新青埔地圖.cmd」重抓）。
+# 注意跟上面 qingpu-communities 的規則刻意不同：地圖的 data/*.json 要進版控。
+# 這張圖是行銷物，netlify publish="." 發佈到官網、客戶點 QR 才看得到，
+# 底圖是 OSM、行情是實價登錄，都是可公開資料。
+tools/qingpu-map/data/cache/
+
+# 開發信生成：裝的是整棟社區屋主的姓名與寄信住址，全都是個資。
+# netlify.toml publish = "." 會把根目錄進版控的檔案發佈到公開官網，
+# 這一包外流的後果比其他工具嚴重得多，整包排除，絕對不可解除。
+# 排除後仍可從 localhost:9000/tools/dev-letter/ 與中控台正常使用。
+tools/dev-letter/
+
+# 物件追蹤：整頁靠中控台的 API 供資料，發佈到公開官網只會是一頁「連不上中控台」，
+# 而且等於把內部工具結構攤在外面。清單本身存在 rita-hub/data/（已整包排除）。
+# 排除後仍可從 localhost:9000/tools/watch-list/ 與中控台正常使用。
+tools/watch-list/
+
+# 帶看路線：你自己排路線用的內部工具，裡面會存客戶名與帶看備註（在 localStorage，
+# 不會進檔案，但這頁本身也沒有對外的價值 —— 客戶拿到的是地圖連結，不是這頁）。
+# netlify.toml 是 publish="."，不排除就會發佈到公開官網。
+tools/tour-route/
+
+# 青埔花媽Rita 官方 LINE 的客服回覆：整包是你的話術資產 —— 議價策略、擋殺價的說法、追蹤節奏，
+# 同業拿去照抄的成本是零。netlify.toml publish="." 會把根目錄進版控的檔案
+# 發佈到公開官網，所以整包排除。
+# 排除後仍可從 localhost:9000/tools/line-reply/ 與中控台正常使用。
+tools/line-reply/
+
+# 離線單檔版是「更新青埔地圖.cmd」每次重跑就會重產的產物，不進版控。
+# 它是拿來用 LINE 傳檔給客戶的，不是靠網址開的。
+tools/qingpu-map/青埔地圖_離線版.html

@@ -1,0 +1,27 @@
+{
+  "_說明": "地標白名單。只有列在 show 裡的才會上圖，順序就是圖上編號與側欄清單的順序。osm 欄位是 OSM 裡的原始名稱，對不到就用 lat/lon 手動補。",
+
+  "show": [
+    { "osm": "高鐵桃園站", "label": "高鐵桃園站（A18）", "kind": "station" },
+    { "osm": "領航", "label": "機捷 A17 領航站", "kind": "station" },
+    { "osm": "桃園體育園區", "label": "機捷 A19 體育園區站", "kind": "station" },
+
+    { "label": "華泰名品城 GLORIA OUTLETS", "kind": "mall", "lat": 25.01498, "lon": 121.21391,
+      "_來源": "OSM 查名稱取得，way GLORIA OUTLETS華泰名品城 building=retail 中心點" },
+    { "label": "IKEA 桃園青埔店", "kind": "mall", "lat": 25.01322, "lon": 121.21742,
+      "_來源": "OSM shop=furniture IKEA 中心點" },
+
+    { "osm": "環球桃園 A19", "label": "環球購物中心 A19", "kind": "mall" },
+    { "osm": "大江國際購物中心", "label": "大江國際購物中心", "kind": "mall" },
+    { "osm": "Xpark", "label": "Xpark 水生公園", "kind": "attraction" },
+    { "osm": "新光影城", "label": "新光影城", "kind": "cinema" },
+    { "osm": "樂天桃園棒球場", "label": "樂天桃園棒球場", "kind": "stadium" },
+    { "osm": "橫山書法藝術館", "label": "橫山書法藝術館", "kind": "museum" },
+    { "osm": "桃園市兒童美術館", "label": "桃園市兒童美術館", "kind": "museum" },
+    { "osm": "桃園陽光劇場", "label": "桃園陽光劇場", "kind": "theatre" },
+    { "osm": "台灣高鐵探索館", "label": "台灣高鐵探索館", "kind": "museum" },
+    { "osm": "國際原住民族文化創意產業園區", "label": "原民族文創園區", "kind": "museum" }
+  ],
+
+  "_排除說明": "沒列在 show 裡的自動不上圖。被排掉的主要是：旅館民宿（和逸、綠藤輕旅、青埔商旅、和陽行館）、公共藝術（送子鳥、風潮、凝露、螺旋水門、赤牛牛）、住宅社區被誤標成 tourism=apartment 的（隱house、國寶苑、宜城僑峰社區）、以及台鐵與高鐵重複的『桃園』節點。"
+}

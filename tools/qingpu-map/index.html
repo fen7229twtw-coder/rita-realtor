@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>青埔地圖｜蕭沛縈 Rita</title>
+<style>
+/* ===================================================================
+   青埔地圖 — 蕭沛縈 Rita
+   沿用買方配案／屋主回報／青埔社區資料庫同一套 CIS。
+   螢幕是可縮放互動地圖，Ctrl+P 直接輸出 A2 橫式印刷級 PDF。
+=================================================================== */
+:root{
+  --primary:#005335; --primary-deep:#0B2E20; --secondary:#4FAF38;
+  --accent:#D8261C; --amber:#C8811A; --blue:#2B6CB0;
+  --bg:#F4F7F4; --surface:#FFFFFF; --border:#DFE9E2; --border-strong:#C3D6CA;
+  --text:#173D30; --text-muted:#6A7D74; --text-faint:#95A69C;
+
+  /* 地圖配色：都市計畫圖語彙 */
+  --m-bg:#FBF8F3;
+  --m-farm:#F2F1E4;
+  --m-residential:#F3E2D8;
+  --m-commercial:#EFD3B8;
+  --m-industrial:#E4DEE8;
+  --m-construction:#EFEAE2;
+  --m-green:#CFE3C3;
+  --m-sport:#C3DCB4;
+  --m-water:#BDD9EC;
+  --m-water-line:#8FBEDC;
+  --m-school:#D8DCE8;
+  --m-hospital:#F0D9D9;
+  --m-temple:#E8DDCE;
+  --m-cemetery:#E3E3DA;
+  --m-bldg:#E7D3C4;
+  --m-bldg-line:#D3BCAB;
+  --m-road-case:#C8BAAB;
+  --m-road-fill:#FFFFFF;
+  --m-road-minor:#F7F2EA;
+  --m-rail:#5A6670;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',-apple-system,BlinkMacSystemFont,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- 海報外框 ---------- */
+.poster{
+  background:var(--surface);
+  max-width:1500px; margin:18px auto; border-radius:14px; overflow:hidden;
+  box-shadow:0 10px 40px rgba(0,83,53,.12);
+  display:flex; flex-direction:column;
+}
+
+/* ---------- 品牌頁首 ---------- */
+.brand{
+  display:flex; align-items:center; gap:18px;
+  padding:14px 22px;
+  background:linear-gradient(105deg,var(--primary-deep),var(--primary) 55%,#0A6A44);
+  color:#fff;
+}
+/* 官方 logo 是 239×74 的橫式（3.23:1），白底不透明。
+   放在白色卡片上是刻意的：深綠底直接貼白底圖會出現生硬的白方塊，
+   做成卡片就變成設計的一部分。 */
+.brand-logo{
+  flex:none; background:#fff; border-radius:8px; padding:7px 10px;
+  display:flex; align-items:center;
+}
+.brand-logo img{height:34px; width:auto; display:block}
+
+/* 字體識別：logo 已經寫了公司名，這裡就不重複，改放團隊定位。
+   左邊那條線是分隔裝飾，不是任何公司的標誌。 */
+.brand-co{
+  flex:none; padding-left:16px; border-left:3px solid var(--secondary);
+}
+.brand-co .co{font-size:1.24rem; font-weight:800; letter-spacing:3px; line-height:1.2}
+.brand-co .co-sub{font-size:.72rem; opacity:.82; letter-spacing:1.5px; margin-top:5px}
+.brand-title{flex:1; text-align:center; padding:0 12px}
+.brand-title h1{margin:0; font-size:1.85rem; font-weight:800; letter-spacing:5px}
+.brand-title .sub{font-size:.8rem; opacity:.85; letter-spacing:2.5px; margin-top:5px}
+.brand-me{display:flex; align-items:center; gap:14px; flex:none}
+.brand-me .who{text-align:right; font-size:.78rem; line-height:1.65}
+.brand-me .who b{font-size:1.06rem; letter-spacing:1.5px; display:block; margin-bottom:3px}
+.brand-qr{
+  width:80px; flex:none; border-radius:8px; background:#fff;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  overflow:hidden; font-size:.58rem; color:#8A9A92; text-align:center; line-height:1.3; padding:5px;
+}
+.brand-qr img{width:100%; display:block}
+.brand-qr .cap{font-size:.56rem; font-weight:700; color:var(--primary-deep); letter-spacing:.5px; margin-top:3px}
+
+/* ---------- 主體：地圖 + 側欄 ---------- */
+.body{display:flex; align-items:stretch; background:var(--m-bg)}
+.mapwrap{flex:1; position:relative; min-width:0; background:var(--m-bg)}
+#map{display:block; width:100%; height:auto; cursor:grab; touch-action:none}
+#map.dragging{cursor:grabbing}
+
+.side{
+  width:310px; flex:none; padding:16px 18px; background:var(--surface);
+  border-left:1px solid var(--border); display:flex; flex-direction:column; gap:14px;
+}
+.side h2{
+  margin:0 0 8px; font-size:.82rem; font-weight:800; letter-spacing:2px; color:var(--primary);
+  padding-bottom:5px; border-bottom:2px solid var(--secondary);
+}
+.legend{display:grid; grid-template-columns:1fr 1fr; gap:5px 10px}
+.legend .it{display:flex; align-items:center; gap:6px; font-size:.72rem; color:var(--text-muted)}
+.legend .sw{width:15px; height:11px; border-radius:2px; flex:none; border:1px solid rgba(0,0,0,.08)}
+.legend .sw.line{height:3px; border-radius:2px}
+
+.poi-list{display:flex; flex-direction:column; gap:4px}
+.poi-list .it{display:flex; align-items:center; gap:7px; font-size:.74rem}
+.poi-list .n{
+  width:17px; height:17px; flex:none; border-radius:50%; background:var(--accent); color:#fff;
+  font-size:.6rem; font-weight:700; display:flex; align-items:center; justify-content:center;
+}
+.note{font-size:.67rem; color:var(--text-faint); line-height:1.65}
+
+/* 範圍外社區：資料庫有、但地理位置落在本圖之外，列出來才不會被誤會成漏掉 */
+.off-list{display:flex; flex-direction:column; gap:3px}
+.off-list .it{font-size:.72rem; color:var(--text-muted); display:flex; gap:7px}
+.off-list .it b{font-weight:700; color:var(--text); flex:none}
+.off-list .rd{color:var(--text-faint); font-size:.68rem}
+
+/* ---------- 頁尾 ---------- */
+.foot{
+  display:flex; justify-content:space-between; align-items:center; gap:14px;
+  padding:8px 22px; background:var(--primary-deep); color:rgba(255,255,255,.75);
+  font-size:.63rem; letter-spacing:.3px;
+}
+
+/* ---------- 螢幕操作列（列印時隱藏） ---------- */
+.toolbar{
+  position:sticky; top:0; z-index:20;
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+  padding:10px 18px; background:var(--surface); border-bottom:1px solid var(--border);
+}
+.btn{
+  font:inherit; font-size:.78rem; font-weight:600; cursor:pointer;
+  padding:7px 13px; border-radius:8px; border:1px solid var(--border-strong);
+  background:var(--surface); color:var(--text);
+}
+.btn:hover{background:var(--bg)}
+.btn.green{background:var(--primary); border-color:var(--primary); color:#fff}
+.btn.green:hover{background:var(--primary-deep)}
+.toolbar .sp{flex:1}
+.toggle{display:flex; align-items:center; gap:5px; font-size:.74rem; color:var(--text-muted); cursor:pointer}
+.hint{font-size:.72rem; color:var(--text-faint)}
+.search{
+  font:inherit; font-size:.78rem; padding:7px 11px; width:150px;
+  border:1px solid var(--border-strong); border-radius:8px; background:var(--surface); color:var(--text);
+}
+.search:focus{outline:2px solid var(--secondary); outline-offset:-1px}
+
+/* 社區資料卡 */
+.card .nm{font-size:1rem; font-weight:800; color:var(--primary-deep)}
+.card .sub{font-size:.7rem; color:var(--text-faint); margin:2px 0 9px}
+.card .rows{display:grid; grid-template-columns:auto 1fr; gap:4px 12px; font-size:.76rem}
+.card .rows dt{color:var(--text-muted); white-space:nowrap}
+.card .rows dd{margin:0; font-weight:600}
+.card .rows .na{color:var(--text-faint); font-weight:500}
+
+/* 樂居資料獨立一塊，跟官方實價登錄的數字分開 */
+.leju-box{
+  margin-top:11px; padding:9px 11px; border-radius:9px;
+  background:#EDF6F1; border:1px solid #CFE6DA;
+}
+.leju-box.empty{background:var(--bg); border-color:var(--border)}
+.leju-t{
+  font-size:.66rem; font-weight:800; color:#1F7A4D; letter-spacing:1px;
+  margin-bottom:6px; display:flex; align-items:center; gap:5px;
+}
+.leju-t::before{content:'●'; font-size:.6rem}
+.leju-box .rows{grid-template-columns:auto 1fr; gap:3px 10px; font-size:.75rem}
+.leju-box .rows dt{color:#4A7A63}
+.leju-box .rows dd{color:var(--text)}
+.leju-box .na{font-size:.72rem; color:var(--text-faint)}
+.card .px{font-size:1.35rem; font-weight:800; color:var(--accent); letter-spacing:.5px}
+.card .up{color:#C0392B} .card .dn{color:#1E8449}
+.card .warn{
+  margin-top:8px; padding:6px 8px; border-radius:6px;
+  background:#FDF3E7; color:#8A5A12; font-size:.68rem; line-height:1.5;
+}
+/* 社區卡下方三顆按鈕：加入帶看 / 樂居 / 完整資料 */
+.card-acts{display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:11px}
+.card-acts .act{
+  font:inherit; font-size:.74rem; font-weight:700; cursor:pointer;
+  padding:9px 8px; border-radius:8px; text-decoration:none; text-align:center;
+  border:1px solid var(--border-strong); background:var(--surface); color:var(--text);
+}
+.card-acts .act:hover{background:var(--bg)}
+.card-acts .tour{grid-column:1 / -1; background:var(--amber); border-color:var(--amber); color:#fff}
+.card-acts .tour:hover{background:#A96B12}
+/* 樂居：還沒存直連時是「搜尋」（較淡），存過就變實心，一眼看得出差別 */
+.card-acts .leju{background:#8FB8A2; border-color:#8FB8A2; color:#fff}
+.card-acts .leju:hover{background:#7AA791}
+.card-acts .leju.direct{background:#1F7A4D; border-color:#1F7A4D}
+.card-acts .leju.direct:hover{background:#17603C}
+.card-acts .setleju{grid-column:1 / -1; font-size:.68rem; font-weight:600; color:var(--text-muted); padding:6px}
+.card-acts .db{background:var(--primary); border-color:var(--primary); color:#fff}
+.card-acts .db:hover{background:var(--primary-deep)}
+@media print{ .card-acts{display:none} }
+
+/* 校正模式 */
+.editing #pins circle{cursor:move}
+.editing .mapwrap{outline:3px solid var(--amber); outline-offset:-3px}
+
+/* ---------- 帶看模式 ----------
+   用途是「手機上挑今天要看的幾間 → 截圖或傳連結給客戶」，
+   所以操作列要好按（手指級），圖面要乾淨（沒選到的社區淡掉）。 */
+.btn.amber{background:var(--amber); border-color:var(--amber); color:#fff}
+.btn.amber:hover{background:#A96B12}
+.btn.btn-sm{padding:6px 11px; font-size:.74rem}
+
+.tourbar{
+  background:#FFF8EC; border-bottom:2px solid var(--amber);
+  padding:11px 18px; display:flex; flex-direction:column; gap:9px;
+}
+.tb-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+.tb-head b{font-size:.9rem; color:#8A5A12}
+.tb-hint{font-size:.72rem; color:#A9884F}
+.tb-total{font-size:.78rem; font-weight:800; color:var(--primary); margin-left:auto}
+/* 路線上的時間標籤：底圖路網很密，要描白邊才讀得到 */
+.leg-label{
+  font-size:12.5px; font-weight:800; fill:#8A5A12;
+  paint-order:stroke; stroke:#fff; stroke-width:4px; stroke-linejoin:round;
+}
+.tb-list{display:flex; flex-wrap:wrap; gap:7px; min-height:32px}
+.tb-empty{font-size:.76rem; color:#A9884F; align-self:center}
+.tb-item{
+  display:flex; align-items:center; gap:7px;
+  background:#fff; border:1px solid #E4CFA6; border-radius:999px;
+  padding:5px 6px 5px 5px; font-size:.78rem; font-weight:600;
+}
+.tb-item .no{
+  width:20px; height:20px; border-radius:50%; background:var(--accent); color:#fff;
+  font-size:.66rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex:none;
+}
+.tb-item .px{color:var(--accent); font-weight:700; font-size:.72rem}
+.tb-item .x{
+  border:0; background:none; cursor:pointer; color:#B08A4E; font-size:1rem;
+  line-height:1; padding:0 3px;
+}
+.tb-item .x:hover{color:var(--accent)}
+.tb-acts{display:flex; gap:7px; flex-wrap:wrap}
+.btn.btn-sm.green{background:var(--primary); border-color:var(--primary); color:#fff}
+
+/* 帶看模式下，沒被挑到的社區與標籤淡掉，客戶的視線只會落在今天要看的那幾間 */
+.touring #pins circle:not(.on){opacity:.2}
+.touring #pin-labels text:not(.on){opacity:.13}
+.touring #pin-labels path{opacity:.13}
+
+/* 截圖時（存成圖片）不需要操作列 */
+.shooting .toolbar, .shooting .tourbar{display:none}
+
+/* ---------- 地圖內元素 ---------- */
+.pin-label{font-size:10.5px; font-weight:600; fill:#3F2D52; paint-order:stroke; stroke:#fff; stroke-width:3px; stroke-linejoin:round}
+.poi-label{font-size:13px; font-weight:700; fill:var(--primary-deep); paint-order:stroke; stroke:#fff; stroke-width:3.5px; stroke-linejoin:round}
+.road-label{font-size:10.5px; fill:#8B7A69; paint-order:stroke; stroke:var(--m-bg); stroke-width:3px; stroke-linejoin:round}
+.area-label{font-size:11px; font-weight:600; fill:#5C7A52; paint-order:stroke; stroke:#fff; stroke-width:3px; stroke-linejoin:round}
+.scalebar text{font-size:11px; fill:var(--text-muted); font-weight:600}
+
+/* ---------- 列印：A2 橫式 ---------- */
+@media print{
+  @page{size:A2 landscape; margin:0}
+  html,body{background:#fff}
+  .toolbar{display:none !important}
+  .poster{margin:0; max-width:none; border-radius:0; box-shadow:none; height:100vh}
+  .body{flex:1}
+
+  /* 地圖是近正方形（1.034），塞進 A2 橫式後高度先滿、寬度會多出一大塊。
+     側欄吃掉那塊，海報才不會右邊開天窗。內容改兩欄排。
+     833 是量出來的：A2 寬 2245px −（可用高 1366px × 地圖長寬比 1.034）= 833。
+     頁首或頁尾高度若再調整，這個數字要跟著重算。 */
+  .side{width:833px; padding:20px 26px}
+  .side h2{font-size:.95rem}
+  .legend{grid-template-columns:repeat(3,1fr); gap:7px 14px}
+  .legend .it{font-size:.82rem}
+  .poi-list{display:grid; grid-template-columns:repeat(2,1fr); gap:6px 16px}
+  .poi-list .it{font-size:.86rem}
+  .note{font-size:.76rem}
+
+  /* 校正模式的橘框是操作提示，不該印出來 */
+  .editing .mapwrap{outline:none !important}
+
+  /* A2 是 59.4 公分寬，螢幕尺寸的頁首印出來會顯得很小家子氣，整排放大。
+     QR 特別重要：29 個模組的 QR 小於 2 公分，手機在店頭光線下就掃不動了。 */
+  .brand{padding:22px 34px; gap:26px}
+  .brand-qr{width:122px}                 /* ≈32mm，手邊距離一秒掃到 */
+  .brand-qr .cap{font-size:.72rem}
+
+  /* logo 原圖只有 239px 寬，印越大越糊：
+     28mm 寬 ≈ 217dpi，是「還看得出銳利」的極限。
+     要更大更清楚，得跟總部要官方向量檔（EPS/AI），不是把這張放大。 */
+  .brand-logo{padding:10px 14px; border-radius:10px}
+  .brand-logo img{height:32px}           /* 寬 ≈103px ≈ 27mm */
+
+  .brand-co{padding-left:22px; border-left-width:4px}
+  .brand-co .co{font-size:1.9rem; letter-spacing:6px}
+  .brand-co .co-sub{font-size:.95rem}
+  .brand-title h1{font-size:2.9rem; letter-spacing:9px}
+  .brand-title .sub{font-size:1.05rem; letter-spacing:3px}
+  .brand-me .who{font-size:1rem; line-height:1.75}
+  .brand-me .who b{font-size:1.35rem}
+  .foot{padding:11px 34px; font-size:.8rem}
+}
+@media (max-width:900px){
+  .body{flex-direction:column}
+  .side{width:auto; border-left:0; border-top:1px solid var(--border)}
+  .brand{flex-wrap:wrap; gap:12px}
+  .brand-title h1{font-size:1.3rem; letter-spacing:3px}
+
+  /* 手機上地圖要夠大才點得到、看得懂。
+     不設高度的話它會照 1400×1354 的比例縮成一小塊（實測只有 288×279），
+     圓點變成 1 像素，整個功能等於廢掉。 */
+  .poster{margin:0; border-radius:0}
+  .mapwrap{min-height:62vh}
+  #map{height:62vh}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button class="btn" id="zoomIn">放大 ＋</button>
+  <button class="btn" id="zoomOut">縮小 －</button>
+  <button class="btn" id="reset">回到全區</button>
+  <label class="toggle"><input type="checkbox" id="tgBldg" checked> 建物輪廓</label>
+  <label class="toggle"><input type="checkbox" id="tgMinor" checked> 巷弄</label>
+  <label class="toggle"><input type="checkbox" id="tgPoi" checked> 地標名稱</label>
+  <label class="toggle"><input type="checkbox" id="tgPin" checked> 社區</label>
+  <label class="toggle"><input type="checkbox" id="tgPrice" checked> 行情色階</label>
+  <input class="search" id="search" placeholder="搜尋社區…" autocomplete="off">
+  <button class="btn amber" id="tourBtn">🚗 帶看地圖</button>
+  <label class="toggle"><input type="checkbox" id="tgEdit"> 校正模式</label>
+  <button class="btn" id="exportPins" hidden>匯出校正檔</button>
+  <span class="sp"></span>
+  <span class="hint" id="status">載入中…</span>
+  <button class="btn" id="svg">匯出 SVG</button>
+  <button class="btn green" id="print">列印 / 存 PDF（A2）</button>
+</div>
+
+<div class="poster">
+
+  <header class="brand">
+    <!-- 官方識別，取自有巢氏官網 www.u-trust.com.tw/images/index_logo.jpg（239×74）。
+         白底卡片呈現，不做去背：JPEG 去背邊緣會留灰邊，而且不該擅自修改公司商標。
+         檔案不在時整塊消失，由右邊的字體識別接手，版面不會開天窗。 -->
+    <div class="brand-logo">
+      <img src="../../assets/logo-uch.jpg" alt="有巢氏房屋 在地經營 社區專家"
+           onerror="this.closest('.brand-logo').remove()">
+    </div>
+    <div class="brand-co">
+      <div class="co">青埔直營團隊</div>
+      <div class="co-sub">在地深耕 ‧ 專任委託</div>
+    </div>
+
+    <div class="brand-title">
+      <h1>青埔生活地圖</h1>
+      <div class="sub">高鐵桃園車站特定區 ‧ A17 領航 ─ A18 高鐵 ─ A19 體育園區</div>
+    </div>
+
+    <div class="brand-me">
+      <div class="who">
+        <b>蕭沛縈 Rita</b>
+        青埔花媽 ‧ 房產顧問<br>
+        0981-456-399<br>
+        LINE：ritahaiao
+      </div>
+      <div class="brand-qr">
+        <!-- build/make-qr.mjs 產生，內容是 https://line.me/ti/p/~ritahaiao
+             向量檔，海報放多大都不會糊；重產請跑 node build/make-qr.mjs -->
+        <img src="../../assets/qr-line.svg" alt="加 LINE 好友 ritahaiao"
+             onerror="this.remove()">
+        <div class="cap">掃我加 LINE</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 帶看模式列：只有開帶看時出現。列印與截圖時會隱藏，圖面才乾淨 -->
+  <div class="tourbar" id="tourbar" hidden>
+    <div class="tb-head">
+      <b>🚗 帶看地圖</b>
+      <span class="tb-hint">點地圖上的社區加入路線，再點一次移除</span>
+      <span class="tb-total" id="tourTotal"></span>
+    </div>
+    <div class="tb-list" id="tourList"></div>
+    <div class="tb-acts">
+      <button class="btn btn-sm" id="tourClear">清空</button>
+      <button class="btn btn-sm" id="tourShare">📋 複製連結</button>
+      <button class="btn btn-sm green" id="tourPng">📷 存成圖片</button>
+      <button class="btn btn-sm" id="tourExit">結束帶看</button>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="mapwrap"><svg id="map" xmlns="http://www.w3.org/2000/svg"></svg></div>
+
+    <aside class="side">
+      <section>
+        <h2>圖　例</h2>
+        <div class="legend" id="legend"></div>
+      </section>
+
+      <section id="priceBox">
+        <h2>社 區 行 情（每坪）</h2>
+        <div class="legend" id="priceLegend"></div>
+        <div class="note" id="priceNote"></div>
+      </section>
+
+      <section id="cardBox" hidden>
+        <h2>社 區 資 料</h2>
+        <div class="card" id="card"></div>
+      </section>
+
+      <section>
+        <h2>重 大 建 設</h2>
+        <div class="poi-list" id="poiList"></div>
+      </section>
+
+      <section id="offBox" hidden>
+        <h2>本 圖 範 圍 外</h2>
+        <div class="off-list" id="offList"></div>
+      </section>
+
+      <section>
+        <div class="note" id="srcNote"></div>
+      </section>
+    </aside>
+  </div>
+
+  <footer class="foot">
+    <span id="footSrc"></span>
+    <span>蕭沛縈 Rita ‧ 0981-456-399 ‧ LINE ritahaiao</span>
+  </footer>
+</div>
+
+<script type="module">
+const $ = s => document.querySelector(s);
+const svgNS = 'http://www.w3.org/2000/svg';
+
+const COLORS = {
+  farm:'var(--m-farm)', residential:'var(--m-residential)', commercial:'var(--m-commercial)',
+  industrial:'var(--m-industrial)', construction:'var(--m-construction)', cemetery:'var(--m-cemetery)',
+  green:'var(--m-green)', sport:'var(--m-sport)', water:'var(--m-water)',
+  school:'var(--m-school)', hospital:'var(--m-hospital)', temple:'var(--m-temple)',
+};
+
+/* 道路寬度（SVG 單位）。casing 比 fill 寬，畫兩層才有「路有邊線」的質感。 */
+const ROAD_W = { major:9, primary:7, secondary:5.5, tertiary:4.2, minor:2.6, service:1.6 };
+
+/* 地標的挑選、命名與順序全在 build/landmarks.src.json 決定，
+   basemap.json 的 pois 已經是整理好的成品，這裡直接照單全收。 */
+
+let MAP = null;
+let PINS = null;
+let view = null;      // 目前 viewBox
+let home = null;      // 全區 viewBox
+
+function path(d, fill, stroke, sw, extra) {
+  const p = document.createElementNS(svgNS, 'path');
+  p.setAttribute('d', d);
+  p.setAttribute('fill', fill || 'none');
+  if (stroke) { p.setAttribute('stroke', stroke); p.setAttribute('stroke-width', sw); }
+  if (extra) for (const [k, v] of Object.entries(extra)) p.setAttribute(k, v);
+  return p;
+}
+function group(id) {
+  const g = document.createElementNS(svgNS, 'g');
+  g.setAttribute('id', id);
+  return g;
+}
+
+function render(m) {
+  const svg = $('#map');
+  const { w, h } = m.meta.canvas;
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  home = { x:0, y:0, w, h };
+  view = { ...home };
+
+  // 底色
+  svg.appendChild(path(`M0 0H${w}V${h}H0Z`, 'var(--m-bg)'));
+
+  /* --- 面圖層，由淡到深疊上去 --- */
+  const areaOrder = ['farm','construction','residential','commercial','industrial','cemetery','green','sport','school','hospital','temple'];
+  const gAreas = group('areas');
+  for (const kind of areaOrder) {
+    for (const f of (m[kind] || [])) gAreas.appendChild(path(f.d, COLORS[kind]));
+  }
+  svg.appendChild(gAreas);
+
+  // 水域畫在面之上：埤塘與河道是青埔的識別特徵，不能被街廓蓋掉
+  const gWater = group('water');
+  for (const f of (m.water || [])) {
+    const closed = f.d.endsWith('Z');
+    gWater.appendChild(closed
+      ? path(f.d, COLORS.water, 'var(--m-water-line)', 0.8)
+      : path(f.d, null, 'var(--m-water)', 3));
+  }
+  svg.appendChild(gWater);
+
+  /* --- 建物 --- */
+  const gB = group('buildings');
+  for (const f of (m.buildings || [])) {
+    gB.appendChild(path(f.d, 'var(--m-bldg)', 'var(--m-bldg-line)', 0.45));
+  }
+  svg.appendChild(gB);
+
+  /* --- 道路：先畫全部 casing，再畫全部 fill，路口才不會被切斷 --- */
+  const order = ['service','minor','tertiary','secondary','primary','major'];
+  const byCls = {};
+  for (const r of (m.roads || [])) (byCls[r.cls] = byCls[r.cls] || []).push(r);
+
+  const gCase = group('road-case'), gFill = group('road-fill');
+  const common = { 'stroke-linecap':'round', 'stroke-linejoin':'round' };
+  for (const cls of order) {
+    for (const r of (byCls[cls] || [])) {
+      gCase.appendChild(path(r.d, null, 'var(--m-road-case)', ROAD_W[cls] + 1.4, common));
+    }
+  }
+  for (const cls of order) {
+    const fill = (cls === 'minor' || cls === 'service') ? 'var(--m-road-minor)' : 'var(--m-road-fill)';
+    for (const r of (byCls[cls] || [])) {
+      gFill.appendChild(path(r.d, null, fill, ROAD_W[cls], common));
+    }
+  }
+  gCase.dataset.minor = gFill.dataset.minor = '1';
+  svg.appendChild(gCase); svg.appendChild(gFill);
+
+  /* --- 軌道：高鐵與機捷用虛線疊實線，做出枕木感 --- */
+  const gRail = group('rail');
+  for (const r of (m.rail || [])) {
+    const wid = r.cls === 'hsr' ? 3.4 : 2.6;
+    gRail.appendChild(path(r.d, null, 'var(--m-rail)', wid));
+    gRail.appendChild(path(r.d, null, '#fff', wid - 1.6, { 'stroke-dasharray':'5 5' }));
+  }
+  svg.appendChild(gRail);
+
+  /* --- 地標 --- */
+  const gPoi = group('pois');
+  const pois = (m.pois || []).map(p => ({ ...p, label: p.name }));
+  const placer = new LabelPlacer();
+
+  // 先畫圓點與編號。點很小，重疊機率低，位置固定不動。
+  pois.forEach((p, i) => {
+    const isStation = p.kind === 'station';
+    const r = isStation ? 8 : 7;
+    const c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); c.setAttribute('r', r);
+    c.setAttribute('fill', isStation ? 'var(--blue)' : 'var(--accent)');
+    c.setAttribute('stroke', '#fff'); c.setAttribute('stroke-width', 2);
+    gPoi.appendChild(c);
+
+    const n = document.createElementNS(svgNS, 'text');
+    n.setAttribute('x', p.x); n.setAttribute('y', p.y + 3.4);
+    n.setAttribute('text-anchor', 'middle');
+    n.setAttribute('style', 'font-size:8.5px;font-weight:800;fill:#fff');
+    n.textContent = i + 1;
+    gPoi.appendChild(n);
+
+    // 圓點本身佔位，名稱不可以壓在別的圓點上
+    placer.block(p.x - r - 1, p.y - r - 1, (r + 1) * 2, (r + 1) * 2);
+  });
+
+  // 再放名稱。順序＝landmarks.src.json 的順序，越前面的越優先搶好位置。
+  pois.forEach((p) => {
+    const spot = placer.place(p.label, 13, p.x, p.y, 9);
+    if (!spot) return;                       // 真的擠不下就不畫，寧缺勿糊
+    const t = document.createElementNS(svgNS, 'text');
+    t.setAttribute('x', spot.x); t.setAttribute('y', spot.y);
+    t.setAttribute('text-anchor', spot.anchor);
+    t.setAttribute('class', 'poi-label');
+    t.textContent = p.label;
+    if (spot.leader) {
+      // 位置被擠遠了，補一條引線指回圓點，不然讀者對不起來
+      gPoi.appendChild(path(spot.leader, null, 'var(--accent)', 1.1,
+        { 'stroke-dasharray': '3 2', opacity: .75 }));
+    }
+    gPoi.appendChild(t);
+  });
+  svg.appendChild(gPoi);
+
+  /* --- 公園綠地名稱：優先權低於地標，搶不到位置就不畫 --- */
+  const gGreenLabel = group('green-labels');
+  for (const f of (m.green || [])) {
+    if (!f.name) continue;
+    const c = pathCenter(f.d);
+    if (!c) continue;
+    const spot = placer.place(f.name, 11, c.x, c.y, 0, true);
+    if (!spot) continue;
+    const t = document.createElementNS(svgNS, 'text');
+    t.setAttribute('x', spot.x); t.setAttribute('y', spot.y);
+    t.setAttribute('text-anchor', spot.anchor);
+    t.setAttribute('class', 'area-label');
+    t.textContent = f.name;
+    gGreenLabel.appendChild(t);
+  }
+  svg.appendChild(gGreenLabel);
+
+  /* --- 社區 --- */
+  renderPins(svg, placer);
+
+  /* --- 指北針與比例尺 --- */
+  svg.appendChild(compass(w - 78, 74));
+  svg.appendChild(scalebar(m.meta.unitsPerMeter, 54, h - 46));
+
+  buildLegend();
+  buildPoiList(pois);
+  buildOffList();
+  $('#srcNote').textContent =
+    `底圖 © OpenStreetMap contributors（ODbL 授權）。${m.meta.note}，不作為容積或土地使用管制之依據。圖資更新：${m.meta.generatedAt.slice(0,10)}`;
+  $('#footSrc').textContent =
+    `底圖 © OpenStreetMap contributors (ODbL)　｜　${m.meta.note}`
+    + (PINS ? `　｜　行情：內政部實價登錄住家類成交中位數` : '');
+}
+
+/* ---------- 社區圖層 ----------
+   pins.json 只存經緯度，畫布座標在這裡用 basemap.meta.proj 算。
+   投影邏輯只有 build 端一份，bbox 或畫布改了重跑 build 就自動對齊，pin 不用重新定位。 */
+
+/* 每坪價格色階。底圖是暖米色、水域藍、地標紅，所以行情用紫色系才不會撞色。 */
+const PRICE_BANDS = [
+  { max: 32,       color:'#DADAEB', label:'未達 32 萬' },
+  { max: 38,       color:'#B3AFD6', label:'32 – 38 萬' },
+  { max: 44,       color:'#8C82BF', label:'38 – 44 萬' },
+  { max: 50,       color:'#63499E', label:'44 – 50 萬' },
+  { max: Infinity, color:'#3F007D', label:'50 萬以上' },
+];
+const NO_PRICE = '#B9BDB8';
+
+function priceBand(upMedian) {
+  if (!upMedian) return null;
+  const wan = upMedian / 10000;
+  return PRICE_BANDS.find(b => wan < b.max);
+}
+
+function projector(proj) {
+  const { R, cos, sin, scale, minX, minY, offX, offY, canvasH } = proj;
+  return (lon, lat) => {
+    const X = R * (lon * Math.PI / 180);
+    const Y = R * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+    const rx = X * cos - Y * sin;
+    const ry = X * sin + Y * cos;
+    return [offX + (rx - minX) * scale, canvasH - (offY + (ry - minY) * scale)];
+  };
+}
+
+function renderPins(svg, placer) {
+  if (!PINS) return;
+  const project = projector(MAP.meta.proj);
+  const g = group('pins');
+  const gl = group('pin-labels');
+
+  // 成交量大的社區＝在地知名度高，讓它優先搶標籤位置
+  const sorted = [...PINS.pins].sort((a, b) => (b.dealsAll || 0) - (a.dealsAll || 0));
+
+  for (const p of sorted) {
+    const [x, y] = project(p.lon, p.lat);
+    p._x = x; p._y = y;
+    const band = priceBand(p.upMedian);
+
+    const c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', 5.5);
+    c.setAttribute('fill', band ? band.color : NO_PRICE);
+    c.setAttribute('stroke', '#fff'); c.setAttribute('stroke-width', 1.6);
+    c.dataset.id = p.id;
+    // 路段中點定位的位置不準，畫成橘色虛線圈提醒要校正
+    if (p.conf === 'road') {
+      c.setAttribute('stroke', 'var(--amber)');
+      c.setAttribute('stroke-dasharray', '2 1.5');
+    }
+    g.appendChild(c);
+    placer.block(x - 7, y - 7, 14, 14);
+  }
+  svg.appendChild(g);
+
+  /* 透明的「好按範圍」，疊在最上面。
+     實際踩到的問題：畫布是 1400 單位寬，手機上 SVG 只有 288px，
+     縮放比 0.2 —— 半徑 5.5 單位畫出來只有 1 個像素，圓點根本點不到。
+     所以另外做一層看不見、但夠大的圓當觸控目標。 */
+  const gHit = group('pin-hits');
+  for (const p of sorted) {
+    const h = document.createElementNS(svgNS, 'circle');
+    h.setAttribute('cx', p._x); h.setAttribute('cy', p._y);
+    h.setAttribute('r', 16);
+    h.setAttribute('fill', 'transparent');
+    h.setAttribute('stroke', 'none');
+    h.dataset.id = p.id;
+    h.style.cursor = 'pointer';
+    gHit.appendChild(h);
+  }
+  svg.appendChild(gHit);
+
+  // 標籤：擠不下的就不畫，寧缺勿糊
+  for (const p of sorted) {
+    const spot = placer.place(p.name, 10.5, p._x, p._y, 7);
+    if (!spot) continue;
+    const t = document.createElementNS(svgNS, 'text');
+    t.setAttribute('x', spot.x); t.setAttribute('y', spot.y);
+    t.setAttribute('text-anchor', spot.anchor);
+    t.setAttribute('class', 'pin-label');
+    t.dataset.id = p.id;
+    t.textContent = p.name;
+    if (spot.leader) {
+      gl.appendChild(path(spot.leader, null, '#7A6A8C', .9, { 'stroke-dasharray':'3 2', opacity:.7 }));
+    }
+    gl.appendChild(t);
+  }
+  svg.appendChild(gl);
+
+  buildPriceLegend();
+}
+
+function buildPriceLegend() {
+  const withPrice = PINS.pins.filter(p => p.upMedian).length;
+  $('#priceLegend').innerHTML = PRICE_BANDS
+    .map(b => `<div class="it"><span class="sw" style="background:${b.color}"></span>${b.label}</div>`)
+    .join('')
+    + `<div class="it"><span class="sw" style="background:${NO_PRICE}"></span>無成交資料</div>`;
+  $('#priceNote').textContent =
+    `圖上 ${PINS.pins.length} 個社區，其中 ${withPrice} 個有成交行情。`
+    + `數字為實價登錄住家類成交的每坪中位數，不是開價。橘色虛線圈代表位置待校正。`;
+}
+
+/* 飛到某個社區並打開資料卡。搜尋、深層連結都走這支。 */
+function focusPin(id) {
+  const p = PINS?.pins.find(x => x.id === id);
+  if (!p) return false;
+  const w = home.w * 0.22;
+  const h = w * home.h / home.w;
+  view = { x: p._x - w / 2, y: p._y - h / 2, w, h };
+  apply();
+  showCard(id);
+  return true;
+}
+
+/* ---------- 樂居連結 ----------
+   樂居的社區頁是不透明 ID（/community/L4f295542e731b），而且整站有 Cloudflare，
+   robots.txt 與 sitemap 都擋（實測 403），所以沒辦法自動建一份 ID 對照表。
+
+   做法：第一次自己去樂居找到那個社區，把網址貼進來存著，之後就永遠直連。
+   還沒存的走搜尋。存的東西放 localStorage，可以匯出成 data/leju-links.json 固定下來。 */
+const LEJU_KEY = 'rita-qingpu-leju-links-v1';
+let lejuLinks = {};
+
+function loadLeju() {
+  try { lejuLinks = JSON.parse(localStorage.getItem(LEJU_KEY) || '{}'); }
+  catch { lejuLinks = {}; }
+}
+
+function lejuUrl(p) {
+  if (lejuLinks[p.id]) return lejuLinks[p.id];
+  // 還沒存過就用搜尋引擎找。加「樂居」兩個字，第一筆通常就是那個社區的樂居頁。
+  return 'https://www.google.com/search?q=' + encodeURIComponent(`樂居 ${p.name} 青埔 社區`);
+}
+
+function setLejuLink(id) {
+  const p = PINS.pins.find(x => x.id === id);
+  const cur = lejuLinks[id] || '';
+  const url = prompt(
+    `貼上「${p.name}」在樂居的網址\n`
+    + '（在樂居找到那個社區後，複製網址列，長得像 https://www.leju.com.tw/community/L4f29…）\n'
+    + '留空白可以清掉已存的連結。',
+    cur);
+  if (url === null) return;                       // 按取消
+  const v = url.trim();
+  if (!v) { delete lejuLinks[id]; }
+  else if (!/^https?:\/\/(www\.)?leju\.com\.tw\//i.test(v)) {
+    // 只收樂居的網址：這串會被拿去開新分頁，不擋等於讓人貼任何東西進來
+    alert('這不是樂居的網址。要以 https://www.leju.com.tw/ 開頭。');
+    return;
+  } else { lejuLinks[id] = v; }
+  localStorage.setItem(LEJU_KEY, JSON.stringify(lejuLinks));
+  showCard(id);
+  $('#status').textContent = v
+    ? `已記住「${p.name}」的樂居連結，以後點「樂居該社區」直接過去`
+    : `已清掉「${p.name}」的樂居連結`;
+}
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const lejuHit = p => !!(p.households || p.publicRatio || p.lejuAddr || p.lejuAge);
+
+/* 點社區跳出資料卡 */
+function showCard(id) {
+  const p = PINS.pins.find(x => x.id === id);
+  if (!p) return;
+  const wan = p.upMedian ? (p.upMedian / 10000).toFixed(1) : null;
+  const rooms = p.rooms
+    ? Object.entries(p.rooms).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k}房 ${v}筆`).join('、')
+    : '—';
+  const trend = p.trend == null ? '' :
+    `<span class="${p.trend > 0 ? 'up' : 'dn'}">${p.trend > 0 ? '▲' : '▼'} ${Math.abs(p.trend)}%</span>`;
+
+  $('#card').innerHTML =
+    `<div class="nm">${p.name}</div>`
+    + `<div class="sub">${p.dist} ${p.road}　${p.addrRange || ''}　${p.block}</div>`
+    + (wan
+        ? `<div class="px">${wan} 萬 / 坪 ${trend}</div>`
+        : `<div class="px" style="color:var(--text-faint);font-size:1rem">尚無成交資料</div>`)
+    + `<dl class="rows">`
+    + (p.doneRoc ? `<dt>完工</dt><dd>民國 ${p.doneRoc} 年（屋齡 ${p.age}）</dd>` : '')
+    + (p.totalFloor ? `<dt>樓高</dt><dd>${p.totalFloor} 層</dd>` : '')
+    + `<dt>格局</dt><dd>${rooms}</dd>`
+    + (p.parkMedian ? `<dt>車位</dt><dd>約 ${p.parkMedian} 萬</dd>` : '')
+    + `<dt>成交</dt><dd>近一年 ${p.deals1y || 0} 筆／累計 ${p.dealsAll || 0} 筆</dd>`
+    + `</dl>`
+    /* 樂居資料獨立一塊。
+       客戶帶看最常問戶數、公設比、地址、屋齡，而這四項官方實價登錄管線都沒有，
+       全是人工核對來的 —— 所以標清楚來源，也跟上面的成交數字分開放。
+       沒對到樂居的社區照樣印出這一塊寫「未收錄」，不然看起來像功能壞了。 */
+    + `<div class="leju-box${lejuHit(p) ? '' : ' empty'}">`
+    +   `<div class="leju-t">樂居社區資料</div>`
+    +   (lejuHit(p)
+        ? `<dl class="rows">`
+          + (p.households ? `<dt>戶數</dt><dd>${p.households} 戶</dd>` : '')
+          + (p.publicRatio ? `<dt>公設比</dt><dd>${p.publicRatio}%</dd>` : '')
+          + (p.lejuAge ? `<dt>屋齡</dt><dd>${esc(p.lejuAge)}${/^\d+$/.test(p.lejuAge) ? ' 年' : ''}</dd>` : '')
+          + (p.lejuAddr ? `<dt>地址</dt><dd>${esc(p.lejuAddr)}</dd>` : '')
+          + `</dl>`
+        : `<div class="na">樂居沒有收錄這個社區</div>`)
+    + `</div>`
+    + (p.conf === 'road'
+        ? `<div class="warn">位置是用路段推估的，還沒校正到實際門牌。開「校正模式」拖曳可修正。</div>` : '')
+    + (p.conf === 'addr-near'
+        ? `<div class="warn">門牌範圍在 OSM 查不到，用最接近的門牌定位，可能有數十公尺誤差。</div>` : '')
+    /* 三顆按鈕的分工：
+       加入帶看 → 排今天的路線
+       樂居     → 客戶最愛查的第三方行情，用 Google 站內搜尋帶過去
+                  （樂居社區頁是不透明 ID /community/L4f2955…，沒有 ID 對照表，
+                   而樂居有 Cloudflare、先前已決定不做爬蟲，所以走搜尋最穩）
+       完整資料 → 自己的青埔社區資料庫，逐年成交與坪數分布 */
+    + `<div class="card-acts">`
+    +   `<button class="act tour" data-tour="${p.id}">${tour.includes(p.id) ? '✓ 已在帶看路線' : '＋ 加入帶看'}</button>`
+    +   `<a class="act leju${lejuLinks[p.id] ? ' direct' : ''}" target="_blank" rel="noopener"`
+    +     ` href="${lejuUrl(p)}">${lejuLinks[p.id] ? '樂居該社區 →' : '樂居搜尋 →'}</a>`
+    +   `<a class="act db" href="../qingpu-communities/#c=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">`
+    +     `完整資料 →</a>`
+    +   `<button class="act setleju" data-setleju="${p.id}" title="貼上這個社區在樂居的網址，以後就直接跳過去">`
+    +     `${lejuLinks[p.id] ? '✎ 改樂居連結' : '🔗 設定樂居連結（一次就好）'}</button>`
+    + `</div>`;
+  $('#cardBox').hidden = false;
+
+  document.querySelectorAll('#pins circle').forEach(c => {
+    const on = c.dataset.id === id;
+    c.setAttribute('r', on ? 9 : 5.5);
+    c.setAttribute('stroke-width', on ? 3 : 1.6);
+  });
+}
+
+/* ---------- 標籤避讓 ----------
+   143 個社區名之後也會走這支。演算法是貪婪式：
+   照優先順序逐一嘗試候選方位，第一個不撞到別人的就放，全撞就放棄。
+   放棄比硬畫好 —— 兩個名字疊在一起，讀者一個都看不懂。 */
+class LabelPlacer {
+  constructor() { this.boxes = []; }
+
+  block(x, y, w, h) { this.boxes.push([x, y, x + w, y + h]); }
+
+  hit(b) {
+    for (const o of this.boxes) {
+      if (b[0] < o[2] && b[2] > o[0] && b[1] < o[3] && b[3] > o[1]) return true;
+    }
+    return false;
+  }
+
+  // 中文字寬約等於字級，英數約 0.55 倍。不必精準，夠擋碰撞就好。
+  static width(text, size) {
+    let n = 0;
+    for (const ch of text) n += /[　-鿿＀-￯]/.test(ch) ? 1 : 0.55;
+    return n * size;
+  }
+
+  /* cx,cy = 錨點；gap = 離錨點的基本距離；tight = 只試原位（給區域名用） */
+  place(text, size, cx, cy, gap, tight) {
+    const w = LabelPlacer.width(text, size);
+    const h = size * 1.15;
+
+    const cands = tight
+      ? [[0, size * 0.35, 'middle']]
+      : [
+          [0, -gap - 4, 'middle'], [0, gap + h, 'middle'],
+          [gap + 4, size * 0.35, 'start'], [-gap - 4, size * 0.35, 'end'],
+          [gap, -gap, 'start'], [-gap, -gap, 'end'],
+          [gap, gap + h * 0.7, 'start'], [-gap, gap + h * 0.7, 'end'],
+          // 以下距離較遠，會補引線
+          [0, -gap - h - 16, 'middle'], [0, gap + h + 18, 'middle'],
+          [gap + 26, size * 0.35, 'start'], [-gap - 26, size * 0.35, 'end'],
+        ];
+
+    for (let i = 0; i < cands.length; i++) {
+      const [dx, dy, anchor] = cands[i];
+      const x = cx + dx;
+      const y = cy + dy;
+      const left = anchor === 'middle' ? x - w / 2 : anchor === 'start' ? x : x - w;
+      const box = [left - 2, y - h, left + w + 2, y + h * 0.25];
+      if (this.hit(box)) continue;
+      this.boxes.push(box);
+      const far = i >= 8;
+      return {
+        x, y, anchor,
+        leader: far ? `M${cx} ${cy}L${x} ${y - h * 0.35}` : null,
+      };
+    }
+    return null;
+  }
+}
+
+/* 印成 A2 之後，圖上 1 公分代表多少實距。
+   要跟著列印版面的實際尺寸算，不能拿畫布單位硬除，
+   否則版面一改數字就變成假的。常數要跟 @media print 的 .side 寬度一致。 */
+const A2 = { w: 594, h: 420, sideMm: 755 / 96 * 25.4 };
+function metersPerPrintedCm(m) {
+  const brandMm = document.querySelector('.brand').getBoundingClientRect().height / 96 * 25.4;
+  const footMm = document.querySelector('.foot').getBoundingClientRect().height / 96 * 25.4;
+  const boxW = A2.w - A2.sideMm;
+  const boxH = A2.h - brandMm - footMm;
+  const { w, h } = m.meta.canvas;
+  const drawnWmm = Math.min(boxW / w, boxH / h) * w;      // preserveAspectRatio="meet"
+  const realWidthM = w / m.meta.unitsPerMeter;
+  return Math.round(realWidthM / (drawnWmm / 10));
+}
+
+/* 取路徑的視覺中心：用所有節點的平均，夠用了 */
+function pathCenter(d) {
+  const nums = d.match(/-?\d+(\.\d+)?/g);
+  if (!nums || nums.length < 4) return null;
+  let sx = 0, sy = 0, n = 0;
+  for (let i = 0; i + 1 < nums.length; i += 2) { sx += +nums[i]; sy += +nums[i+1]; n++; }
+  return { x: sx / n, y: sy / n };
+}
+
+function compass(x, y) {
+  const g = group('compass');
+  g.setAttribute('transform', `translate(${x},${y})`);
+  g.appendChild(path('M0 -30 L9 12 L0 4 L-9 12 Z', 'var(--primary-deep)'));
+  g.appendChild(path('M0 -30 L9 12 L0 4 Z', '#7E9188'));
+  const t = document.createElementNS(svgNS, 'text');
+  t.setAttribute('x', 0); t.setAttribute('y', 30); t.setAttribute('text-anchor', 'middle');
+  t.setAttribute('style', 'font-size:15px;font-weight:800;fill:var(--primary-deep)');
+  t.textContent = 'N';
+  g.appendChild(t);
+  return g;
+}
+
+function scalebar(upm, x, y) {
+  const g = group('scalebar');
+  g.setAttribute('class', 'scalebar');
+  g.setAttribute('transform', `translate(${x},${y})`);
+  const meters = 500, len = meters * upm;
+  g.appendChild(path(`M0 0H${len}`, null, 'var(--primary-deep)', 3));
+  g.appendChild(path(`M0 -5V5`, null, 'var(--primary-deep)', 3));
+  g.appendChild(path(`M${len} -5V5`, null, 'var(--primary-deep)', 3));
+  g.appendChild(path(`M${len/2} -3V3`, null, 'var(--primary-deep)', 2));
+  const t = document.createElementNS(svgNS, 'text');
+  t.setAttribute('x', len / 2); t.setAttribute('y', -10); t.setAttribute('text-anchor', 'middle');
+  t.textContent = '500 公尺';
+  g.appendChild(t);
+  return g;
+}
+
+function buildLegend() {
+  const items = [
+    ['住宅街廓', COLORS.residential], ['商業區', COLORS.commercial],
+    ['公園綠地', COLORS.green], ['運動場地', COLORS.sport],
+    ['埤塘水域', COLORS.water], ['學校用地', COLORS.school],
+    ['產業專區', COLORS.industrial], ['開發中', COLORS.construction],
+    ['農業用地', COLORS.farm], ['宗教用地', COLORS.temple],
+    ['建物輪廓', 'var(--m-bldg)'],
+  ];
+  const el = $('#legend');
+  el.innerHTML = items.map(([n, c]) =>
+    `<div class="it"><span class="sw" style="background:${c}"></span>${n}</div>`).join('')
+    + `<div class="it"><span class="sw line" style="background:var(--m-rail)"></span>高鐵／機捷</div>`
+    + `<div class="it"><span class="sw line" style="background:var(--m-road-case)"></span>主要道路</div>`;
+}
+
+/* 資料庫有、但地理位置落在本圖之外的社區。
+   列出來是為了誠實：不列的話會被當成漏掉，硬畫進圖裡又會標在錯的地方。 */
+function buildOffList() {
+  const off = PINS?.offMap || [];
+  if (!off.length) { $('#offBox').hidden = true; return; }
+  $('#offBox').hidden = false;
+  $('#offList').innerHTML = off
+    .map(o => `<div class="it"><b>${o.name}</b><span class="rd">${o.dist}${o.road} ${o.addrRange || ''}</span></div>`)
+    .join('')
+    + `<div class="note" style="margin-top:6px">這 ${off.length} 個社區在資料庫裡，`
+    + `但位置在本圖範圍外（月德路、高鐵南路五段一帶，離高鐵桃園站 3 公里以上）。</div>`;
+}
+
+function buildPoiList(pois) {
+  $('#poiList').innerHTML = pois
+    .map((p, i) => `<div class="it"><span class="n">${i+1}</span>${p.label}</div>`)
+    .join('');
+}
+
+/* ---------- 縮放與拖曳 ---------- */
+function apply() {
+  $('#map').setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
+  rescale();
+}
+
+/* 讓圓點、標籤、觸控範圍在「螢幕上」維持固定大小。
+   SVG 的單位會跟著 viewBox 一起縮，手機上整張圖縮到 288px 寬時，
+   5.5 單位的圓點只剩 1 像素 —— 看不到也點不到。
+   所以每次縮放後都換算一次：要幾個單位才等於螢幕上的 N 像素。 */
+function rescale() {
+  const svg = $('#map');
+  const wpx = svg.getBoundingClientRect().width;
+  if (!wpx || !view) return;
+  const k = view.w / wpx;                    // 1 螢幕像素 = k 個 SVG 單位
+
+  const dot = Math.max(4, 6 * k);            // 圓點目標 6px 半徑
+  const hit = Math.max(12, 22 * k);          // 觸控範圍目標 22px 半徑，手指按得到
+  const pinFont = Math.max(9, 11 * k);
+  const poiFont = Math.max(11, 13 * k);
+  const badge = Math.max(11, 15 * k);
+
+  document.querySelectorAll('#pins circle').forEach(c => {
+    c.setAttribute('r', c.classList.contains('on') ? dot * 1.5 : dot);
+    c.setAttribute('stroke-width', Math.max(1, 1.6 * k));
+  });
+  document.querySelectorAll('#pin-hits circle').forEach(c => c.setAttribute('r', hit));
+  document.querySelectorAll('#pin-labels text').forEach(t => t.style.fontSize = pinFont + 'px');
+  document.querySelectorAll('#pois text.poi-label').forEach(t => t.style.fontSize = poiFont + 'px');
+  document.querySelectorAll('#green-labels text').forEach(t => t.style.fontSize = Math.max(9, 11 * k) + 'px');
+  document.querySelectorAll('#tour-badges circle, #tour-badges path').forEach(() => {});
+  document.querySelectorAll('#tour-badges text').forEach(t => t.style.fontSize = badge + 'px');
+  document.querySelectorAll('.leg-label').forEach(t => t.style.fontSize = Math.max(11, 12.5 * k) + 'px');
+}
+function zoom(f, cx, cy) {
+  const nw = Math.min(home.w * 1.05, Math.max(home.w * 0.06, view.w * f));
+  const k = nw / view.w;
+  view.x = cx - (cx - view.x) * k;
+  view.y = cy - (cy - view.y) * k;
+  view.w = nw; view.h = view.h * k;
+  apply();
+}
+function bindMap() {
+  const svg = $('#map');
+  svg.addEventListener('wheel', e => {
+    e.preventDefault();
+    const r = svg.getBoundingClientRect();
+    const cx = view.x + (e.clientX - r.left) / r.width * view.w;
+    const cy = view.y + (e.clientY - r.top) / r.height * view.h;
+    zoom(e.deltaY > 0 ? 1.18 : 0.85, cx, cy);
+  }, { passive:false });
+
+  /* 拖曳與點選要分開判斷。
+     原本一按下去就 setPointerCapture，等於把後續事件全部搶到 SVG 身上，
+     click 的目標就變成整張圖而不是那個社區圓點 —— 點了沒反應的主因。
+     改成：移動超過 4 像素才算拖曳；沒超過就是「點一下」，
+     用放開手指的位置自己找出點到誰，不依賴瀏覽器的 click 目標。 */
+  const TAP_SLOP = 4;
+  let drag = null;
+  svg.addEventListener('pointerdown', e => {
+    drag = { px: e.clientX, py: e.clientY, vx: view.x, vy: view.y, moved: false, id: e.pointerId };
+  });
+  svg.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.px;
+    const dy = e.clientY - drag.py;
+    if (!drag.moved) {
+      if (Math.hypot(dx, dy) < TAP_SLOP) return;      // 還在容許的手抖範圍內
+      drag.moved = true;
+      svg.setPointerCapture(drag.id);
+      svg.classList.add('dragging');
+    }
+    const r = svg.getBoundingClientRect();
+    view.x = drag.vx - dx / r.width * view.w;
+    view.y = drag.vy - dy / r.height * view.h;
+    apply();
+  });
+  svg.addEventListener('pointerup', e => {
+    if (!drag) return;
+    const wasTap = !drag.moved;
+    const px = e.clientX;
+    const py = e.clientY;
+    if (drag.moved) { try { svg.releasePointerCapture(drag.id); } catch {} }
+    drag = null;
+    svg.classList.remove('dragging');
+    if (!wasTap || $('#tgEdit')?.checked) return;
+
+    // 自己從放開的位置找出點到哪個社區
+    const el = document.elementFromPoint(px, py);
+    const id = el?.dataset?.id;
+    if (!id) return;
+    if (tourOn()) { toggleTour(id); showCard(id); }
+    else showCard(id);
+  });
+  svg.addEventListener('pointercancel', () => {
+    if (drag?.moved) { try { svg.releasePointerCapture(drag.id); } catch {} }
+    drag = null;
+    svg.classList.remove('dragging');
+  });
+
+  $('#zoomIn').onclick  = () => zoom(0.75, view.x + view.w/2, view.y + view.h/2);
+  $('#zoomOut').onclick = () => zoom(1.33, view.x + view.w/2, view.y + view.h/2);
+  $('#reset').onclick   = () => { view = { ...home }; apply(); };
+  $('#print').onclick   = () => window.print();
+  $('#svg').onclick     = exportSVG;
+
+  $('#tgBldg').onchange  = e => $('#buildings').style.display = e.target.checked ? '' : 'none';
+  $('#tgPoi').onchange   = e => $('#pois').style.display = e.target.checked ? '' : 'none';
+  $('#tgPin').onchange   = e => {
+    const d = e.target.checked ? '' : 'none';
+    $('#pins').style.display = d;
+    $('#pin-labels').style.display = d;
+    $('#priceBox').hidden = !e.target.checked;
+  };
+  $('#tgPrice').onchange = e => {
+    // 關掉色階時全部改成中性灰，位置還在但不透露價格 —— 給買方看的版本用這個
+    document.querySelectorAll('#pins circle').forEach(c => {
+      const p = PINS.pins.find(x => x.id === c.dataset.id);
+      const band = e.target.checked ? priceBand(p?.upMedian) : null;
+      c.setAttribute('fill', band ? band.color : (e.target.checked ? NO_PRICE : '#8C82BF'));
+    });
+    $('#priceLegend').style.display = e.target.checked ? '' : 'none';
+  };
+
+  /* 點社區圈圈的處理在上面的 pointerup 裡（要自己分辨拖曳與點選）。
+     這裡留一個 click 後備，給不送 pointer 事件的環境（例如程式模擬點擊）。 */
+  svg.addEventListener('click', e => {
+    const id = e.target.dataset?.id;
+    if (!id || $('#tgEdit')?.checked) return;
+    if (tourOn()) { toggleTour(id); showCard(id); }
+    else showCard(id);
+  });
+
+  /* 資料卡裡的按鈕 */
+  $('#card').addEventListener('click', e => {
+    const setId = e.target.dataset?.setleju;
+    if (setId) { setLejuLink(setId); return; }
+    const id = e.target.dataset?.tour;
+    if (!id) return;
+    if (!tourOn()) enterTour();
+    toggleTour(id);
+    showCard(id);          // 重畫按鈕文字
+  });
+
+  /* 搜尋：找到就放大過去並打開資料卡 */
+  $('#search').addEventListener('input', e => {
+    const q = e.target.value.trim();
+    if (!q || !PINS) return;
+    const hit = PINS.pins.find(p => p.name.includes(q));
+    if (!hit) {
+      $('#search').style.borderColor = 'var(--accent)';
+      // 可能是落在圖外的那幾個，講清楚比讓她以為漏掉好
+      const off = (PINS.offMap || []).find(o => o.name.includes(q));
+      if (off) $('#status').textContent = `「${off.name}」在 ${off.dist}${off.road}，位置在本圖範圍外，右側「本圖範圍外」有列`;
+      return;
+    }
+    $('#search').style.borderColor = '';
+    focusPin(hit.id);
+  });
+
+  bindEdit();
+  bindTour();
+
+  /* 網址帶進來的兩種情境：
+       #c=<社區id>        從社區資料庫點過來，飛到該社區並開卡
+       #v=id1,id2,id3     帶看連結，客戶點開直接看到排好的路線 */
+  const gotoHash = () => {
+    if (!PINS) return;
+    const tourMatch = /^#v=(.+)$/.exec(location.hash);
+    if (tourMatch) {
+      enterTour(decodeURIComponent(tourMatch[1]).split(',').filter(Boolean));
+      return;
+    }
+    const one = /^#c=(.+)$/.exec(location.hash);
+    if (one) focusPin(decodeURIComponent(one[1]));
+  };
+  gotoHash();
+  window.addEventListener('hashchange', gotoHash);
+  $('#tgMinor').onchange = e => {
+    const on = e.target.checked;
+    for (const g of ['#road-case', '#road-fill']) {
+      document.querySelectorAll(`${g} path`).forEach(p => {
+        const sw = parseFloat(p.getAttribute('stroke-width'));
+        if (sw <= ROAD_W.minor + 1.4) p.style.display = on ? '' : 'none';
+      });
+    }
+  };
+}
+
+/* ---------- 校正模式 ----------
+   自動定位有 5 個社區只推估到路段、3 個是就近門牌，位置不準。
+   這裡讓 Rita 直接拖曳修正，改動存 localStorage，按「匯出校正檔」下載 pins-manual.json，
+   放進 data/ 就永久固定 —— 不需要後端寫檔，線上版也能用。 */
+const MANUAL_KEY = 'rita-qingpu-map-manual-v1';
+let manual = {};
+
+function loadManual() {
+  try { manual = JSON.parse(localStorage.getItem(MANUAL_KEY) || '{}'); } catch { manual = {}; }
+}
+
+/* 校正檔覆蓋自動定位的結果。data/pins-manual.json 優先於 localStorage。 */
+function applyManual() {
+  let n = 0;
+  for (const p of PINS.pins) {
+    const m = manual[p.id];
+    if (!m) continue;
+    p.lat = m.lat; p.lon = m.lon; p.conf = 'manual'; n++;
+  }
+  return n;
+}
+
+function bindEdit() {
+  const svg = $('#map');
+  const inv = invProjector(MAP.meta.proj);
+  let dragPin = null;
+
+  $('#tgEdit').onchange = e => {
+    document.body.classList.toggle('editing', e.target.checked);
+    $('#exportPins').hidden = !e.target.checked;
+    $('#status').textContent = e.target.checked
+      ? '校正模式：拖曳社區圓點修正位置，改完按「匯出校正檔」'
+      : statusLine();
+  };
+
+  // 校正模式下，拖曳圓點改的是 pin 位置，不是整張圖
+  svg.addEventListener('pointerdown', e => {
+    if (!$('#tgEdit').checked) return;
+    const id = e.target.dataset?.id;
+    if (!id || e.target.tagName !== 'circle') return;
+    dragPin = { id, el: e.target };
+    e.stopPropagation();
+  }, true);
+
+  svg.addEventListener('pointermove', e => {
+    if (!dragPin) return;
+    const r = svg.getBoundingClientRect();
+    const x = view.x + (e.clientX - r.left) / r.width * view.w;
+    const y = view.y + (e.clientY - r.top) / r.height * view.h;
+    dragPin.el.setAttribute('cx', x);
+    dragPin.el.setAttribute('cy', y);
+    const [lon, lat] = inv(x, y);
+    manual[dragPin.id] = { lat: +lat.toFixed(6), lon: +lon.toFixed(6) };
+  }, true);
+
+  svg.addEventListener('pointerup', () => {
+    if (!dragPin) return;
+    localStorage.setItem(MANUAL_KEY, JSON.stringify(manual));
+    const p = PINS.pins.find(x => x.id === dragPin.id);
+    $('#status').textContent = `已校正「${p?.name}」，共 ${Object.keys(manual).length} 筆待匯出`;
+    dragPin.el.removeAttribute('stroke-dasharray');
+    dragPin.el.setAttribute('stroke', '#fff');
+    dragPin = null;
+  }, true);
+
+  $('#exportPins').onclick = () => {
+    const n = Object.keys(manual).length;
+    if (!n) { $('#status').textContent = '還沒有校正過任何社區'; return; }
+    const named = {};
+    for (const [id, pos] of Object.entries(manual)) {
+      const p = PINS.pins.find(x => x.id === id);
+      named[id] = { ...pos, name: p?.name };   // 附社區名，之後人看得懂這檔在改什麼
+    }
+    const blob = new Blob([JSON.stringify({
+      _說明: '手動校正的社區座標。放在 data/pins-manual.json，載入時會覆蓋 pins.json 的自動定位結果。重跑 geocode-pins.mjs 不會蓋掉這個檔。',
+      generatedAt: new Date().toISOString(),
+      pins: named,
+    }, null, 2)], { type:'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'pins-manual.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    $('#status').textContent = `已匯出 ${n} 筆校正，把 pins-manual.json 放進 tools/qingpu-map/data/ 就固定下來`;
+  };
+}
+
+/* 畫布座標 → 經緯度。校正模式拖曳時要反算回經緯度存檔。 */
+function invProjector(proj) {
+  const { R, cos, sin, scale, minX, minY, offX, offY, canvasH } = proj;
+  return (x, y) => {
+    const rx = (x - offX) / scale + minX;
+    const ry = (canvasH - y - offY) / scale + minY;
+    const X = rx * cos + ry * sin;      // 反向旋轉
+    const Y = -rx * sin + ry * cos;
+    const lon = X / R * 180 / Math.PI;
+    const lat = (2 * Math.atan(Math.exp(Y / R)) - Math.PI / 2) * 180 / Math.PI;
+    return [lon, lat];
+  };
+}
+
+/* ---------- 帶看地圖 ----------
+   實際用法：帶看前在手機上挑今天要看的幾間，截圖或傳連結給客戶。
+   所以重點是「挑得快、圖面乾淨、傳得出去」，不是資料多完整。 */
+let tour = [];          // 社區 id，順序就是帶看順序
+let GRAPH = null;       // 路網圖（data/roadgraph.json）
+let ADJ = null;
+
+const tourOn = () => document.body.classList.contains('touring');
+
+/* ---------- 路線與行車時間 ----------
+   直線距離在青埔會嚴重低估：中間隔著老街溪、高鐵軌道與國道 2 號。
+   實測潤隆國家大院→亞昕喜徠登 直線 63 公尺，實際要繞 314 公尺。
+   所以走真實路網跑最短路徑，順便把走的那條路畫在圖上給客戶看。 */
+const COS_LAT_M = Math.cos(25 * Math.PI / 180);
+const metresOf = (a, b) =>
+  Math.hypot((a[0] - b[0]) * 111320 * COS_LAT_M, (a[1] - b[1]) * 110540);
+
+function buildAdj() {
+  ADJ = new Map();
+  for (const [a, b, d, s] of GRAPH.edges) {
+    if (!ADJ.has(a)) ADJ.set(a, []);
+    ADJ.get(a).push([b, d, s]);
+  }
+}
+
+const snapCache = new Map();
+function snapNode(pin) {
+  if (snapCache.has(pin.id)) return snapCache.get(pin.id);
+  let bi = -1;
+  let bd = Infinity;
+  GRAPH.nodes.forEach((n, i) => {
+    const d = metresOf(n, [pin.lon, pin.lat]);
+    if (d < bd) { bd = d; bi = i; }
+  });
+  const r = { node: bi, off: bd };
+  snapCache.set(pin.id, r);
+  return r;
+}
+
+/** 最短路徑，回傳 {m, s, nodes[]} —— nodes 是要畫在圖上的那條線 */
+function routeBetween(a, b) {
+  if (!GRAPH) return null;
+  const s0 = snapNode(a);
+  const s1 = snapNode(b);
+  if (s0.node < 0 || s1.node < 0) return null;
+
+  const N = GRAPH.nodes.length;
+  const sec = new Float64Array(N).fill(Infinity);
+  const dist = new Float64Array(N).fill(Infinity);
+  const prev = new Int32Array(N).fill(-1);
+  const done = new Uint8Array(N);
+  sec[s0.node] = 0; dist[s0.node] = 0;
+
+  for (;;) {
+    let u = -1;
+    let best = Infinity;
+    for (let i = 0; i < N; i++) if (!done[i] && sec[i] < best) { best = sec[i]; u = i; }
+    if (u < 0 || u === s1.node) break;
+    done[u] = 1;
+    for (const [v, d, sc] of ADJ.get(u) || []) {
+      if (sec[u] + sc < sec[v]) { sec[v] = sec[u] + sc; dist[v] = dist[u] + d; prev[v] = u; }
+    }
+  }
+  if (!isFinite(sec[s1.node])) return null;
+
+  const path = [];
+  for (let n = s1.node; n !== -1; n = prev[n]) path.unshift(n);
+  return { m: Math.round(dist[s1.node] + s0.off + s1.off), s: Math.round(sec[s1.node]), nodes: path };
+}
+
+/** 一段路程的白話說明 */
+function legLabel(leg) {
+  if (!leg) return '路線待確認';
+  const min = Math.max(1, Math.round(leg.s / 60));
+  const dist = leg.m >= 1000 ? (leg.m / 1000).toFixed(1) + 'km' : leg.m + 'm';
+  return `${min} 分 ‧ ${dist}`;
+}
+
+function toggleTour(id) {
+  const i = tour.indexOf(id);
+  if (i >= 0) tour.splice(i, 1);
+  else tour.push(id);
+  renderTour();
+}
+
+function renderTour() {
+  const box = $('#tourList');
+  if (!tour.length) {
+    box.innerHTML = '<span class="tb-empty">還沒挑社區 —— 點地圖上的圓圈加入</span>';
+  } else {
+    box.innerHTML = tour.map((id, i) => {
+      const p = PINS.pins.find(x => x.id === id);
+      if (!p) return '';
+      const wan = p.upMedian ? `${(p.upMedian / 10000).toFixed(0)}萬` : '';
+      return `<span class="tb-item"><span class="no">${i + 1}</span>${p.name}`
+        + (wan ? `<span class="px">${wan}</span>` : '')
+        + `<button class="x" data-drop="${id}" title="移除">×</button></span>`;
+    }).join('');
+  }
+
+  // 圖上：選到的放大加編號，其餘淡掉
+  const chosen = new Set(tour);
+  document.querySelectorAll('#pins circle').forEach(c => {
+    c.classList.toggle('on', chosen.has(c.dataset.id));
+  });
+  document.querySelectorAll('#pin-labels text').forEach(t => {
+    t.classList.toggle('on', chosen.has(t.dataset.id));
+  });
+
+  // 路線與編號另外畫一層，離開帶看就整層移除
+  document.querySelector('#tour-path')?.remove();
+  document.querySelector('#tour-badges')?.remove();
+
+  if (tour.length) {
+    const svg = $('#map');
+    const project = projector(MAP.meta.proj);
+    const stops = tour.map(id => PINS.pins.find(x => x.id === id)).filter(Boolean);
+
+    /* 先畫路線（走實際道路），再畫徽章壓在上面 */
+    const gPath = group('tour-path');
+    let totalSec = 0;
+    const legs = [];
+    for (let i = 0; i < stops.length - 1; i++) {
+      const leg = routeBetween(stops[i], stops[i + 1]);
+      legs.push(leg);
+      if (!leg) continue;
+      totalSec += leg.s;
+
+      // 路網節點 → 畫布座標。頭尾接回社區本身，線才不會斷在路口。
+      const pts = [[stops[i]._x, stops[i]._y]];
+      for (const n of leg.nodes) {
+        const [lon, lat] = GRAPH.nodes[n];
+        pts.push(project(lon, lat));
+      }
+      pts.push([stops[i + 1]._x, stops[i + 1]._y]);
+      const d = 'M' + pts.map(p => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join('L');
+
+      // 兩層：白色粗底 + 橘色實線，壓在密集的路網上才看得清楚
+      gPath.appendChild(path(d, null, '#fff', 9,
+        { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: .9 }));
+      gPath.appendChild(path(d, null, 'var(--amber)', 4.5,
+        { 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+
+      // 時間標在這段路的中點
+      const mid = pts[Math.floor(pts.length / 2)];
+      const label = document.createElementNS(svgNS, 'text');
+      label.setAttribute('x', mid[0]);
+      label.setAttribute('y', mid[1] - 9);
+      label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('class', 'leg-label');
+      label.textContent = `${i + 1}→${i + 2}　${legLabel(leg)}`;
+      gPath.appendChild(label);
+    }
+    svg.appendChild(gPath);
+
+    const gBadge = group('tour-badges');
+    stops.forEach((p, i) => {
+      gBadge.appendChild(path(`M${p._x} ${p._y}m-13 0a13 13 0 1 0 26 0a13 13 0 1 0 -26 0`,
+        'var(--accent)', '#fff', 2.5));
+      const t = document.createElementNS(svgNS, 'text');
+      t.setAttribute('x', p._x); t.setAttribute('y', p._y + 5);
+      t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('style', 'font-size:14px;font-weight:800;fill:#fff');
+      t.textContent = i + 1;
+      gBadge.appendChild(t);
+    });
+    svg.appendChild(gBadge);
+
+    // 帶看列上顯示總車程
+    const tot = $('#tourTotal');
+    if (tot) {
+      tot.textContent = stops.length > 1 && totalSec
+        ? `全程車程約 ${Math.round(totalSec / 60)} 分鐘（實際道路，非直線）`
+        : '';
+    }
+    fitTour();
+  }
+  saveTourHash();
+}
+
+/** 把視野縮放到剛好框住挑選的社區，四周留一點餘裕看得到路名 */
+function fitTour() {
+  const pts = tour.map(id => PINS.pins.find(x => x.id === id)).filter(Boolean);
+  if (!pts.length) return;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const p of pts) {
+    x0 = Math.min(x0, p._x); x1 = Math.max(x1, p._x);
+    y0 = Math.min(y0, p._y); y1 = Math.max(y1, p._y);
+  }
+  const pad = Math.max((x1 - x0) * 0.35, (y1 - y0) * 0.35, 140);
+  x0 -= pad; x1 += pad; y0 -= pad; y1 += pad;
+  // 補成畫布比例，內容才不會被壓扁
+  const ar = home.w / home.h;
+  let w = x1 - x0, h = y1 - y0;
+  if (w / h < ar) { const t = h * ar; x0 -= (t - w) / 2; w = t; }
+  else { const t = w / ar; y0 -= (t - h) / 2; h = t; }
+  view = { x: x0, y: y0, w, h };
+  apply();
+}
+
+/* 分享連結：把挑選編進網址，客戶點開看到的就是同一份帶看地圖 */
+function saveTourHash() {
+  const h = tour.length ? '#v=' + tour.join(',') : '';
+  history.replaceState(null, '', location.pathname + location.search + h);
+}
+
+function enterTour(ids) {
+  document.body.classList.add('touring');
+  $('#tourbar').hidden = false;
+  $('#tourBtn').textContent = '🚗 帶看中';
+  if (ids) tour = ids.filter(id => PINS.pins.some(p => p.id === id));
+  renderTour();
+}
+
+function exitTour() {
+  document.body.classList.remove('touring');
+  $('#tourbar').hidden = true;
+  $('#tourBtn').textContent = '🚗 帶看地圖';
+  tour = [];
+  document.querySelector('#tour-badges')?.remove();
+  document.querySelectorAll('#pins circle,#pin-labels text').forEach(e => e.classList.remove('on'));
+  history.replaceState(null, '', location.pathname + location.search);
+  view = { ...home };
+  apply();
+}
+
+function bindTour() {
+  $('#tourBtn').onclick = () => (tourOn() ? exitTour() : enterTour());
+  $('#tourExit').onclick = exitTour;
+  $('#tourClear').onclick = () => { tour = []; renderTour(); };
+  $('#tourList').addEventListener('click', e => {
+    const id = e.target.dataset?.drop;
+    if (id) toggleTour(id);
+  });
+
+  $('#tourShare').onclick = async () => {
+    if (!tour.length) { toastTour('先挑幾個社區'); return; }
+    const url = location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      toastTour(`已複製連結（${tour.length} 個社區），貼到 LINE 傳給客戶`);
+    } catch {
+      // 有些瀏覽器不給剪貼簿權限，退回選取讓她自己複製
+      prompt('複製這個連結傳給客戶：', url);
+    }
+  };
+
+  $('#tourPng').onclick = exportPNG;
+}
+
+function toastTour(msg) {
+  const el = $('#tourbar').querySelector('.tb-hint');
+  const old = el.textContent;
+  el.textContent = msg;
+  el.style.color = 'var(--primary)';
+  setTimeout(() => { el.textContent = old; el.style.color = ''; }, 3200);
+}
+
+/* ---------- 存成圖片 ----------
+   帶看時最常用的動作：截圖傳 LINE。瀏覽器截圖會連工具列一起拍進去，
+   所以自己畫一張乾淨的 PNG：把 SVG 轉成點陣圖，加上社區清單與聯絡方式。 */
+async function exportPNG() {
+  if (!PINS) return;
+  const svg = $('#map');
+  const vb = svg.getAttribute('viewBox').split(' ').map(Number);
+
+  const clone = svg.cloneNode(true);
+  const cs = getComputedStyle(document.documentElement);
+  clone.setAttribute('width', vb[2]);
+  clone.setAttribute('height', vb[3]);
+  // 帶看模式的淡化是 CSS class 做的，複製出去要換成 inline 屬性才會生效
+  if (tourOn()) {
+    const chosen = new Set(tour);
+    clone.querySelectorAll('#pins circle').forEach(c => {
+      if (!chosen.has(c.dataset.id)) c.setAttribute('opacity', .2);
+    });
+    clone.querySelectorAll('#pin-labels text,#pin-labels path').forEach(t => {
+      if (!chosen.has(t.dataset?.id)) t.setAttribute('opacity', .13);
+    });
+  }
+  let s = new XMLSerializer().serializeToString(clone)
+    .replace(/var\(--([a-z0-9-]+)\)/g, (_, n) => cs.getPropertyValue('--' + n).trim() || '#000');
+  s = s.replace(/^<svg([^>]*)>/, `<svg$1><style>
+    text{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif}
+    .poi-label{font-size:13px;font-weight:700;fill:#0B2E20;paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}
+    .pin-label{font-size:10.5px;font-weight:600;fill:#3F2D52;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+    .area-label{font-size:11px;font-weight:600;fill:#5C7A52;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+    .scalebar text{font-size:11px;fill:#6A7D74;font-weight:600}
+  </style>`);
+
+  const SCALE = 2;                                  // 2 倍供手機看與 LINE 壓縮後仍清楚
+  const listH = tourOn() && tour.length ? 46 + Math.ceil(tour.length / 2) * 30 : 0;
+  const footH = 44;
+  const W = Math.round(vb[2] * SCALE);
+  const H = Math.round(vb[3] * SCALE) + listH + footH;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#FBF8F3'; ctx.fillRect(0, 0, W, H);
+
+  const img = new Image();
+  const blobUrl = URL.createObjectURL(new Blob([s], { type: 'image/svg+xml;charset=utf-8' }));
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
+  ctx.drawImage(img, 0, 0, W, Math.round(vb[3] * SCALE));
+  URL.revokeObjectURL(blobUrl);
+
+  let y = Math.round(vb[3] * SCALE);
+
+  // 帶看清單
+  if (listH) {
+    ctx.fillStyle = '#FFF8EC'; ctx.fillRect(0, y, W, listH);
+    ctx.fillStyle = '#8A5A12';
+    ctx.font = `700 ${15 * SCALE}px 'Noto Sans TC','Microsoft JhengHei',sans-serif`;
+    ctx.fillText('今日帶看', 16 * SCALE, y + 26 * SCALE / 1.4);
+    tour.forEach((id, i) => {
+      const p = PINS.pins.find(x => x.id === id);
+      if (!p) return;
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const x = (16 + col * (vb[2] / 2 - 8)) * SCALE;
+      const ly = y + (46 + row * 30) * SCALE / 1.4;
+      ctx.fillStyle = '#D8261C';
+      ctx.beginPath(); ctx.arc(x + 9 * SCALE, ly - 5 * SCALE, 9 * SCALE, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = `800 ${11 * SCALE}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(String(i + 1), x + 9 * SCALE, ly - 1 * SCALE);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#173D30';
+      ctx.font = `600 ${14 * SCALE}px 'Noto Sans TC','Microsoft JhengHei',sans-serif`;
+      const wan = p.upMedian ? `　${(p.upMedian / 10000).toFixed(0)} 萬/坪` : '';
+      ctx.fillText(p.name + wan, x + 24 * SCALE, ly);
+    });
+    y += listH;
+  }
+
+  // 頁尾：聯絡方式 + 資料來源
+  ctx.fillStyle = '#0B2E20'; ctx.fillRect(0, y, W, footH);
+  ctx.fillStyle = '#fff';
+  ctx.font = `700 ${14 * SCALE}px 'Noto Sans TC','Microsoft JhengHei',sans-serif`;
+  ctx.fillText('有巢氏房屋　蕭沛縈 Rita　0981-456-399　LINE：ritahaiao', 16 * SCALE, y + 19 * SCALE);
+  ctx.fillStyle = 'rgba(255,255,255,.62)';
+  ctx.font = `${11 * SCALE}px 'Noto Sans TC','Microsoft JhengHei',sans-serif`;
+  ctx.fillText('底圖 © OpenStreetMap contributors　行情為實價登錄成交中位數，非開價　參考用', 16 * SCALE, y + 34 * SCALE);
+
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.download = tourOn() && tour.length ? `帶看地圖_${stamp}.png` : `青埔地圖_${stamp}.png`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  if (tourOn()) toastTour('圖片已存到「下載」資料夾，可以直接傳 LINE');
+}
+
+/* ---------- 匯出 SVG ----------
+   印刷店要向量檔的時候給這個：無限放大不糊，比 PDF 好改色。
+   CSS 變數要換成實際色碼，字型樣式要內嵌，SVG 才能獨立開啟。 */
+function exportSVG() {
+  const clone = $('#map').cloneNode(true);
+  clone.setAttribute('viewBox', `0 0 ${MAP.meta.canvas.w} ${MAP.meta.canvas.h}`);
+  clone.setAttribute('width', MAP.meta.canvas.w);
+  clone.setAttribute('height', MAP.meta.canvas.h);
+
+  const cs = getComputedStyle(document.documentElement);
+  let s = new XMLSerializer().serializeToString(clone)
+    .replace(/var\(--([a-z0-9-]+)\)/g, (_, n) => cs.getPropertyValue('--' + n).trim() || '#000');
+
+  const style = '<style>'
+    + `text{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif}`
+    + `.poi-label{font-size:13px;font-weight:700;fill:#0B2E20;paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}`
+    + `.area-label{font-size:11px;font-weight:600;fill:#5C7A52;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}`
+    + `.scalebar text{font-size:11px;fill:#6A7D74;font-weight:600}`
+    + '</style>';
+  s = s.replace(/^<svg([^>]*)>/, `<svg$1>${style}`);
+
+  const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + s], { type:'image/svg+xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `青埔地圖_${MAP.meta.generatedAt.slice(0,10)}.svg`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+}
+
+/* ---------- 啟動 ---------- */
+function statusLine() {
+  const n = PINS ? PINS.pins.length : 0;
+  return `${(MAP.buildings||[]).length} 棟建物 ‧ ${(MAP.roads||[]).length} 條道路`
+    + ` ‧ ${(MAP.pois||[]).length} 個地標 ‧ ${n} 個社區`
+    + ` ‧ 印成 A2 時 1 公分 ≈ ${metersPerPrintedCm(MAP)} 公尺`;
+}
+
+/* no-cache 是「每次都跟伺服器確認有沒有更新」，不是「不快取」。
+   沒改就回 304 幾乎不花時間，改了就一定拿到新的。
+   社區資料常更新（補樂居戶數、改社區名），拿到舊的會讓人以為功能壞了。 */
+const jsonOr = async (url, fallback) => {
+  try {
+    const r = await fetch(url, { cache: 'no-cache' });
+    return r.ok ? await r.json() : fallback;
+  } catch { return fallback; }
+};
+
+try {
+  /* 離線單檔版會把資料直接內嵌成 window.__BASEMAP__ / __PINS__，
+     這樣同一份 index.html 兩種模式都能跑：
+     走伺服器就 fetch data/，點兩下開檔就吃內嵌資料（file:// 不能 fetch）。 */
+  if (window.__BASEMAP__) {
+    MAP = window.__BASEMAP__;
+    PINS = window.__PINS__ || null;
+  } else {
+    const res = await fetch('data/basemap.json');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    MAP = await res.json();
+    // 社區圖層是選配：沒跑過 geocode-pins.mjs 也要能看底圖
+    PINS = await jsonOr('data/pins.json', null);
+  }
+
+  /* 路網圖：帶看模式畫路線與算時間用。
+     沒有它照樣能挑社區，只是畫不出路線 —— 不要因為缺這個就整頁掛掉。 */
+  GRAPH = window.__ROADGRAPH__ || await jsonOr('data/roadgraph.json', null);
+  if (GRAPH) buildAdj();
+
+  loadLeju();
+  // data/leju-links.json 存在就以它為準（可以把 localStorage 匯出成這個檔固定下來）
+  const lejuFile = await jsonOr('data/leju-links.json', null);
+  if (lejuFile) lejuLinks = { ...lejuLinks, ...lejuFile };
+
+  if (PINS) {
+    loadManual();
+    // 檔案版的校正優先於瀏覽器暫存版：Rita 匯出後放進 data/ 就是定案
+    const fileManual = window.__MANUAL__ || await jsonOr('data/pins-manual.json', null);
+    if (fileManual?.pins) manual = { ...manual, ...fileManual.pins };
+    applyManual();
+  } else {
+    $('#tgPin').disabled = $('#tgPrice').disabled = $('#tgEdit').disabled = true;
+    $('#search').disabled = true;
+    $('#priceBox').hidden = true;
+  }
+
+  render(MAP);
+  bindMap();
+  rescale();
+  // 轉向或改視窗大小時要重算，不然橫turn直之後圓點又變回點不到
+  window.addEventListener('resize', rescale);
+  $('#status').textContent = statusLine();
+} catch (err) {
+  $('#status').textContent = '底圖載入失敗：' + err.message + '（先跑「更新青埔地圖.cmd」）';
+  $('#status').style.color = 'var(--accent)';
+}
+</script>
+</body>
+</html>
