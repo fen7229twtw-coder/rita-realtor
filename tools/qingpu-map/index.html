@@ -248,6 +248,32 @@ body{
 .tb-acts{display:flex; gap:7px; flex-wrap:wrap}
 .btn.btn-sm.green{background:var(--primary); border-color:var(--primary); color:#fff}
 
+/* 路線與編號徽章是畫在觸控層「之上」的（要蓋住底圖才看得清楚），
+   但它們會擋掉點擊 —— 客戶最直覺會去點那個編號圓圈，結果什麼都沒發生。
+   設成不吃滑鼠事件，點擊就會穿過去打到底下的觸控圈。 */
+#tour-path, #tour-badges, #compass, #scalebar, #pin-labels, #green-labels{
+  pointer-events:none;
+}
+/* 社區名還是要能點（點名字跟點圓圈一樣意思） */
+#pin-labels text[data-id]{pointer-events:auto; cursor:pointer}
+
+/* ---------- 客戶檢視（從我傳的連結進來）----------
+   客戶要的只有三件事：看到路線、點社區看資料、知道找誰。
+   所以整條工具列收起來 —— 16 顆按鈕在手機上會排成 6 行、佔掉 213px，
+   加上品牌列與帶看列，客戶得滑過 669px 才看得到地圖。 */
+#tourEdit{display:none}
+.guest .toolbar{display:none}
+.guest #tourClear, .guest #tourExit{display:none}
+.guest #tourEdit{display:inline-flex}
+/* 客戶檢視時品牌列也壓扁一點，把空間讓給地圖 */
+@media (max-width:900px){
+  .guest .brand{padding:10px 14px; gap:10px}
+  .guest .brand-title{display:none}      /* 標題在客戶手機上是純裝飾，先讓位 */
+  .guest .brand-logo img{height:26px}
+  .guest .brand-qr{width:58px}
+  .guest #map, .guest .mapwrap{height:70vh; min-height:70vh}
+}
+
 /* 帶看模式下，沒被挑到的社區與標籤淡掉，客戶的視線只會落在今天要看的那幾間 */
 .touring #pins circle:not(.on){opacity:.2}
 .touring #pin-labels text:not(.on){opacity:.13}
@@ -384,7 +410,7 @@ body{
   <div class="tourbar" id="tourbar" hidden>
     <div class="tb-head">
       <b>🚗 帶看地圖</b>
-      <span class="tb-hint">點地圖上的社區加入路線，再點一次移除</span>
+      <span class="tb-hint" id="tourHint">點地圖上的社區加入路線，再點一次移除</span>
       <span class="tb-total" id="tourTotal"></span>
     </div>
     <div class="tb-list" id="tourList"></div>
@@ -393,6 +419,8 @@ body{
       <button class="btn btn-sm" id="tourShare">📋 複製連結</button>
       <button class="btn btn-sm green" id="tourPng">📷 存成圖片</button>
       <button class="btn btn-sm" id="tourExit">結束帶看</button>
+      <!-- 客戶檢視時只留這顆，讓 Rita 自己切回可編輯 -->
+      <button class="btn btn-sm" id="tourEdit">✎ 我要改這條路線</button>
     </div>
   </div>
 
@@ -1014,11 +1042,15 @@ function rescale() {
   if (!wpx || !view) return;
   const k = view.w / wpx;                    // 1 螢幕像素 = k 個 SVG 單位
 
-  const dot = Math.max(4, 6 * k);            // 圓點目標 6px 半徑
-  const hit = Math.max(12, 22 * k);          // 觸控範圍目標 22px 半徑，手指按得到
-  const pinFont = Math.max(9, 11 * k);
-  const poiFont = Math.max(11, 13 * k);
-  const badge = Math.max(11, 15 * k);
+  /* 一律用「螢幕像素 × k」換算，不要再加單位下限。
+     加單位下限會反過來害事：放大之後 k 變小，22*k 也變小，
+     但下限是固定單位數，換回螢幕反而可能更小 —— 實測帶看模式縮放後
+     觸控範圍從 44px 掉到 20px。直接照螢幕尺寸算就不會有這種事。 */
+  const dot = 6 * k;                          // 圓點：螢幕上固定 6px 半徑
+  const hit = 22 * k;                         // 觸控：螢幕上固定 22px 半徑（直徑 44px）
+  const pinFont = 11 * k;
+  const poiFont = 13 * k;
+  const badge = 15 * k;
 
   document.querySelectorAll('#pins circle').forEach(c => {
     c.setAttribute('r', c.classList.contains('on') ? dot * 1.5 : dot);
@@ -1027,10 +1059,10 @@ function rescale() {
   document.querySelectorAll('#pin-hits circle').forEach(c => c.setAttribute('r', hit));
   document.querySelectorAll('#pin-labels text').forEach(t => t.style.fontSize = pinFont + 'px');
   document.querySelectorAll('#pois text.poi-label').forEach(t => t.style.fontSize = poiFont + 'px');
-  document.querySelectorAll('#green-labels text').forEach(t => t.style.fontSize = Math.max(9, 11 * k) + 'px');
+  document.querySelectorAll('#green-labels text').forEach(t => t.style.fontSize = (11 * k) + 'px');
   document.querySelectorAll('#tour-badges circle, #tour-badges path').forEach(() => {});
   document.querySelectorAll('#tour-badges text').forEach(t => t.style.fontSize = badge + 'px');
-  document.querySelectorAll('.leg-label').forEach(t => t.style.fontSize = Math.max(11, 12.5 * k) + 'px');
+  document.querySelectorAll('.leg-label').forEach(t => t.style.fontSize = (12.5 * k) + 'px');
 }
 function zoom(f, cx, cy) {
   const nw = Math.min(home.w * 1.05, Math.max(home.w * 0.06, view.w * f));
@@ -1089,7 +1121,7 @@ function bindMap() {
     const el = document.elementFromPoint(px, py);
     const id = el?.dataset?.id;
     if (!id) return;
-    if (tourOn()) { toggleTour(id); showCard(id); }
+    if (tourOn() && !guestMode()) { toggleTour(id); showCard(id); }
     else showCard(id);
   });
   svg.addEventListener('pointercancel', () => {
@@ -1127,7 +1159,7 @@ function bindMap() {
   svg.addEventListener('click', e => {
     const id = e.target.dataset?.id;
     if (!id || $('#tgEdit')?.checked) return;
-    if (tourOn()) { toggleTour(id); showCard(id); }
+    if (tourOn() && !guestMode()) { toggleTour(id); showCard(id); }
     else showCard(id);
   });
 
@@ -1168,7 +1200,7 @@ function bindMap() {
     if (!PINS) return;
     const tourMatch = /^#v=(.+)$/.exec(location.hash);
     if (tourMatch) {
-      enterTour(decodeURIComponent(tourMatch[1]).split(',').filter(Boolean));
+      enterTour(decodeURIComponent(tourMatch[1]).split(',').filter(Boolean), true);
       return;
     }
     const one = /^#c=(.+)$/.exec(location.hash);
@@ -1494,13 +1526,34 @@ function saveTourHash() {
   history.replaceState(null, '', location.pathname + location.search + h);
 }
 
-function enterTour(ids) {
+/* readonly = 客戶從我傳的連結點進來的。
+   這時點社區只能看資料，不能改路線 —— 客戶手一滑就把行程改掉，
+   然後跟我說「你給我的地圖多一個社區」，那很糟。 */
+function enterTour(ids, readonly) {
   document.body.classList.add('touring');
+  document.body.classList.toggle('guest', !!readonly);
   $('#tourbar').hidden = false;
-  $('#tourBtn').textContent = '🚗 帶看中';
+  $('#tourBtn').textContent = readonly ? '🚗 帶看行程' : '🚗 帶看中';
+  $('#tourHint').textContent = readonly
+    ? '點社區圓圈可以看該社區的資料'
+    : '點地圖上的社區加入路線，再點一次移除';
   if (ids) tour = ids.filter(id => PINS.pins.some(p => p.id === id));
   renderTour();
+
+  /* 客戶從連結進來時直接捲到地圖。
+     手機上頁首佔掉大半個畫面，不捲的話第一眼看到的是品牌抬頭不是路線，
+     客戶會以為「這什麼？」就關掉了。 */
+  if (readonly) {
+    requestAnimationFrame(() => {
+      const wrap = document.querySelector('.mapwrap');
+      if (wrap && window.innerWidth <= 900) {
+        window.scrollTo({ top: wrap.offsetTop - 8, behavior: 'smooth' });
+      }
+    });
+  }
 }
+
+const guestMode = () => document.body.classList.contains('guest');
 
 function exitTour() {
   document.body.classList.remove('touring');
@@ -1536,6 +1589,13 @@ function bindTour() {
   };
 
   $('#tourPng').onclick = exportPNG;
+
+  /* 客戶檢視切回可編輯。給 Rita 自己用 —— 她也會點自己傳出去的連結。 */
+  $('#tourEdit').onclick = () => {
+    document.body.classList.remove('guest');
+    $('#tourBtn').textContent = '🚗 帶看中';
+    $('#tourHint').textContent = '點地圖上的社區加入路線，再點一次移除';
+  };
 }
 
 function toastTour(msg) {
