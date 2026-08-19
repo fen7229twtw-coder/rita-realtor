@@ -2043,11 +2043,15 @@ function optimizeTour() {
     $('#status').textContent = '要 3 個社區以上才排得出順序';
     return;
   }
-  const beforeSec = tour.slice(0, -1).reduce((t, id, i) => {
+  /* 報給她看的分鐘數，要跟行程清單上那幾段加起來一樣 ——
+     用總秒數除 60 算出來的數字會跟清單對不起來，她會以為算錯。 */
+  const showMin = (ids) => ids.slice(0, -1).reduce((t, id, i) => {
     const a = PINS.pins.find((x) => x.id === id);
-    const b = PINS.pins.find((x) => x.id === tour[i + 1]);
-    return t + (a && b ? secBetween(a, b) : 0);
+    const b = PINS.pins.find((x) => x.id === ids[i + 1]);
+    const sec = a && b ? secBetween(a, b) : Infinity;
+    return t + (isFinite(sec) ? Math.max(1, Math.round(sec / 60)) : 0);
   }, 0);
+  const beforeMin = showMin(tour);
 
   const r = bestOrder(tour);
   if (!r) { $('#status').textContent = '路網資料還沒載入，排不了順序'; return; }
@@ -2057,13 +2061,14 @@ function optimizeTour() {
     $('#status').textContent = '你排的順序已經是最省時間的走法了';
     return;
   }
+  const afterMin = showMin(r.order);
   tourBefore = [...tour];
   tour = r.order;
   renderTour();
   setOptBtn();
-  const m = (x) => Math.max(1, Math.round(x / 60));
-  $('#status').textContent =
-    `已排成最省時間的走法：全程車程 ${m(beforeSec)} 分 → ${m(r.sec)} 分（省 ${m(beforeSec) - m(r.sec)} 分）`;
+  $('#status').textContent = beforeMin > afterMin
+    ? `已排成最省時間的走法：全程車程 ${beforeMin} 分 → ${afterMin} 分（省 ${beforeMin - afterMin} 分）`
+    : `已排成最省時間的走法：全程車程約 ${afterMin} 分`;
 }
 
 function toggleTour(id) {
