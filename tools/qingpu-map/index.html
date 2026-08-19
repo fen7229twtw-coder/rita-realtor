@@ -659,6 +659,10 @@ const PRICE_BANDS = [
   { max: Infinity, color:'#3F007D', label:'50 萬以上' },
 ];
 const NO_PRICE = '#B9BDB8';
+/* 樂居補進來的社區用綠色，跟卡片裡的樂居區塊同一個色系 —— 一眼看得出
+   「這個點沒有實價登錄成交行情可查」。預售案再淺一階，代表還沒蓋好。 */
+const LEJU_DOT = '#3E8E63';
+const LEJU_DOT_PRESALE = '#CFE7D8';
 
 function priceBand(upMedian) {
   if (!upMedian) return null;
@@ -683,8 +687,12 @@ function renderPins(svg, placer) {
   const g = group('pins');
   const gl = group('pin-labels');
 
-  // 成交量大的社區＝在地知名度高，讓它優先搶標籤位置
-  const sorted = [...PINS.pins].sort((a, b) => (b.dealsAll || 0) - (a.dealsAll || 0));
+  /* 誰優先搶標籤位置：
+       成交量大的社區＝在地知名度高，先給它。
+       樂居補的點沒有成交筆數，直接排序會全被擠到最後、圖上一個名字都沒有，
+       所以拿戶數當替代指標（大社區一樣該有名字），再乘一個折扣讓官方的優先。 */
+  const weight = (p) => (p.src === 'leju' ? (p.households || 0) * 0.35 : (p.dealsAll || 0));
+  const sorted = [...PINS.pins].sort((a, b) => weight(b) - weight(a));
 
   for (const p of sorted) {
     const [x, y] = project(p.lon, p.lat);
@@ -693,11 +701,21 @@ function renderPins(svg, placer) {
 
     const c = document.createElementNS(svgNS, 'circle');
     c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', 5.5);
-    c.setAttribute('fill', band ? band.color : NO_PRICE);
-    c.setAttribute('stroke', '#fff'); c.setAttribute('stroke-width', 1.6);
+    /* 三種點要分得開：
+         實價登錄有成交 → 紫色深淺代表每坪單價
+         實價登錄沒成交 → 灰色
+         樂居補進來的   → 綠色，預售案填淺綠（還沒蓋好，帶看講法完全不同） */
+    if (p.src === 'leju') {
+      c.setAttribute('fill', p.presale ? LEJU_DOT_PRESALE : LEJU_DOT);
+      c.setAttribute('stroke', LEJU_DOT);
+      c.setAttribute('stroke-width', p.presale ? 2 : 1.6);
+    } else {
+      c.setAttribute('fill', band ? band.color : NO_PRICE);
+      c.setAttribute('stroke', '#fff'); c.setAttribute('stroke-width', 1.6);
+    }
     c.dataset.id = p.id;
-    // 路段中點定位的位置不準，畫成橘色虛線圈提醒要校正
-    if (p.conf === 'road') {
+    // 路段中點與街角定位的位置不準，畫成橘色虛線圈提醒要校正
+    if (p.conf === 'road' || p.conf === 'corner') {
       c.setAttribute('stroke', 'var(--amber)');
       c.setAttribute('stroke-dasharray', '2 1.5');
     }
@@ -745,13 +763,20 @@ function renderPins(svg, placer) {
 
 function buildPriceLegend() {
   const withPrice = PINS.pins.filter(p => p.upMedian).length;
+  const lejuN = PINS.pins.filter(p => p.src === 'leju').length;
+  const presaleN = PINS.pins.filter(p => p.presale).length;
   $('#priceLegend').innerHTML = PRICE_BANDS
     .map(b => `<div class="it"><span class="sw" style="background:${b.color}"></span>${b.label}</div>`)
     .join('')
-    + `<div class="it"><span class="sw" style="background:${NO_PRICE}"></span>無成交資料</div>`;
+    + `<div class="it"><span class="sw" style="background:${NO_PRICE}"></span>無成交資料</div>`
+    + (lejuN
+      ? `<div class="it"><span class="sw" style="background:${LEJU_DOT}"></span>樂居補的社區</div>`
+        + `<div class="it"><span class="sw" style="background:${LEJU_DOT_PRESALE};border:1.5px solid ${LEJU_DOT}"></span>預售（未交屋）</div>`
+      : '');
   $('#priceNote').textContent =
-    `圖上 ${PINS.pins.length} 個社區，其中 ${withPrice} 個有成交行情。`
-    + `數字為實價登錄住家類成交的每坪中位數，不是開價。橘色虛線圈代表位置待校正。`;
+    `圖上 ${PINS.pins.length} 個社區：${withPrice} 個有實價登錄成交行情，`
+    + `${lejuN} 個是樂居清單補進來的（其中 ${presaleN} 個預售未交屋，沒有成交行情可查）。`
+    + `紫色深淺為實價登錄住家類成交的每坪中位數，不是開價。橘色虛線圈代表位置是推估的、待校正。`;
 }
 
 /* 飛到某個社區並打開資料卡。搜尋、深層連結都走這支。 */
@@ -1148,6 +1173,11 @@ function bindMap() {
     // 關掉色階時全部改成中性灰，位置還在但不透露價格 —— 給買方看的版本用這個
     document.querySelectorAll('#pins circle').forEach(c => {
       const p = PINS.pins.find(x => x.id === c.dataset.id);
+      if (p?.src === 'leju') {
+        // 樂居點的綠色不是價格，是「沒有行情可查」，關色階時照樣要留著
+        c.setAttribute('fill', p.presale ? LEJU_DOT_PRESALE : LEJU_DOT);
+        return;
+      }
       const band = e.target.checked ? priceBand(p?.upMedian) : null;
       c.setAttribute('fill', band ? band.color : (e.target.checked ? NO_PRICE : '#8C82BF'));
     });

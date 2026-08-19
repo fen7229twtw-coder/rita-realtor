@@ -214,6 +214,60 @@ function interpolateByNumber(cl, known, targetNo) {
   return { ...pos, r2, n, extrapolated, nearest: Math.round(nearest) };
 }
 
+/* ---------- 樂居地址解析 ----------
+   樂居 TSV 的「地址」欄有三種寫法，各自要用不同方式定位：
+     1. 「青峰路一段71號」  → 路名 + 門牌，走跟社區資料庫同一套門牌比對，最準。
+     2. 「領航南路四段、青溪路二段」→ 基地的四至（幾條路圍起來的街廓），
+        取這幾條路彼此最靠近的地方，也就是街角。整個街廓通常就那麼一棟。
+     3. 「高鐵北路二段」    → 只知道在哪條路上，落路中點，標成待校正。
+   括號註記（例：「青境路(國泰資訊大樓對面)」）先剝掉再解析。 */
+function parseLejuAddr(raw) {
+  const clean = String(raw || '')
+    .replace(/[（(][^）)]*[）)]/g, '')       // 剝掉「(國泰資訊大樓對面)」這種註記
+    .replace(/\s/g, '')
+    .trim();
+  if (!clean) return null;
+
+  const parts = clean.split(/[、,，]/).map((x) => x.trim()).filter(Boolean);
+  const roads = [];
+  let no = null;
+  for (const part of parts) {
+    // 「五青路63巷601號」：巷弄之後的號才是門牌，路名只取到巷之前
+    const m = part.match(/^(.+?[路街道])((?:[一二三四五六七八九十\d]+段)?)(.*)$/);
+    if (!m) { roads.push(part); continue; }
+    const road = m[1] + m[2];
+    roads.push(road);
+    const tail = m[3] || '';
+    const hit = tail.match(/(\d+)(?:[-之](\d+))?號/) || tail.match(/^(\d+)/);
+    if (hit && no == null) no = +hit[1];
+  }
+  if (!roads.length) return null;
+  return { roads, no };
+}
+
+/** 兩條路中心線彼此最靠近的位置（街角）。用來定位只給四至、沒給門牌的建案。 */
+function nearestCrossing(clA, clB) {
+  if (!clA || !clB) return null;
+  let best = null;
+  let bestD = Infinity;
+  // 折線點很多時抽樣就夠：街角的精度到公尺級即可，不需要逐點比
+  const stepA = Math.max(1, Math.floor(clA.line.length / 400));
+  const stepB = Math.max(1, Math.floor(clB.line.length / 400));
+  for (let i = 0; i < clA.line.length; i += stepA) {
+    for (let j = 0; j < clB.line.length; j += stepB) {
+      const d = dist2(clA.line[i], clB.line[j]);
+      if (d < bestD) { bestD = d; best = [clA.line[i], clB.line[j]]; }
+    }
+  }
+  if (!best) return null;
+  const x = (best[0][0] + best[1][0]) / 2;
+  const y = (best[0][1] + best[1][1]) / 2;
+  // 兩條路最近處還差 300 公尺以上，代表根本沒交會，這組四至不可信
+  const gapM = Math.sqrt(bestD) * 111000;
+  if (gapM > 300) return null;
+  return { lat: y, lon: x / COS_LAT, gapM: Math.round(gapM) };
+}
+
 async function main() {
   const communities = JSON.parse(await readFile(COMMUNITIES, 'utf8')).communities;
 
@@ -230,32 +284,46 @@ async function main() {
      帶看時客戶會問的就是這些。整份接進來，讓卡片一按就看得到，不用再跳出去查。
      樂居有 Cloudflare 不能自動抓，這是 Rita 一次性人工核對的成果。 */
   const leju = new Map();
+  const lejuAll = [];                               // 保留全部 225 筆，補點時要用
   try {
     const raw = await readFile(LEJU_TSV, 'utf8');
     const lines = raw.trim().split('\n').map((l) => l.split('\t'));
     lines.shift();                                  // 表頭
     for (const r of lines) {
-      const k = normName(r[1]);
-      if (!k || leju.has(k)) continue;
-      leju.set(k, {
+      const rawName = (r[1] || '').trim();
+      const k = normName(rawName);
+      if (!k) continue;
+      const rec = {
+        rawName,
         block: (r[0] || '').trim() || undefined,
         addr: (r[2] || '').trim() || undefined,
         households: numOr(r[3]),
         ratio: numOr(r[4]),
         age: (r[5] || '').trim() || undefined,
-      });
+      };
+      lejuAll.push(rec);
+      /* Map 只留同名的第一筆：normName 會去掉結尾流水號，
+         「禾林RICH ONE」「禾林RICH ONE2」「禾林RICH ONE3」會撞成同一個 key。
+         查欄位時取第一筆就好，但補點要當成三個不同建案 —— 所以另存 lejuAll。 */
+      if (!leju.has(k)) leju.set(k, rec);
     }
   } catch { /* 沒有這份檔就只是少了樂居欄位，不影響定位 */ }
 
   /* 社區名對樂居名。先求完全相同，再退一步找包含關係
-     （樂居用銷售名、管委會用登記名，例：良茂詠恆詠美館 vs 良茂詠恆）。 */
+     （樂居用銷售名、管委會用登記名，例：良茂詠恆詠美館 vs 良茂詠恆）。
+     命中的樂居原始名記進 usedLeju，後面補點時就不會再畫一次同一個社區。 */
   const lejuKeys = [...leju.keys()];
+  const usedLeju = new Set();
   const lejuOf = (name) => {
     const n = normName(name);
     if (!n) return null;
-    if (leju.has(n)) return leju.get(n);
-    const k = lejuKeys.find((x) => x.length > 2 && (x.includes(n) || n.includes(x)));
-    return k ? leju.get(k) : null;
+    let hit = leju.get(n);
+    if (!hit) {
+      const k = lejuKeys.find((x) => x.length > 2 && (x.includes(n) || n.includes(x)));
+      hit = k ? leju.get(k) : null;
+    }
+    if (hit) usedLeju.add(hit.rawName);
+    return hit || null;
   };
   const addrRaw = JSON.parse(await readFile(join(CACHE, 'addresses.json'), 'utf8')).elements;
   const bldRaw = JSON.parse(await readFile(join(CACHE, 'buildings.json'), 'utf8')).elements;
@@ -461,6 +529,192 @@ async function main() {
     });
   }
 
+  /* ---- 樂居補點 ----
+     實價登錄資料庫只收得到「有成交紀錄」的社區，所以圖上原本只有 114 個點，
+     但 Rita 人工核對過的樂居清單有 225 筆 —— 中間差的多半是預售屋、剛交屋、
+     或成交量少到沒進實價登錄的社區。這些帶看時照樣會被客戶問到，圖上不能沒有。
+     這一段把「樂居有、上面主流程沒對到」的社區，用樂居自己的地址欄定位補上圖，
+     標成 src:'leju'，前端用不同顏色畫，一眼看得出它沒有成交行情可查。 */
+  const BLOCK_LABEL = { A17: 'A17 領航', A18: 'A18 高鐵站', A19: 'A19 體育園區', 大園: '其他' };
+  const onMapNames = new Set(pins.map((p) => normName(p.name)));
+  const lejuStats = { addr: 0, interp: 0, name: 0, cross: 0, road: 0, offMap: 0, none: 0 };
+  let lejuSeq = 0;
+
+  for (const lj of lejuAll) {
+    if (usedLeju.has(lj.rawName)) continue;            // 主流程已經對到這筆
+    const nm = normName(lj.rawName);
+    if (!nm || onMapNames.has(nm)) continue;           // 名字已經在圖上
+    lejuSeq++;
+
+    const parsed = parseLejuAddr(lj.addr);
+    if (!parsed) {
+      lejuStats.none++;
+      offMap.push({ name: lj.rawName, dist: '', road: lj.addr || '', why: '樂居沒給地址' , src: 'leju' });
+      continue;
+    }
+
+    let pos = null;
+    let conf = null;
+    let hits = 0;
+
+    // 1. 有門牌 → 走跟社區資料庫同一套：先找同號、再找最接近的號
+    if (parsed.no != null) {
+      for (const r of parsed.roads) {
+        const street = normRoad(r);
+        const list = byStreet.get(street) || [];
+        if (!list.length) continue;
+        const exact = list.filter((a) => a.no === parsed.no);
+        if (exact.length) { pos = centroid(exact); conf = 'addr'; hits = exact.length; lejuStats.addr++; break; }
+        let bestDiff = Infinity;
+        let best = null;
+        for (const a of list) {
+          const d = Math.abs(a.no - parsed.no);
+          if (d < bestDiff) { bestDiff = d; best = a; }
+        }
+        if (best && bestDiff <= 20) {
+          pos = { lat: best.lat, lon: best.lon }; conf = 'addr-near'; hits = 1; lejuStats.addr++; break;
+        }
+        // 2. 門牌有缺口就沿路推算（跟主流程同一支迴歸）
+        if (list.length >= 3) {
+          const cl = centerlineOf(street);
+          const got = cl && interpolateByNumber(cl, list, parsed.no);
+          if (got) { pos = { lat: got.lat, lon: got.lon }; conf = 'interp'; lejuStats.interp++; break; }
+        }
+      }
+    }
+
+    // 3. OSM 建物名比對（樂居用銷售名，有些剛好標在建物上）
+    if (!pos) {
+      const hit = byBldName.get(lj.rawName.replace(/[\s\-－—・·．.]/g, ''));
+      if (hit) { pos = hit; conf = 'name'; lejuStats.name++; }
+    }
+
+    // 4. 只給四至（幾條路圍起來的街廓）→ 取街角
+    if (!pos && parsed.roads.length >= 2) {
+      for (let i = 0; i < parsed.roads.length - 1 && !pos; i++) {
+        for (let j = i + 1; j < parsed.roads.length && !pos; j++) {
+          const x = nearestCrossing(centerlineOf(normRoad(parsed.roads[i])), centerlineOf(normRoad(parsed.roads[j])));
+          if (x) { pos = { lat: x.lat, lon: x.lon }; conf = 'corner'; lejuStats.cross++; }
+        }
+      }
+    }
+
+    // 5. 只知道在哪條路上 → 路段中點，前端會標成待校正
+    if (!pos) {
+      for (const r of parsed.roads) {
+        const list = byStreet.get(normRoad(r)) || [];
+        if (list.length) { pos = centroid(list); conf = 'road'; lejuStats.road++; break; }
+        const cl = centerlineOf(normRoad(r));
+        if (cl) { pos = pointAt(cl, cl.total / 2); conf = 'road'; lejuStats.road++; break; }
+      }
+    }
+
+    if (!pos) {
+      lejuStats.none++;
+      offMap.push({ name: lj.rawName, dist: '', road: lj.addr || '', why: '查無門牌', src: 'leju' });
+      continue;
+    }
+    if (!inBBox(pos.lon, pos.lat)) {
+      lejuStats.offMap++;
+      offMap.push({
+        name: lj.rawName, dist: '', road: lj.addr || '',
+        lat: +pos.lat.toFixed(6), lon: +pos.lon.toFixed(6), why: '在本圖範圍外', src: 'leju',
+      });
+      continue;
+    }
+
+    /* 「2026年第四季度完工」這種是還沒交屋的預售案，跟成屋要分得開 ——
+       帶看時講法完全不同，圖上會另外標一個「預售」記號。
+       樂居的屋齡欄只有數字（例：「3」）就是已完工的成屋。 */
+    const ageTxt = lj.age || '';
+    const presale = /202[6-9]|20[3-9]\d|完工|交屋|年底|季度/.test(ageTxt) && !/^\d+$/.test(ageTxt.trim());
+    const ageNum = /^\d+$/.test(ageTxt.trim()) ? +ageTxt.trim() : undefined;
+
+    pins.push({
+      id: 'leju-' + lejuSeq,
+      name: lj.rawName,
+      src: 'leju',                                    // 前端靠這個欄位換顏色
+      presale: presale || undefined,
+      households: lj.households,
+      publicRatio: lj.ratio,
+      lejuAddr: lj.addr,
+      lejuAge: lj.age,
+      lejuBlock: lj.block,
+      lat: +pos.lat.toFixed(6),
+      lon: +pos.lon.toFixed(6),
+      conf,
+      hits,
+      block: BLOCK_LABEL[lj.block] || lj.block || '其他',
+      dist: lj.block === '大園' ? '大園區' : '中壢區',
+      road: parsed.roads[0],
+      addrRange: lj.addr,
+      age: ageNum,
+    });
+    onMapNames.add(nm);
+  }
+
+  const MIN_GAP_M = 28;                        // 圓點在圖上的直徑差不多這麼大
+  const M_PER_DEG_LAT = 111000;
+  const M_PER_DEG_LON = 111000 * COS_LAT;
+  const metersApart = (a, b) => Math.hypot(
+    (a.lat - b.lat) * M_PER_DEG_LAT,
+    (a.lon - b.lon) * M_PER_DEG_LON
+  );
+
+  /* ---- 疑似同一個社區 ----
+     樂居用銷售名、管委會用登記名，同一棟樓可能兩邊各一個名字，
+     現在就會變成圖上兩個點。不自動合併（合錯比多一個點嚴重），只印出來給人判斷。 */
+  const suspects = [];
+  for (const a of pins) {
+    if (a.src !== 'leju') continue;
+    for (const b of pins) {
+      if (b.src === 'leju' || b.conf === 'road' || a.conf === 'road') continue;
+      if (metersApart(a, b) < 12) suspects.push(`${a.name}（樂居）↔ ${b.name}（實價登錄）`);
+    }
+  }
+  if (suspects.length) {
+    console.log(`\n疑似同一個社區的兩個名字（沒自動合併，要你自己看）：`);
+    suspects.forEach((x) => console.log('  ' + x));
+  }
+
+
+  /* ---- 疊點錯開 ----
+     樂居補的點常常落在同一個位置：兩個建案只給「青峰路二段」就都掉到路中點，
+     同一個街廓的四至也會算出同一個街角。座標一樣的話圖上只看得到一個圓點，
+     另一個永遠點不到 —— 跟功能壞掉沒兩樣。
+     所以補點放上去之前，先看有沒有人站在那裡，有的話沿小圓往外挪到空位。
+     只挪樂居補的點，官方管線那 114 個是門牌級精準定位，絕對不動。 */
+  const placed = pins.filter((p) => p.src !== 'leju').map((p) => ({ lat: p.lat, lon: p.lon }));
+  let nudged = 0;
+  for (const p of pins) {
+    if (p.src !== 'leju') continue;
+    let spot = { lat: p.lat, lon: p.lon };
+    if (placed.some((q) => metersApart(spot, q) < MIN_GAP_M)) {
+      // 一圈一圈往外找空位：先繞半徑 30 公尺八個方向，不夠再放大
+      outer:
+      for (let ring = 1; ring <= 4; ring++) {
+        const rM = MIN_GAP_M * (ring + 0.1);
+        for (let k = 0; k < 8; k++) {
+          const th = (k / 8) * 2 * Math.PI + ring;   // 每圈轉一點角度，不然會排成十字
+          const cand = {
+            lat: p.lat + (rM * Math.sin(th)) / M_PER_DEG_LAT,
+            lon: p.lon + (rM * Math.cos(th)) / M_PER_DEG_LON,
+          };
+          if (!inBBox(cand.lon, cand.lat)) continue;
+          if (placed.every((q) => metersApart(cand, q) >= MIN_GAP_M)) { spot = cand; break outer; }
+        }
+      }
+      if (spot.lat !== p.lat || spot.lon !== p.lon) {
+        p.lat = +spot.lat.toFixed(6);
+        p.lon = +spot.lon.toFixed(6);
+        p.nudged = true;                       // 卡片上會註明位置是挪過的
+        nudged++;
+      }
+    }
+    placed.push({ lat: p.lat, lon: p.lon });
+  }
+  if (nudged) console.log(`\n疊點錯開：${nudged} 個樂居點原本壓在別的社區上，已挪開`);
+
   // 官方管線命名的 + 我人工補命名的都算「有名字」，兩者都會上圖
   const named = communities.filter((c) => c.name || noteOf(c.id).name).length;
   await writeFile(
@@ -470,6 +724,9 @@ async function main() {
         generatedAt: new Date().toISOString(),
         total: named,
         located: pins.length,
+        govLocated: pins.filter((p) => p.src !== 'leju').length,
+        lejuLocated: pins.filter((p) => p.src === 'leju').length,
+        lejuTotal: lejuAll.length,
         byConfidence: stats,
         offMapCount: offMap.length,
         source: '社區資料：內政部實價登錄 + 桃園市管委會清冊；座標比對：OpenStreetMap 門牌點（ODbL）',
@@ -482,12 +739,15 @@ async function main() {
 
   /* 統計要從最終結果反推。
      stats 是「某個方法成功了」的計數，但成功之後還可能被判定在圖框外而不上圖，
-     直接印 stats 會重複計算、加起來超過社區總數。 */
+     直接印 stats 會重複計算、加起來超過社區總數。
+     官方管線與樂居補點要分開算：兩邊的分母不一樣，混在一起看不出誰的定位比較準。 */
+  const govPins = pins.filter((p) => p.src !== 'leju');
+  const lejuPins = pins.filter((p) => p.src === 'leju');
   const onMap = {};
-  for (const p of pins) onMap[p.conf] = (onMap[p.conf] || 0) + 1;
+  for (const p of govPins) onMap[p.conf] = (onMap[p.conf] || 0) + 1;
   const pct = (n) => ((n / named) * 100).toFixed(0) + '%';
   const row = (label, n) => console.log(`  ${label.padEnd(16)}${String(n).padStart(3)}  ${pct(n)}`);
-  console.log(`已命名社區 ${named} 個 → 上圖 ${pins.length} 個、範圍外 ${offMap.length} 個\n`);
+  console.log(`已命名社區 ${named} 個 → 上圖 ${govPins.length} 個、範圍外 ${offMap.filter((o) => o.src !== 'leju').length} 個\n`);
   console.log('上圖的定位方式：');
   row('門牌精準比對', onMap.addr || 0);
   row('門牌就近比對', onMap['addr-near'] || 0);
@@ -495,7 +755,23 @@ async function main() {
   row('建物名比對', onMap.name || 0);
   row('路段中點(待校正)', onMap.road || 0);
   const precise = (onMap.addr || 0) + (onMap['addr-near'] || 0) + (onMap.interp || 0);
-  console.log(`\n  → 門牌級精準 ${precise} 個，佔上圖的 ${((precise / pins.length) * 100).toFixed(0)}%`);
+  console.log(`\n  → 門牌級精準 ${precise} 個，佔上圖的 ${((precise / govPins.length) * 100).toFixed(0)}%`);
+
+  /* ---- 樂居補點的統計 ---- */
+  const ljOn = {};
+  for (const p of lejuPins) ljOn[p.conf] = (ljOn[p.conf] || 0) + 1;
+  const ljOff = offMap.filter((o) => o.src === 'leju').length;
+  console.log(`\n樂居補點：清單 ${lejuAll.length} 筆，其中 ${lejuSeq} 筆官方管線沒有`
+    + ` → 補上圖 ${lejuPins.length} 個、圖框外或查不到 ${ljOff} 個`);
+  const ljRow = (label, n) => console.log(`  ${label.padEnd(16)}${String(n).padStart(3)}`);
+  ljRow('門牌比對', (ljOn.addr || 0) + (ljOn['addr-near'] || 0));
+  ljRow('沿路門牌推算', ljOn.interp || 0);
+  ljRow('建物名比對', ljOn.name || 0);
+  ljRow('街角(只給四至)', ljOn.corner || 0);
+  ljRow('路段中點(待校正)', ljOn.road || 0);
+  console.log(`\n全圖共 ${pins.length} 個社區（官方 ${govPins.length} + 樂居 ${lejuPins.length}）`);
+  const presaleN = lejuPins.filter((p) => p.presale).length;
+  if (presaleN) console.log(`  其中 ${presaleN} 個是還沒交屋的預售案`);
   if (offMap.length) {
     console.log(`
 本圖範圍外或查無門牌（不畫進圖裡，改列在側欄）：`);

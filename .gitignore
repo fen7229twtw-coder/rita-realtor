@@ -70,3 +70,8 @@ tools/line-reply/
 # 離線單檔版是「更新青埔地圖.cmd」每次重跑就會重產的產物，不進版控。
 # 它是拿來用 LINE 傳檔給客戶的，不是靠網址開的。
 tools/qingpu-map/青埔地圖_離線版.html
+
+# RITA 修圖系統：inbox/ 與 out/ 裝的是屋主家裡的照片，外流等同把客戶的家公開。
+# netlify.toml publish="." 會把根目錄進版控的檔案發佈到公開官網，所以整包排除。
+# 排除後仍可從 localhost:9000/tools/photo-studio/ 與中控台正常使用。
+tools/photo-studio/
