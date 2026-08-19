@@ -45,6 +45,11 @@ tools/property-survey/
 # 底圖是 OSM、行情是實價登錄，都是可公開資料。
 tools/qingpu-map/data/cache/
 
+# 自動更新的工作檔：狀態檔每跑一次就變、備份檔只是還原用的，
+# 進版控只會把紀錄洗掉，而且對客戶端沒有意義。
+tools/qingpu-map/data/auto-update-state.json
+tools/qingpu-map/data/pins.backup.json
+
 # 開發信生成：裝的是整棟社區屋主的姓名與寄信住址，全都是個資。
 # netlify.toml publish = "." 會把根目錄進版控的檔案發佈到公開官網，
 # 這一包外流的後果比其他工具嚴重得多，整包排除，絕對不可解除。

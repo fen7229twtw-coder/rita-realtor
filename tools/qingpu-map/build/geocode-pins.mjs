@@ -270,6 +270,21 @@ function parseEta(raw) {
   return { y, mon, label, date: new Date(y, mon, 0) };   // 該月最後一天
 }
 
+/* 樂居補點的 id 要跟著「社區名」走，不可以用流水號。
+   踩過的坑：實價登錄一更新（多了 3 個社區），哪幾筆樂居會被主流程吃掉就變了，
+   後面的序號整排位移 —— 同一個 leju-113 昨天是「川睦叡極」，今天變成
+   「新潤明日苑7國都苑」。而帶看路線、人工校正檔、傳給客戶的 #v= 連結存的
+   全都是 id：資料一更新，客戶點開看到的就是別的社區。
+   名字不變 id 就不變，這樣才穩。 */
+function lejuId(name) {
+  let h = 2166136261;
+  for (let i = 0; i < name.length; i++) {
+    h ^= name.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return 'leju-' + h.toString(36);
+}
+
 /** 兩條路中心線彼此最靠近的位置（街角）。用來定位只給四至、沒給門牌的建案。 */
 function nearestCrossing(clA, clB) {
   if (!clA || !clB) return null;
@@ -671,7 +686,7 @@ async function main() {
     }
 
     pins.push({
-      id: 'leju-' + lejuSeq,
+      id: lejuId(lj.rawName),
       name: lj.rawName,
       src: 'leju',                                    // 前端靠這個欄位換顏色
       presale: presale || undefined,
