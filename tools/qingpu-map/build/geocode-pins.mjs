@@ -661,22 +661,8 @@ async function main() {
     (a.lon - b.lon) * M_PER_DEG_LON
   );
 
-  /* ---- 疑似同一個社區 ----
-     樂居用銷售名、管委會用登記名，同一棟樓可能兩邊各一個名字，
-     現在就會變成圖上兩個點。不自動合併（合錯比多一個點嚴重），只印出來給人判斷。 */
-  const suspects = [];
-  for (const a of pins) {
-    if (a.src !== 'leju') continue;
-    for (const b of pins) {
-      if (b.src === 'leju' || b.conf === 'road' || a.conf === 'road') continue;
-      if (metersApart(a, b) < 12) suspects.push(`${a.name}（樂居）↔ ${b.name}（實價登錄）`);
-    }
-  }
-  if (suspects.length) {
-    console.log(`\n疑似同一個社區的兩個名字（沒自動合併，要你自己看）：`);
-    suspects.forEach((x) => console.log('  ' + x));
-  }
-
+  /* 撞名（同一棟樓兩個名字）的偵測搬到 build/find-duplicates.mjs：
+     那支用門牌比對，比在這裡用座標猜準得多，跑完地圖再跑一次就好。 */
 
   /* ---- 疊點錯開 ----
      樂居補的點常常落在同一個位置：兩個建案只給「青峰路二段」就都掉到路中點，

@@ -151,6 +151,9 @@ export async function renderQingpuMap(container, opts = {}) {
   /* --- 其他社區：小點襯托，讓被標的物件看起來有座落感 --- */
   for (const p of pins) {
     if (marks.includes(p)) continue;
+    /* 預售案不畫：這張圖是給客戶看的，地上還沒有建築的位置點一個點，
+       客戶會以為那裡已經有房子。主地圖（自己用的）照畫。 */
+    if (p.presale) continue;
     const [x, y] = project(p.lon, p.lat);
     svg.appendChild(el('circle', {
       cx: x, cy: y, r: 3,

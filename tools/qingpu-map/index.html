@@ -163,6 +163,20 @@ body{
 .card .rows dd{margin:0; font-weight:600}
 .card .rows .na{color:var(--text-faint); font-weight:500}
 
+/* 社區名旁邊的小標：樂居補的、預售未交屋 */
+.nm .tag{
+  display:inline-block; margin-left:6px; padding:1px 7px; border-radius:99px;
+  font-size:.62rem; font-weight:700; vertical-align:middle; letter-spacing:.02em;
+}
+.tag.leju{background:#3E8E63; color:#fff}
+.tag.presale{background:#CFE7D8; color:#1F5F3F; border:1px solid #3E8E63}
+/* 樂居補的社區沒有成交紀錄，用這塊說明原因，不要讓人以為資料掉了 */
+.src-note{
+  margin:8px 0 0; padding:8px 10px; border-radius:8px;
+  background:var(--bg); border:1px solid var(--border);
+  font-size:.72rem; line-height:1.55; color:var(--text-muted);
+}
+
 /* 樂居資料獨立一塊，跟官方實價登錄的數字分開 */
 .leju-box{
   margin-top:11px; padding:9px 11px; border-radius:9px;
@@ -849,19 +863,32 @@ function showCard(id) {
   const trend = p.trend == null ? '' :
     `<span class="${p.trend > 0 ? 'up' : 'dn'}">${p.trend > 0 ? '▲' : '▼'} ${Math.abs(p.trend)}%</span>`;
 
+  const isLeju = p.src === 'leju';
   $('#card').innerHTML =
-    `<div class="nm">${p.name}</div>`
-    + `<div class="sub">${p.dist} ${p.road}　${p.addrRange || ''}　${p.block}</div>`
+    `<div class="nm">${esc(p.name)}`
+    +   (isLeju ? `<span class="tag leju">樂居</span>` : '')
+    +   (p.presale ? `<span class="tag presale">預售</span>` : '')
+    + `</div>`
+    + `<div class="sub">${esc(p.dist)} ${esc(p.road)}　${esc(p.addrRange || '')}　${esc(p.block)}</div>`
     + (wan
         ? `<div class="px">${wan} 萬 / 坪 ${trend}</div>`
         : `<div class="px" style="color:var(--text-faint);font-size:1rem">尚無成交資料</div>`)
-    + `<dl class="rows">`
-    + (p.doneRoc ? `<dt>完工</dt><dd>民國 ${p.doneRoc} 年（屋齡 ${p.age}）</dd>` : '')
-    + (p.totalFloor ? `<dt>樓高</dt><dd>${p.totalFloor} 層</dd>` : '')
-    + `<dt>格局</dt><dd>${rooms}</dd>`
-    + (p.parkMedian ? `<dt>車位</dt><dd>約 ${p.parkMedian} 萬</dd>` : '')
-    + `<dt>成交</dt><dd>近一年 ${p.deals1y || 0} 筆／累計 ${p.dealsAll || 0} 筆</dd>`
-    + `</dl>`
+    /* 樂居補的社區在實價登錄裡查不到，格局／車位／成交筆數全是空的。
+       印一排「—」和「0 筆」看起來像資料掉了，所以整塊換成一句說明。 */
+    + (isLeju
+      ? `<div class="src-note">`
+        + (p.presale
+          ? `還沒交屋的預售案，實價登錄自然還沒有成交紀錄。`
+          : `實價登錄查不到這個社區的成交紀錄（成交量少或登記名不同）。`)
+        + `下面的資料是你在樂居人工核對來的。`
+        + `</div>`
+      : `<dl class="rows">`
+        + (p.doneRoc ? `<dt>完工</dt><dd>民國 ${p.doneRoc} 年（屋齡 ${p.age}）</dd>` : '')
+        + (p.totalFloor ? `<dt>樓高</dt><dd>${p.totalFloor} 層</dd>` : '')
+        + `<dt>格局</dt><dd>${rooms}</dd>`
+        + (p.parkMedian ? `<dt>車位</dt><dd>約 ${p.parkMedian} 萬</dd>` : '')
+        + `<dt>成交</dt><dd>近一年 ${p.deals1y || 0} 筆／累計 ${p.dealsAll || 0} 筆</dd>`
+        + `</dl>`)
     /* 樂居資料獨立一塊。
        客戶帶看最常問戶數、公設比、地址、屋齡，而這四項官方實價登錄管線都沒有，
        全是人工核對來的 —— 所以標清楚來源，也跟上面的成交數字分開放。
@@ -875,12 +902,16 @@ function showCard(id) {
           + (p.lejuAge ? `<dt>屋齡</dt><dd>${esc(p.lejuAge)}${/^\d+$/.test(p.lejuAge) ? ' 年' : ''}</dd>` : '')
           + (p.lejuAddr ? `<dt>地址</dt><dd>${esc(p.lejuAddr)}</dd>` : '')
           + `</dl>`
-        : `<div class="na">樂居沒有收錄這個社區</div>`)
+        : `<div class="na">樂居這邊還沒對上名字（樂居用銷售名、我們用登記名），先空著</div>`)
     + `</div>`
     + (p.conf === 'road'
         ? `<div class="warn">位置是用路段推估的，還沒校正到實際門牌。開「校正模式」拖曳可修正。</div>` : '')
+    + (p.conf === 'corner'
+        ? `<div class="warn">樂居只給了幾條路的四至，位置抓在街角，可能差一整個街廓。開「校正模式」拖曳可修正。</div>` : '')
     + (p.conf === 'addr-near'
         ? `<div class="warn">門牌範圍在 OSM 查不到，用最接近的門牌定位，可能有數十公尺誤差。</div>` : '')
+    + (p.nudged
+        ? `<div class="warn">這個點原本跟別的社區壓在一起，往旁邊挪了幾十公尺才畫得出來。</div>` : '')
     /* 三顆按鈕的分工：
        加入帶看 → 排今天的路線
        樂居     → 客戶最愛查的第三方行情，用 Google 站內搜尋帶過去
@@ -891,8 +922,9 @@ function showCard(id) {
     +   `<button class="act tour" data-tour="${p.id}">${tour.includes(p.id) ? '✓ 已在帶看路線' : '＋ 加入帶看'}</button>`
     +   `<a class="act leju${lejuLinks[p.id] ? ' direct' : ''}" target="_blank" rel="noopener"`
     +     ` href="${lejuUrl(p)}">${lejuLinks[p.id] ? '樂居該社區 →' : '樂居搜尋 →'}</a>`
-    +   `<a class="act db" href="../qingpu-communities/#c=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">`
-    +     `完整資料 →</a>`
+    +   (isLeju
+        ? ''                    // 樂居補的社區沒進自家資料庫，這顆按鈕點過去是空的
+        : `<a class="act db" href="../qingpu-communities/#c=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">完整資料 →</a>`)
     +   `<button class="act setleju" data-setleju="${p.id}" title="貼上這個社區在樂居的網址，以後就直接跳過去">`
     +     `${lejuLinks[p.id] ? '✎ 改樂居連結' : '🔗 設定樂居連結（一次就好）'}</button>`
     + `</div>`;
@@ -1057,6 +1089,24 @@ function apply() {
   rescale();
 }
 
+/* 螢幕座標 → 離它最近的社區圓點。
+   為什麼不能只靠 elementFromPoint：圖上 249 個社區，每個的觸控圈在螢幕上是 44px，
+   在青埔這種密度下大量重疊，而 elementFromPoint 只回最上層那一個 ——
+   常常不是眼睛看到的那個圓點，點下去跳出隔壁社區。
+   改成量「離手指最近的圓點」，這才是使用者的意思。 */
+function pinNear(px, py, maxPx = 26) {
+  const layer = $('#pins');
+  if (!layer || layer.style.display === 'none') return null;
+  let best = null;
+  let bestD = maxPx;
+  layer.querySelectorAll('circle').forEach(c => {
+    const b = c.getBoundingClientRect();
+    const d = Math.hypot(px - (b.left + b.width / 2), py - (b.top + b.height / 2));
+    if (d < bestD) { bestD = d; best = c.dataset.id; }
+  });
+  return best;
+}
+
 /* 讓圓點、標籤、觸控範圍在「螢幕上」維持固定大小。
    SVG 的單位會跟著 viewBox 一起縮，手機上整張圖縮到 288px 寬時，
    5.5 單位的圓點只剩 1 像素 —— 看不到也點不到。
@@ -1143,8 +1193,7 @@ function bindMap() {
     if (!wasTap || $('#tgEdit')?.checked) return;
 
     // 自己從放開的位置找出點到哪個社區
-    const el = document.elementFromPoint(px, py);
-    const id = el?.dataset?.id;
+    const id = pinNear(px, py) || document.elementFromPoint(px, py)?.dataset?.id;
     if (!id) return;
     if (tourOn() && !guestMode()) { toggleTour(id); showCard(id); }
     else showCard(id);
@@ -1821,6 +1870,11 @@ try {
   render(MAP);
   bindMap();
   rescale();
+  /* 第一次載入時 SVG 常常還沒完成版面計算，寬度量到 0 —— rescale 會直接 return，
+     圓點就停在原始的 5.5 單位、觸控範圍只剩該有的一半，等使用者去縮放才修正。
+     ResizeObserver 在元素第一次拿到尺寸時就會叫一次，補掉這個空窗。 */
+  if (window.ResizeObserver) new ResizeObserver(() => rescale()).observe($('#map'));
+  else requestAnimationFrame(rescale);
   // 轉向或改視窗大小時要重算，不然橫turn直之後圓點又變回點不到
   window.addEventListener('resize', rescale);
   $('#status').textContent = statusLine();
