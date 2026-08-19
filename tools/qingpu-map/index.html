@@ -237,6 +237,7 @@ body{
   position:relative; pointer-events:auto;
   margin:auto 26px auto auto;                 /* 桌機：垂直置中、靠右浮著 */
   width:min(400px, calc(100vw - 32px)); max-height:min(76vh, 660px);
+  /* 內容不多的社區不要硬撐出一大片空白 —— flex 的 auto 高度會自己縮 */
   display:flex; flex-direction:column;
   background:var(--surface); border:1px solid var(--border); border-radius:16px;
   box-shadow:0 24px 60px rgba(0,0,0,.26), 0 2px 10px rgba(0,0,0,.12);
@@ -257,6 +258,44 @@ body{
 }
 .pop-x:hover{background:var(--border); color:var(--text)}
 .pop-body{padding:14px 18px 18px; overflow-y:auto; overscroll-behavior:contain}
+/* 帶看時客戶必問的四個數字，放在最上面一排，不用在兩個區塊之間找 */
+.stats{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+  margin:12px 0 0; background:var(--border); border:1px solid var(--border); border-radius:10px; overflow:hidden;
+}
+.stats .st{background:var(--surface); padding:8px 4px; text-align:center}
+.stats .k{font-size:.6rem; font-weight:700; color:var(--text-faint); letter-spacing:.08em}
+.stats .v{font-size:1rem; font-weight:800; color:var(--primary-deep); line-height:1.3; margin-top:2px}
+.stats .v.na{color:var(--text-faint); font-weight:600}
+.stats .v small{font-size:.62rem; font-weight:700; margin-left:1px}
+
+/* 地址單獨一列，右邊掛複製與導航 —— 帶看當天最常用的兩個動作 */
+.addr{
+  display:flex; align-items:center; gap:8px; margin-top:10px;
+  padding:9px 10px; border-radius:9px; background:var(--bg); border:1px solid var(--border);
+}
+.addr .t{flex:1; min-width:0; font-size:.78rem; font-weight:600; color:var(--text); line-height:1.45}
+.addr .t .lb{display:block; font-size:.6rem; font-weight:700; color:var(--text-faint); letter-spacing:.08em}
+.addr .mini{
+  flex:none; width:36px; height:36px; border-radius:9px; cursor:pointer; font-size:.95rem;
+  display:flex; align-items:center; justify-content:center; text-decoration:none;
+  border:1px solid var(--border-strong); background:var(--surface); color:var(--text-muted);
+}
+.addr .mini:hover{background:var(--border)}
+.addr .mini.ok{background:var(--secondary); border-color:var(--secondary); color:#fff}
+
+/* 帶看時翻上下一站，不用關掉視窗再點下一個 */
+.pop-nav{display:flex; gap:8px; margin-top:12px}
+.pop-nav button{
+  flex:1; font:inherit; font-size:.74rem; font-weight:700; cursor:pointer;
+  padding:10px 6px; border-radius:9px;
+  border:1px solid var(--amber); background:#FDF0DC; color:#8A5A12;
+}
+.pop-nav button:disabled{opacity:.32; cursor:default; border-color:var(--border); background:var(--bg); color:var(--text-faint)}
+
+/* 資料是哪裡來的，用一行小字交代就好，不必再切兩大塊 */
+.from{margin-top:10px; font-size:.64rem; line-height:1.6; color:var(--text-faint)}
+
 /* 已經排進今天路線的社區，一進來就先講這件事 */
 .pop-tour{
   margin:0 0 11px; padding:8px 11px; border-radius:8px; font-size:.76rem; font-weight:700;
@@ -265,7 +304,7 @@ body{
 @media (max-width:900px){
   .pop-bd{display:block}
   .pop{
-    margin:auto 0 0; width:100%; max-height:82vh;
+    margin:auto 0 0; width:100%; max-height:min(72vh, 620px);   /* 留 28% 給地圖，看資料時還看得到位置 */
     border-radius:18px 18px 0 0; border-bottom:0;
     animation:pop-up .24s cubic-bezier(.2,.9,.3,1);
   }
@@ -997,13 +1036,61 @@ function showCard(id) {
     + (isLeju ? `<span class="tag leju">樂居</span>` : '')
     + (p.presale ? `<span class="tag presale">預售</span>` : '');
 
+  /* 排版順序照「帶看時會用到的先後」：
+       第幾站 → 單價 → 四個必問數字 → 地址（可複製可導航） → 明細 → 來源
+     原本戶數與公設比放在最下面的樂居區塊，客戶當面問的時候要往下捲才找得到。 */
+  const st = (k, v, unit) =>
+    `<div class="st"><div class="k">${k}</div>`
+    + (v == null || v === '' ? `<div class="v na">—</div>` : `<div class="v">${esc(String(v))}${unit ? `<small>${unit}</small>` : ''}</div>`)
+    + `</div>`;
+
+  // 屋齡兩個來源都可能有：實價登錄算得出來的優先，沒有才用樂居那欄
+  const ageTxt = p.age != null ? String(p.age)
+    : (p.lejuAge && /^\d+$/.test(p.lejuAge) ? p.lejuAge : null);
+  const ageUnit = ageTxt != null ? '年' : '';
+  // 樂居的屋齡欄有時候寫的是「2028年下半年完工」這種預售案的交屋時程，不是數字
+  const ageNote = (ageTxt == null && p.lejuAge) ? esc(p.lejuAge) : null;
+
+  const addrFull = p.lejuAddr || [p.road, p.addrRange].filter(Boolean).join(' ');
+  /* 導航目的地：有門牌號就用地址（Google 會帶到門口），只有路名就用座標 —— 
+     拿「高鐵北路二段」去導航會停在路中間某處，還不如用圖上那個點。 */
+  const navTo = /號/.test(p.lejuAddr || '') ? `桃園市${p.dist || ''}${p.lejuAddr}` : `${p.lat},${p.lon}`;
+
+  const srcBits = [];
+  if (!isLeju) srcBits.push('單價、屋齡、樓高、格局與成交筆數來自實價登錄');
+  /* 同一句話對客戶要換人稱 —— 客戶看到「你人工核對來的」會愣住 */
+  if (lejuHit(p)) srcBits.push(guestMode()
+    ? '戶數、公設比與地址整理自樂居'
+    : '戶數、公設比與地址是你在樂居人工核對來的');
+
   $('#card').innerHTML =
     /* 已經排進路線的，第一行就講清楚是第幾站 —— 客戶看到的也是這句 */
     (tour.includes(p.id) ? `<div class="pop-tour">✓ 今天的帶看路線　第 ${tour.indexOf(p.id) + 1} 站</div>` : '')
-    + `<div class="sub">${esc(p.dist)} ${esc(p.road)}　${esc(p.addrRange || '')}　${esc(p.block)}</div>`
     + (wan
         ? `<div class="px">${wan} 萬 / 坪 ${trend}</div>`
         : `<div class="px" style="color:var(--text-faint);font-size:1rem">尚無成交資料</div>`)
+    // 樂居補的點沒有門牌，addrRange 會等於路名，印兩次很怪
+    + `<div class="sub">${esc(p.dist)} ${esc(p.road)}　${esc(p.addrRange === p.road ? '' : (p.addrRange || ''))}　${esc(p.block)}</div>`
+
+    /* 四個必問數字 */
+    + `<div class="stats">`
+    +   st('屋齡', ageTxt, ageUnit)
+    +   st('樓高', p.totalFloor, '層')
+    +   st('戶數', p.households, '戶')
+    +   st('公設比', p.publicRatio, '%')
+    + `</div>`
+    + (ageNote ? `<div class="from">交屋時程：${ageNote}</div>` : '')
+
+    /* 地址 + 複製 + 導航 */
+    + (addrFull
+      ? `<div class="addr">`
+        + `<div class="t"><span class="lb">地址</span>${esc(addrFull)}</div>`
+        + `<button class="mini" data-copy="${esc(p.name)}　${esc(addrFull)}" title="複製社區名與地址">⧉</button>`
+        + `<a class="mini" target="_blank" rel="noopener" title="用 Google 導航過去"`
+        + ` href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(navTo)}">➤</a>`
+        + `</div>`
+      : '')
+
     /* 樂居補的社區在實價登錄裡查不到，格局／車位／成交筆數全是空的。
        印一排「—」和「0 筆」看起來像資料掉了，所以整塊換成一句說明。 */
     + (isLeju
@@ -1011,30 +1098,21 @@ function showCard(id) {
         + (p.presale
           ? `還沒交屋的預售案，實價登錄自然還沒有成交紀錄。`
           : `實價登錄查不到這個社區的成交紀錄（成交量少或登記名不同）。`)
-        + `下面的資料是你在樂居人工核對來的。`
+        + (guestMode() ? `上面的資料整理自樂居。` : `上面的資料是你在樂居人工核對來的。`)
         + `</div>`
-      : `<dl class="rows">`
-        + (p.doneRoc ? `<dt>完工</dt><dd>民國 ${p.doneRoc} 年（屋齡 ${p.age}）</dd>` : '')
-        + (p.totalFloor ? `<dt>樓高</dt><dd>${p.totalFloor} 層</dd>` : '')
+      : `<dl class="rows" style="margin-top:11px">`
+        + (p.doneRoc ? `<dt>完工</dt><dd>民國 ${p.doneRoc} 年</dd>` : '')
         + `<dt>格局</dt><dd>${rooms}</dd>`
         + (p.parkMedian ? `<dt>車位</dt><dd>約 ${p.parkMedian} 萬</dd>` : '')
         + `<dt>成交</dt><dd>近一年 ${p.deals1y || 0} 筆／累計 ${p.dealsAll || 0} 筆</dd>`
         + `</dl>`)
-    /* 樂居資料獨立一塊。
-       客戶帶看最常問戶數、公設比、地址、屋齡，而這四項官方實價登錄管線都沒有，
-       全是人工核對來的 —— 所以標清楚來源，也跟上面的成交數字分開放。
-       沒對到樂居的社區照樣印出這一塊寫「未收錄」，不然看起來像功能壞了。 */
-    + `<div class="leju-box${lejuHit(p) ? '' : ' empty'}">`
-    +   `<div class="leju-t">樂居社區資料</div>`
-    +   (lejuHit(p)
-        ? `<dl class="rows">`
-          + (p.households ? `<dt>戶數</dt><dd>${p.households} 戶</dd>` : '')
-          + (p.publicRatio ? `<dt>公設比</dt><dd>${p.publicRatio}%</dd>` : '')
-          + (p.lejuAge ? `<dt>屋齡</dt><dd>${esc(p.lejuAge)}${/^\d+$/.test(p.lejuAge) ? ' 年' : ''}</dd>` : '')
-          + (p.lejuAddr ? `<dt>地址</dt><dd>${esc(p.lejuAddr)}</dd>` : '')
-          + `</dl>`
-        : `<div class="na">樂居這邊還沒對上名字（樂居用銷售名、我們用登記名），先空著</div>`)
-    + `</div>`
+
+    /* 沒對到樂居的社區要講清楚是「還沒對上名字」，不然看起來像功能壞了 */
+    + (!lejuHit(p) && !isLeju
+        ? `<div class="from">戶數與公設比：樂居這邊還沒對上名字（樂居用銷售名、我們用登記名），先空著</div>`
+        : '')
+    + (srcBits.length ? `<div class="from">${srcBits.join('；')}</div>` : '')
+
     + (p.conf === 'road'
         ? `<div class="warn">位置是用路段推估的，還沒校正到實際門牌。開「校正模式」拖曳可修正。</div>` : '')
     + (p.conf === 'corner'
@@ -1043,6 +1121,15 @@ function showCard(id) {
         ? `<div class="warn">門牌範圍在 OSM 查不到，用最接近的門牌定位，可能有數十公尺誤差。</div>` : '')
     + (p.nudged
         ? `<div class="warn">這個點原本跟別的社區壓在一起，往旁邊挪了幾十公尺才畫得出來。</div>` : '')
+
+    /* 帶看時可以直接翻到上／下一站，不用關掉視窗再去點地圖 */
+    + (tour.length > 1 && tour.includes(p.id)
+      ? `<div class="pop-nav">`
+        + `<button data-step="${tour[tour.indexOf(p.id) - 1] || ''}"${tour.indexOf(p.id) === 0 ? ' disabled' : ''}>← 上一站</button>`
+        + `<button data-step="${tour[tour.indexOf(p.id) + 1] || ''}"${tour.indexOf(p.id) === tour.length - 1 ? ' disabled' : ''}>下一站 →</button>`
+        + `</div>`
+      : '')
+
     /* 三顆按鈕的分工：
        加入帶看 → 排今天的路線
        樂居     → 客戶最愛查的第三方行情，用 Google 站內搜尋帶過去
@@ -1060,6 +1147,40 @@ function showCard(id) {
     +     `${lejuLinks[p.id] ? '✎ 改樂居連結' : '🔗 設定樂居連結（一次就好）'}</button>`
     + `</div>`;
   openPop(id);
+}
+
+/* 複製到剪貼簿。clipboard API 在非 https 會被擋，所以留一條 textarea 後路。 */
+function copyText(txt, btn) {
+  const done = () => {
+    if (!btn) return;
+    const old = btn.textContent;
+    btn.textContent = '✓';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = old; btn.classList.remove('ok'); }, 1200);
+  };
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(txt).then(done, () => fallback(txt, done));
+  } else fallback(txt, done);
+
+  function fallback(t, ok) {
+    const ta = document.createElement('textarea');
+    ta.value = t;
+    ta.style.cssText = 'position:fixed;top:-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); ok(); } catch {}
+    ta.remove();
+  }
+}
+
+/* 把某個社區移到畫面中央，縮放不動。
+   翻上下一站時用 —— 直接跳縮放會讓人搞不清楚現在看的是哪一區。 */
+function centerOn(id) {
+  const p = PINS?.pins.find(x => x.id === id);
+  if (!p || !view) return;
+  view.x = p._x - view.w / 2;
+  view.y = p._y - view.h / 2;
+  apply();
 }
 
 /* ---------- 社區資料視窗的開關 ---------- */
@@ -1459,6 +1580,14 @@ function bindMap() {
 
   /* 資料卡裡的按鈕 */
   $('#card').addEventListener('click', e => {
+    // 複製社區名＋地址，直接貼給客戶
+    const txt = e.target.dataset?.copy;
+    if (txt) { copyText(txt, e.target); return; }
+
+    // 翻到帶看路線的上／下一站：卡片換掉，地圖平移過去（不改縮放，免得客戶迷路）
+    const step = e.target.dataset?.step;
+    if (step) { centerOn(step); showCard(step); return; }
+
     const setId = e.target.dataset?.setleju;
     if (setId) { setLejuLink(setId); return; }
     const id = e.target.dataset?.tour;
