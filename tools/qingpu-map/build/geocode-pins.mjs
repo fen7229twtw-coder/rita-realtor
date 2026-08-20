@@ -20,6 +20,7 @@ const COMMUNITIES = join(HERE, '..', '..', 'qingpu-communities', 'data', 'commun
 const NOTES = join(HERE, '..', '..', 'qingpu-communities', 'data', 'my-notes.json');
 const LEJU_TSV = join(HERE, '..', '..', 'qingpu-communities', 'data', 'leju-crosscheck.tsv');
 const SINYI = join(HERE, '..', '..', 'qingpu-communities', 'data', 'sinyi-extra.json');
+const MANUAL_EXTRA = join(HERE, '..', '..', 'qingpu-communities', 'data', 'community-extra-manual.tsv');
 
 const CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 
@@ -357,6 +358,32 @@ async function main() {
   const sinyi = await readFile(SINYI, 'utf8')
     .then((t) => JSON.parse(t).byName || {})
     .catch(() => ({}));                       // 沒抓過就只是少幾個欄位，不影響定位
+  /* ---- 人工整理的補充（community-extra-manual.tsv）----
+     信義沒收錄的社區走這裡。青埔有幾個成交量很大的社區信義那邊查不到
+     （美術水公園 405 筆成交、聯上3Q 490 筆、麗江星漾 153 筆…），
+     但建案報導與其他實價登錄網站有完整公設。
+     這份是人工查證整理的，所以卡片上的來源要跟信義那份分開講。 */
+  try {
+    const rows = (await readFile(MANUAL_EXTRA, 'utf8')).trim().split('\n').slice(1)
+      .map((l) => l.split('\t'));
+    for (const r of rows) {
+      const name = (r[0] || '').trim();
+      if (!name || sinyi[name]) continue;          // 信義有的就不用這份蓋掉
+      const rec = { manual: true };                // 卡片靠這個欄位分辨來源
+      const put = (k, v, unit) => {
+        const t = (v || '').trim();
+        if (t) rec[k] = unit ? t + unit : t;
+      };
+      put('公共設施', r[1]);
+      put('建設公司', r[2]);
+      put('警衛管理', r[3]);
+      put('樓高', r[4], '層');
+      put('公設比', r[5], '%');
+      put('戶數', r[6], '戶');
+      sinyi[name] = rec;
+    }
+  } catch { /* 沒這份檔就只是少幾個社區的公設 */ }
+
   const sinyiKeys = Object.keys(sinyi);
   const sinyiOf = (name) => {
     const n = normName(name);
@@ -589,6 +616,8 @@ async function main() {
       addrRange: c.addrRange,
       /* 信義房屋補的：公設、建商、管理方式。這幾項實價登錄與樂居都沒有，
          但帶看現場客戶一定會問。 */
+      // true 代表這筆是人工查證整理的，不是從信義自動抓的 —— 卡片的來源要分開講
+      extraManual: sy?.manual || undefined,
       facilities: sy?.['公共設施'] || undefined,
       builder: sy?.['建設公司'] || undefined,
       security: sy?.['警衛管理'] || undefined,
@@ -745,6 +774,7 @@ async function main() {
       /* 樂居那份表沒有樓高，信義有 —— 這 135 個社區的樓高原本全是空的 */
       totalFloor: sy2 ? sTopFloor(sy2['樓高']) : undefined,
       floorsText: sy2?.['樓高'] || undefined,
+      extraManual: sy2?.manual || undefined,
       facilities: sy2?.['公共設施'] || undefined,
       builder: sy2?.['建設公司'] || undefined,
       security: sy2?.['警衛管理'] || undefined,

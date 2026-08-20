@@ -1171,7 +1171,13 @@ function showCard(id) {
   if (lejuHit(p)) srcBits.push(guestMode()
     ? '戶數、公設比與地址整理自樂居'
     : '戶數、公設比與地址是你在樂居人工核對來的');
-  if (p.facilities || p.builder) srcBits.push('公設、建商與管理方式整理自信義房屋的社區資料');
+  /* 兩種來源要分開講：信義那份是程式自動抓的（會定期更新），
+     人工那份是查建案報導整理的（不會自己更新，數字要當參考不是保證） */
+  if (p.facilities || p.builder) {
+    srcBits.push(p.extraManual
+      ? '公設與建商是查建案報導整理的，帶客戶確認前請以現場與管委會為準'
+      : '公設、建商與管理方式整理自信義房屋的社區資料');
+  }
 
   $('#card').innerHTML =
     /* 已經排進路線的，第一行就講清楚是第幾站 —— 客戶看到的也是這句 */
