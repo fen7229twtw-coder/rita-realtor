@@ -289,6 +289,24 @@ body{
   font-size:.76rem; font-weight:700; color:#8A5A12; line-height:1.5;
 }
 .trip-total small{display:block; font-weight:600; color:#A07430; font-size:.66rem; margin-top:2px}
+/* 承辦人名片：客戶手機上點 📞 直接撥、點 LINE 直接加好友 */
+.trip-me{
+  display:flex; align-items:center; gap:8px; margin-top:10px;
+  padding:9px 11px; border-radius:10px;
+  background:var(--primary-deep); color:#fff;
+}
+.trip-me .t{flex:1; min-width:0}
+.trip-me .t b{display:block; font-size:.78rem; font-weight:800; letter-spacing:.5px}
+.trip-me .t span{display:block; font-size:.7rem; opacity:.82; margin-top:2px}
+.trip-me .mini{
+  flex:none; min-width:42px; height:42px; padding:0 10px; border-radius:10px;   /* 手指按得到 */
+  display:flex; align-items:center; justify-content:center; text-decoration:none;
+  font-size:.9rem; font-weight:800; letter-spacing:.5px;
+  background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.3);
+}
+.trip-me .mini:hover{background:rgba(255,255,255,.26)}
+.trip-me .mini.line{background:#06C755; border-color:#06C755; font-size:.68rem}
+
 .trip-acts{display:flex; gap:7px; margin-top:9px}
 .trip-acts button{
   flex:1; font:inherit; font-size:.72rem; font-weight:700; cursor:pointer;
@@ -593,7 +611,7 @@ body{
            onerror="this.closest('.brand-logo').remove()">
     </div>
     <div class="brand-co">
-      <div class="co">青埔直營團隊</div>
+      <div class="co">青埔IKEA店</div>
       <div class="co-sub">在地深耕 ‧ 專任委託</div>
     </div>
 
@@ -647,6 +665,15 @@ body{
         <h2>今 天 的 行 程</h2>
         <ol class="trip" id="tripList"></ol>
         <div class="trip-total" id="tripTotal"></div>
+        <!-- 客戶滑到行程最下面，正好看到是誰帶他看的、怎麼找到人 -->
+        <div class="trip-me">
+          <div class="t">
+            <b>有巢氏房屋　青埔IKEA店</b>
+            <span>蕭沛縈 Rita ‧ 青埔花媽</span>
+          </div>
+          <a class="mini" href="tel:+886981456399" title="撥給 Rita：0981-456-399">📞</a>
+          <a class="mini line" href="https://line.me/ti/p/~ritahaiao" target="_blank" rel="noopener" title="加 LINE：ritahaiao">LINE</a>
+        </div>
         <div class="trip-acts">
           <button id="tripCopy">💬 複製行程文字</button>
         </div>
@@ -681,7 +708,7 @@ body{
 
   <footer class="foot">
     <span id="footSrc"></span>
-    <span>蕭沛縈 Rita ‧ 0981-456-399 ‧ LINE ritahaiao</span>
+    <span>有巢氏房屋　青埔IKEA店　蕭沛縈 Rita ‧ 0981-456-399 ‧ LINE ritahaiao</span>
   </footer>
 </div>
 
@@ -2246,7 +2273,8 @@ function tripText() {
   });
   lines.push('');
   lines.push('地圖：' + shareUrl());
-  lines.push('青埔花媽 Rita ‧ 0981-456-399');
+  lines.push('有巢氏房屋 青埔IKEA店');
+  lines.push('蕭沛縈 Rita（青埔花媽）‧ 0981-456-399 ‧ LINE：ritahaiao');
   return lines.join('\n');
 }
 
@@ -2426,10 +2454,17 @@ async function exportPNG() {
   </style>`);
 
   const SCALE = 2;                                  // 2 倍供手機看與 LINE 壓縮後仍清楚
-  const listH = tourOn() && tour.length ? 46 + Math.ceil(tour.length / 2) * 30 : 0;
-  const footH = 44;
-  const W = Math.round(vb[2] * SCALE);
-  const H = Math.round(vb[3] * SCALE) + listH + footH;
+  /* 版面尺寸一律先換算成實際像素。
+     原本清單與頁尾的高度沒乘 SCALE，裡面的字卻有乘，還用 /1.4 去湊 ——
+     結果是頁尾只有 44px 高卻要塞兩行 28px 的字，第二行（資料來源）整行被裁掉，
+     帶看清單的最後一列也一樣。 */
+  const px = (v) => Math.round(v * SCALE);
+
+  const rows = tourOn() && tour.length ? Math.ceil(tour.length / 2) : 0;
+  const listH = rows ? px(30 + rows * 26) : 0;
+  const footH = px(48);
+  const W = px(vb[2]);
+  const H = px(vb[3]) + listH + footH;
 
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -2439,47 +2474,64 @@ async function exportPNG() {
   const img = new Image();
   const blobUrl = URL.createObjectURL(new Blob([s], { type: 'image/svg+xml;charset=utf-8' }));
   await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
-  ctx.drawImage(img, 0, 0, W, Math.round(vb[3] * SCALE));
+  ctx.drawImage(img, 0, 0, W, px(vb[3]));
   URL.revokeObjectURL(blobUrl);
 
-  let y = Math.round(vb[3] * SCALE);
+  let y = px(vb[3]);
+
+  /* 一行字塞不下就自動縮字級。
+     圖片寬度是跟著帶看範圍走的 —— 幾個社區靠得近，圖就窄，
+     寫死字級的話「有巢氏房屋　青埔IKEA店　蕭沛縈 Rita…」會被切在半路。 */
+  const fitText = (text, maxW, want, weight) => {
+    let size = want;
+    for (;;) {
+      ctx.font = `${weight ? weight + ' ' : ''}${px(size)}px 'Noto Sans TC','Microsoft JhengHei',sans-serif`;
+      if (ctx.measureText(text).width <= maxW || size <= 7) return;
+      size -= 0.5;
+    }
+  };
+  const pad = px(14);
+  const innerW = W - pad * 2;
 
   // 帶看清單
   if (listH) {
     ctx.fillStyle = '#FFF8EC'; ctx.fillRect(0, y, W, listH);
     ctx.fillStyle = '#8A5A12';
-    ctx.font = `700 ${15 * SCALE}px 'Noto Sans TC','Microsoft JhengHei',sans-serif`;
-    ctx.fillText('今日帶看', 16 * SCALE, y + 26 * SCALE / 1.4);
+    ctx.font = `700 ${px(13)}px 'Noto Sans TC','Microsoft JhengHei',sans-serif`;
+    ctx.fillText('今日帶看', pad, y + px(19));
     tour.forEach((id, i) => {
       const p = PINS.pins.find(x => x.id === id);
       if (!p) return;
       const col = i % 2;
       const row = Math.floor(i / 2);
-      const x = (16 + col * (vb[2] / 2 - 8)) * SCALE;
-      const ly = y + (46 + row * 30) * SCALE / 1.4;
-      ctx.fillStyle = '#D8261C';
-      ctx.beginPath(); ctx.arc(x + 9 * SCALE, ly - 5 * SCALE, 9 * SCALE, 0, Math.PI * 2); ctx.fill();
+      const colW = (W - pad * 2) / 2;
+      const x = pad + col * colW;
+      const ly = y + px(30 + row * 26) + px(13);       // 這一列文字的基線
+      ctx.fillStyle = '#0B7A4B';                        // 跟地圖上的編號徽章同一個綠
+      ctx.beginPath(); ctx.arc(x + px(9), ly - px(5), px(9), 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#fff';
-      ctx.font = `800 ${11 * SCALE}px sans-serif`;
+      ctx.font = `800 ${px(11)}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(String(i + 1), x + 9 * SCALE, ly - 1 * SCALE);
+      ctx.fillText(String(i + 1), x + px(9), ly - px(1));
       ctx.textAlign = 'left';
       ctx.fillStyle = '#173D30';
-      ctx.font = `600 ${14 * SCALE}px 'Noto Sans TC','Microsoft JhengHei',sans-serif`;
       const wan = p.upMedian ? `　${(p.upMedian / 10000).toFixed(0)} 萬/坪` : '';
-      ctx.fillText(p.name + wan, x + 24 * SCALE, ly);
+      fitText(p.name + wan, colW - px(30), 13, '600');
+      ctx.fillText(p.name + wan, x + px(24), ly);
     });
     y += listH;
   }
 
   // 頁尾：聯絡方式 + 資料來源
   ctx.fillStyle = '#0B2E20'; ctx.fillRect(0, y, W, footH);
+  const me = '有巢氏房屋　青埔IKEA店　蕭沛縈 Rita　0981-456-399　LINE：ritahaiao';
   ctx.fillStyle = '#fff';
-  ctx.font = `700 ${14 * SCALE}px 'Noto Sans TC','Microsoft JhengHei',sans-serif`;
-  ctx.fillText('有巢氏房屋　蕭沛縈 Rita　0981-456-399　LINE：ritahaiao', 16 * SCALE, y + 19 * SCALE);
+  fitText(me, innerW, 14, '700');
+  ctx.fillText(me, pad, y + px(20));
+  const src = '底圖 © OpenStreetMap contributors　行情為實價登錄成交中位數，非開價　參考用';
   ctx.fillStyle = 'rgba(255,255,255,.62)';
-  ctx.font = `${11 * SCALE}px 'Noto Sans TC','Microsoft JhengHei',sans-serif`;
-  ctx.fillText('底圖 © OpenStreetMap contributors　行情為實價登錄成交中位數，非開價　參考用', 16 * SCALE, y + 34 * SCALE);
+  fitText(src, innerW, 11);
+  ctx.fillText(src, pad, y + px(37));
 
   const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
   const a = document.createElement('a');
