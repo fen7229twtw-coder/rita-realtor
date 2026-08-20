@@ -75,7 +75,11 @@ async function main() {
   for (const [name, id] of rows) {
     // 一個月內抓過就不重抓 —— 公設與建商幾乎不會變
     const prev = byName[name];
-    const fresh = prev?.at && (Date.now() - Date.parse(prev.at)) < 30 * 24 * 60 * 60 * 1000;
+    /* 對照表裡的編號改過就一定要重抓 —— 只看「30 天內抓過」的話，
+       改編號等於沒改（實際踩過：宜誠青埔市原本填成二期的編號，
+       改成一期之後跑一次，快取照樣沿用二期的資料）。 */
+    const sameId = prev?.id === id;
+    const fresh = sameId && prev?.at && (Date.now() - Date.parse(prev.at)) < 30 * 24 * 60 * 60 * 1000;
     if (fresh && !FORCE) { skip++; continue; }
 
     const url = `https://www.sinyi.com.tw/communitylist/communityinfo/${id}`;
