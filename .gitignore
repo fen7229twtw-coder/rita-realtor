@@ -62,7 +62,7 @@ tools/dev-letter/
 tools/watch-list/
 
 # 帶看路線：你自己排路線用的內部工具，裡面會存客戶名與帶看備註（在 localStorage，
-# 不會進檔案，但這頁本身也沒有對外的價值 —— 客戶拿到的是地圖連結，不是這頁）。
+# 不會進檔案，但這頁本身也沒有對外的價值 —— 客戶拿到的是名片頁連結 card/#v=…，不是這頁）。
 # netlify.toml 是 publish="."，不排除就會發佈到公開官網。
 tools/tour-route/
 
