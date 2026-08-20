@@ -19,6 +19,7 @@ const DATA = join(HERE, '..', 'data');
 const COMMUNITIES = join(HERE, '..', '..', 'qingpu-communities', 'data', 'communities.json');
 const NOTES = join(HERE, '..', '..', 'qingpu-communities', 'data', 'my-notes.json');
 const LEJU_TSV = join(HERE, '..', '..', 'qingpu-communities', 'data', 'leju-crosscheck.tsv');
+const SINYI = join(HERE, '..', '..', 'qingpu-communities', 'data', 'sinyi-extra.json');
 
 const CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 
@@ -349,6 +350,32 @@ async function main() {
     }
   } catch { /* 沒有這份檔就只是少了樂居欄位，不影響定位 */ }
 
+  /* ---- 信義房屋社區頁（build/fetch-sinyi.mjs 抓的）----
+     補樂居沒有的欄位：公共設施、建設公司、警衛管理、垃圾處理、結構與外牆。
+     客戶當面問「有沒有健身房」「誰蓋的」「垃圾怎麼倒」，這些原本一個都答不出來。
+     它還有樓高 —— 樂居那份表沒這欄，圖上 135 個社區的樓高本來全是空的。 */
+  const sinyi = await readFile(SINYI, 'utf8')
+    .then((t) => JSON.parse(t).byName || {})
+    .catch(() => ({}));                       // 沒抓過就只是少幾個欄位，不影響定位
+  const sinyiKeys = Object.keys(sinyi);
+  const sinyiOf = (name) => {
+    const n = normName(name);
+    if (!n) return null;
+    const exact = sinyiKeys.find((k) => normName(k) === n);
+    if (exact) return sinyi[exact];
+    const loose = sinyiKeys.find((k) => {
+      const m = normName(k);
+      return m.length > 2 && (m.includes(n) || n.includes(m));
+    });
+    return loose ? sinyi[loose] : null;
+  };
+  /* 「819戶」→ 819、「34.00%~34.00%」→ 34、「15、16、17層」→ 17（取最高的那棟） */
+  const sNum = (v) => { const m = String(v || '').match(/[\d.]+/); return m ? +m[0] : undefined; };
+  const sTopFloor = (v) => {
+    const all = String(v || '').match(/\d+/g);
+    return all ? Math.max(...all.map(Number)) : undefined;
+  };
+
   /* 社區名對樂居名。先求完全相同，再退一步找包含關係
      （樂居用銷售名、管委會用登記名，例：良茂詠恆詠美館 vs 良茂詠恆）。
      命中的樂居原始名記進 usedLeju，後面補點時就不會再畫一次同一個社區。 */
@@ -428,6 +455,7 @@ async function main() {
     const name = note.name || c.name;
     if (!name) continue;                         // 未命名社區不上圖
     const lj = lejuOf(name);
+    const sy = sinyiOf(name);
 
     /* 路名要試好幾種寫法。
        OSM 會把同一條路拆成兩個名字：「青昇路一段」只有 8 個門牌（23~105），
@@ -543,8 +571,11 @@ async function main() {
       nameIsMine: note.name ? true : undefined,
       /* 樂居人工核對來的欄位，官方管線沒有這些。帶看時客戶最常問的就是這幾項。
          my-notes（我自己改過的）優先於 TSV 原始快照。 */
-      households: note.households ? Number(note.households) : lj?.households,
-      publicRatio: note.ratio ? Number(note.ratio) : lj?.ratio,
+      /* 優先序：我自己改過的 > 樂居人工核對 > 信義房屋 */
+      households: note.households ? Number(note.households)
+        : (lj?.households ?? (sy ? sNum(sy['戶數']) : undefined)),
+      publicRatio: note.ratio ? Number(note.ratio)
+        : (lj?.ratio ?? (sy ? sNum(sy['公設比']) : undefined)),
       lejuAddr: lj?.addr,
       lejuAge: lj?.age,
       lejuBlock: lj?.block,
@@ -556,8 +587,22 @@ async function main() {
       dist: c.dist,
       road: c.roadFull || c.road,
       addrRange: c.addrRange,
+      /* 信義房屋補的：公設、建商、管理方式。這幾項實價登錄與樂居都沒有，
+         但帶看現場客戶一定會問。 */
+      facilities: sy?.['公共設施'] || undefined,
+      builder: sy?.['建設公司'] || undefined,
+      security: sy?.['警衛管理'] || undefined,
+      trash: sy?.['垃圾處理'] || undefined,
+      structure: sy?.['主要結構'] || undefined,
+      facade: sy?.['外牆建材'] || undefined,
+      barrierFree: sy?.['無障礙設施'] || undefined,
+      floorsText: sy?.['樓高'] || undefined,          // 「15、16、17層」這種多棟寫法
       age: c.age,
       doneRoc: c.doneRoc,
+      /* 確切到月的完工日。實價登錄本來就給到月（202306＝2023年6月），
+         但卡片一直只印「民國 112 年」—— 客戶問「幾年幾月蓋好的」答不出來，
+         而屋齡差幾個月在議價時是有差的。 */
+      doneYM: c.doneYM,
       totalFloor: c.totalFloor,
       upMedian: c.upMedian,
       trend: c.trend,
@@ -591,6 +636,7 @@ async function main() {
     if (!nm || onMapNames.has(nm)) continue;           // 名字已經在圖上
     lejuSeq++;
 
+    const sy2 = sinyiOf(lj.rawName);
     const parsed = parseLejuAddr(lj.addr);
     if (!parsed) {
       lejuStats.none++;
@@ -690,11 +736,22 @@ async function main() {
       name: lj.rawName,
       src: 'leju',                                    // 前端靠這個欄位換顏色
       presale: presale || undefined,
-      households: lj.households,
-      publicRatio: lj.ratio,
+      // 樂居沒登的，用信義那邊的補上
+      households: lj.households ?? (sy2 ? sNum(sy2['戶數']) : undefined),
+      publicRatio: lj.ratio ?? (sy2 ? sNum(sy2['公設比']) : undefined),
       lejuAddr: lj.addr,
       lejuAge: lj.age,
       doneEta,                                        // 「2026 Q4」這種短標籤，卡片直接顯示
+      /* 樂居那份表沒有樓高，信義有 —— 這 135 個社區的樓高原本全是空的 */
+      totalFloor: sy2 ? sTopFloor(sy2['樓高']) : undefined,
+      floorsText: sy2?.['樓高'] || undefined,
+      facilities: sy2?.['公共設施'] || undefined,
+      builder: sy2?.['建設公司'] || undefined,
+      security: sy2?.['警衛管理'] || undefined,
+      trash: sy2?.['垃圾處理'] || undefined,
+      structure: sy2?.['主要結構'] || undefined,
+      facade: sy2?.['外牆建材'] || undefined,
+      barrierFree: sy2?.['無障礙設施'] || undefined,
       lejuBlock: lj.block,
       lat: +pos.lat.toFixed(6),
       lon: +pos.lon.toFixed(6),

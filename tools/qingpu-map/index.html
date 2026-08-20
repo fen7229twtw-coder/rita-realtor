@@ -182,6 +182,18 @@ body{
   font-size:.72rem; line-height:1.55; color:var(--text-muted);
 }
 
+/* 公共設施：排成一排小標籤。客戶當面問「有沒有健身房」，
+   一整行字要用讀的，標籤用掃的就看到了。 */
+.facil{margin-top:11px}
+.facil-t{font-size:.64rem; font-weight:700; color:var(--text-faint); letter-spacing:.08em; margin-bottom:5px}
+.facil-list{display:flex; flex-wrap:wrap; gap:4px}
+.facil-list .f{
+  font-size:.68rem; font-weight:600; padding:3px 8px; border-radius:99px;
+  background:#EDF4EF; color:#2C5E45; border:1px solid #CFE2D6; white-space:nowrap;
+}
+/* 客戶最常指名的那幾樣，顏色加重 */
+.facil-list .f.hot{background:#3E8E63; border-color:#3E8E63; color:#fff}
+
 /* 樂居資料獨立一塊，跟官方實價登錄的數字分開 */
 .leju-box{
   margin-top:11px; padding:9px 11px; border-radius:9px;
@@ -1159,6 +1171,7 @@ function showCard(id) {
   if (lejuHit(p)) srcBits.push(guestMode()
     ? '戶數、公設比與地址整理自樂居'
     : '戶數、公設比與地址是你在樂居人工核對來的');
+  if (p.facilities || p.builder) srcBits.push('公設、建商與管理方式整理自信義房屋的社區資料');
 
   $('#card').innerHTML =
     /* 已經排進路線的，第一行就講清楚是第幾站 —— 客戶看到的也是這句 */
@@ -1181,7 +1194,7 @@ function showCard(id) {
     +   (p.presale
           ? st('交屋', p.doneEta, '')
           : st('屋齡', ageTxt, '年', noteUnpublished ? '還沒公布' : (isLeju ? '樂居沒登' : null)))
-    +   st('樓高', p.totalFloor, '層', isLeju ? '樂居沒這欄' : null)
+    +   st('樓高', p.totalFloor, '層', isLeju ? '還沒查到' : null)
     +   st('戶數', p.households, '戶', isLeju ? '樂居沒登' : (!lejuHit(p) ? '名字沒對上' : null))
     +   st('公設比', p.publicRatio, '%', isLeju ? '樂居沒登' : (!lejuHit(p) ? '名字沒對上' : null))
     + `</div>`
@@ -1199,6 +1212,24 @@ function showCard(id) {
         + `</div>`
       : '')
 
+    /* 公共設施與管理方式。這些實價登錄與樂居都沒有，是從信義房屋的社區頁
+       整理來的（build/fetch-sinyi.mjs）—— 但帶看現場客戶一定會問。 */
+    + (p.facilities
+      ? `<div class="facil"><div class="facil-t">公共設施</div><div class="facil-list">`
+        + p.facilities.split(/[,、]/).map((f) => f.trim()).filter(Boolean)
+            .map((f) => `<span class="f${/泳池|健身|KTV|交誼|閱覽|圖書|遊戲|視聽/.test(f) ? ' hot' : ''}">${esc(f)}</span>`)
+            .join('')
+        + `</div></div>`
+      : '')
+    + ((p.builder || p.security || p.trash || p.structure)
+      ? `<dl class="rows" style="margin-top:11px">`
+        + (p.builder ? `<dt>建商</dt><dd>${esc(p.builder)}</dd>` : '')
+        + (p.security ? `<dt>警衛</dt><dd>${esc(p.security)}</dd>` : '')
+        + (p.trash ? `<dt>垃圾</dt><dd>${esc(p.trash)}</dd>` : '')
+        + (p.structure ? `<dt>結構</dt><dd>${esc(p.structure)}${p.facade ? `／${esc(p.facade)}` : ''}</dd>` : '')
+        + `</dl>`
+      : '')
+
     /* 樂居補的社區在實價登錄裡查不到，格局／車位／成交筆數全是空的。
        印一排「—」和「0 筆」看起來像資料掉了，所以整塊換成一句說明。 */
     + (isLeju
@@ -1209,7 +1240,13 @@ function showCard(id) {
         + (guestMode() ? `上面的資料整理自樂居。` : `上面的資料是你在樂居人工核對來的。`)
         + `</div>`
       : `<dl class="rows" style="margin-top:11px">`
-        + (p.doneRoc ? `<dt>完工</dt><dd>民國 ${p.doneRoc} 年</dd>` : '')
+        + (p.doneYM || p.doneRoc
+          /* 實價登錄的完工日本來就精確到月，之前只印民國年 ——
+             客戶問「幾年幾月蓋好的」答不出來，屋齡差幾個月在議價時是有差的。 */
+          ? `<dt>完工</dt><dd>${p.doneYM
+              ? `${String(p.doneYM).slice(0,4)} 年 ${+String(p.doneYM).slice(4,6)} 月`
+              : ''}${p.doneRoc ? `<small style="color:var(--text-faint)">（民國 ${p.doneRoc} 年）</small>` : ''}</dd>`
+          : '')
         + `<dt>格局</dt><dd>${rooms}</dd>`
         + (p.parkMedian ? `<dt>車位</dt><dd>約 ${p.parkMedian} 萬</dd>` : '')
         + `<dt>成交</dt><dd>近一年 ${p.deals1y || 0} 筆／累計 ${p.dealsAll || 0} 筆`
