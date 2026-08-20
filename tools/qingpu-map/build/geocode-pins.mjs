@@ -46,6 +46,25 @@ function houseNo(s) {
 const normName = (s) =>
   String(s || '').replace(/[\s\-－—・·．.()（）]/g, '').replace(/[0-9]+$/, '');
 
+/* 公設欄是各家網站人工填的，夾了不少不是公設的東西：
+   「扣點」「不須另外付費」「不清楚」「頂樓有空中花園，景觀超棒!!」。
+   這些印在卡片上會讓整份資料看起來很隨便，先洗過再上圖。
+   分隔符號各家不同（逗號、頓號、句點、空白都有），一起切。 */
+function cleanFacilities(raw) {
+  const items = String(raw || '')
+    .replace(new RegExp('[' + String.fromCharCode(32, 0x3000, 0xa0) + ']+', 'g'), ',')  // 空白也是分隔符
+    .split(/[,、;；。．./／]+/)
+    .map((x) => x.trim())
+    .filter((x) => {
+      if (x.length < 2 || x.length > 10) return false;      // 太短是碎片，太長是句子
+      if (/[!！?？]/.test(x)) return false;                  // 帶驚嘆號的是感想不是公設
+      if (/^不/.test(x)) return false;                       // 不清楚／不須另外付費
+      if (/付費|扣點|清楚|超棒|請洽|另計|每次|每小時/.test(x)) return false;
+      return true;
+    });
+  return items.length ? [...new Set(items)].join(',') : undefined;
+}
+
 /* 「33.99」→ 33.99；「0」與空字串一律當沒有 */
 const numOr = (v) => {
   const n = parseFloat(String(v || '').replace(/[^\d.]/g, ''));
@@ -625,7 +644,7 @@ async function main() {
          但帶看現場客戶一定會問。 */
       // true 代表這筆是人工查證整理的，不是從信義自動抓的 —— 卡片的來源要分開講
       extraManual: sy?.manual || undefined,
-      facilities: sy?.['公共設施'] || undefined,
+      facilities: cleanFacilities(sy?.['公共設施']),
       builder: sy?.['建設公司'] || undefined,
       security: sy?.['警衛管理'] || undefined,
       trash: sy?.['垃圾處理'] || undefined,
@@ -782,7 +801,7 @@ async function main() {
       totalFloor: sy2 ? sTopFloor(sy2['樓高']) : undefined,
       floorsText: sy2?.['樓高'] || undefined,
       extraManual: sy2?.manual || undefined,
-      facilities: sy2?.['公共設施'] || undefined,
+      facilities: cleanFacilities(sy2?.['公共設施']),
       builder: sy2?.['建設公司'] || undefined,
       security: sy2?.['警衛管理'] || undefined,
       trash: sy2?.['垃圾處理'] || undefined,
