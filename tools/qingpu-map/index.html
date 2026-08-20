@@ -15,6 +15,7 @@
   --primary:#005335; --primary-deep:#0B2E20; --secondary:#4FAF38;
   --accent:#D8261C; --amber:#C8811A; --blue:#2B6CB0;
   --tour:#0B7A4B;                      /* 帶看編號徽章與光暈的綠 */
+  --route:#D8261C;                     /* 帶看路線的紅虛線（就是有巢氏那個紅） */                      /* 帶看編號徽章與光暈的綠 */
   --bg:#F4F7F4; --surface:#FFFFFF; --border:#DFE9E2; --border-strong:#C3D6CA;
   --text:#173D30; --text-muted:#6A7D74; --text-faint:#95A69C;
 
@@ -437,9 +438,10 @@ body{
 .tb-head b{font-size:.9rem; color:#8A5A12}
 .tb-hint{font-size:.72rem; color:#A9884F}
 .tb-total{font-size:.78rem; font-weight:800; color:var(--primary); margin-left:auto}
-/* 路線上的時間標籤：底圖路網很密，要描白邊才讀得到 */
+/* 路線上的時間標籤：底圖路網很密，要描白邊才讀得到。
+   顏色跟著路線走 —— 標籤是路線的一部分，不該還留在舊的橘色 */
 .leg-label{
-  font-size:12.5px; font-weight:800; fill:#8A5A12;
+  font-size:12.5px; font-weight:800; fill:#B3261E;
   paint-order:stroke; stroke:#fff; stroke-width:4px; stroke-linejoin:round;
 }
 .tb-list{display:flex; flex-wrap:wrap; gap:7px; min-height:32px}
@@ -1651,6 +1653,15 @@ function rescale() {
   });
   document.querySelectorAll('#tour-badges text').forEach(t => t.style.fontSize = badge + 'px');
   document.querySelectorAll('.leg-label').forEach(t => t.style.fontSize = (12.5 * k) + 'px');
+
+  /* 帶看路線：白底螢幕上固定 8.6px、紅虛線 4.4px，虛線本身的長短也照螢幕算。
+     圓頭端點會讓每一段虛線的實際長度多出一個線寬，所以留的空隙要比想要的再大一點。 */
+  document.querySelectorAll('#tour-path .leg-case')
+    .forEach(p => p.setAttribute('stroke-width', 8.6 * k));
+  document.querySelectorAll('#tour-path .leg-line').forEach(p => {
+    p.setAttribute('stroke-width', 4.4 * k);
+    p.setAttribute('stroke-dasharray', (10 * k) + ' ' + (15 * k));
+  });
 }
 function zoom(f, cx, cy) {
   const nw = Math.min(home.w * 1.05, Math.max(home.w * 0.06, view.w * f));
@@ -2273,11 +2284,14 @@ function renderTour() {
       pts.push([stops[i + 1]._x, stops[i + 1]._y]);
       const d = 'M' + pts.map(p => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join('L');
 
-      // 兩層：白色粗底 + 橘色實線，壓在密集的路網上才看得清楚
+      /* 兩層：白色粗底墊著，紅虛線壓在上面。
+         底圖的路網很密，沒有白底那條紅線會跟路混在一起看不出是路線。
+         粗細與虛線長短都不寫死，交給 rescale 照螢幕像素算 —— 帶看模式會自動
+         縮放到只框住那幾站，寫死單位的話社區靠得近時線會脹成一條粗紅帶。 */
       gPath.appendChild(path(d, null, '#fff', 9,
-        { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: .9 }));
-      gPath.appendChild(path(d, null, 'var(--amber)', 4.5,
-        { 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+        { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: .95, class: 'leg-case' }));
+      gPath.appendChild(path(d, null, 'var(--route)', 4.4,
+        { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', class: 'leg-line' }));
 
       // 時間標在這段路的中點
       const mid = pts[Math.floor(pts.length / 2)];
@@ -2611,6 +2625,7 @@ async function exportPNG() {
     .poi-label{font-size:13px;font-weight:700;fill:#0B2E20;paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}
     .pin-label{font-size:10.5px;font-weight:600;fill:#3F2D52;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
     .area-label{font-size:11px;font-weight:600;fill:#5C7A52;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+    .leg-label{font-weight:800;fill:#B3261E;paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
     .scalebar text{font-size:11px;fill:#6A7D74;font-weight:600}
   </style>`);
 
@@ -2722,6 +2737,7 @@ function exportSVG() {
     + `text{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif}`
     + `.poi-label{font-size:13px;font-weight:700;fill:#0B2E20;paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}`
     + `.area-label{font-size:11px;font-weight:600;fill:#5C7A52;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}`
+    + `.leg-label{font-weight:800;fill:#B3261E;paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}`
     + `.scalebar text{font-size:11px;fill:#6A7D74;font-weight:600}`
     + '</style>';
   s = s.replace(/^<svg([^>]*)>/, `<svg$1>${style}`);
