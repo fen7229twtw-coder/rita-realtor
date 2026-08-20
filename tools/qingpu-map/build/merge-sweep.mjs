@@ -26,7 +26,10 @@ const PINS = join(HERE, '..', 'data', 'pins.json');
 
 const DRY = process.argv.includes('--dry');
 
-const norm = (s) => String(s || '').replace(/[\s\-－—・·．.()（）]/g, '').replace(/[0-9]+$/, '');
+/* 信義寫「新潤明日苑NO.8-國峰苑」，地圖上是「新潤明日苑8國峰苑」——
+   同一個社區，差在一個 NO. 跟一個破折號。把 NO. 這種序號前綴拿掉，
+   數字本身要留（留著才分得出 8 國峰苑跟 2 國璽苑是兩個社區）。 */
+const norm = (s) => String(s || '').replace(/[Nn][Oo]\.?|第/g, '').replace(/[\s\-－—・·．.()（）]/g, '').replace(/[0-9]+$/, '');
 /* 信義的社區名常常是「A/B/C」，那是同一棟樓的別名，逐個拿來比 */
 const aliases = (s) => String(s || '').split(/[/／]/).map(norm).filter((x) => x.length >= 2);
 /* 門牌只留路名那段，用來決勝 */
