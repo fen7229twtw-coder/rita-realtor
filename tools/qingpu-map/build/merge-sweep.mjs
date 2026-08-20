@@ -32,6 +32,12 @@ const DRY = process.argv.includes('--dry');
 const norm = (s) => String(s || '').replace(/[Nn][Oo]\.?|第/g, '').replace(/[\s\-－—・·．.()（）]/g, '').replace(/[0-9]+$/, '');
 /* 信義的社區名常常是「A/B/C」，那是同一棟樓的別名，逐個拿來比 */
 const aliases = (s) => String(s || '').split(/[/／]/).map(norm).filter((x) => x.length >= 2);
+/* 名字結尾的那個數字是「第幾期／第幾棟」，是分辨社區的關鍵，不能被吃掉。
+   「康橋新幹線6」跟「康橋新幹線No.2」去掉尾碼後長得一模一樣，
+   但它們是兩個社區 —— 公設配錯，帶看現場就會出糗。 */
+const tailNo = (s) => (String(s || '').replace(/[Nn][Oo].?|第/g, '').replace(/[s-－—・·．.()（）]/g, '').match(/[0-9]+$/) || [''])[0];
+/* 「819戶」→ 819 */
+const hh = (v) => { const m = String(v || '').match(/d+/); return m ? +m[0] : null; };
 /* 門牌只留路名那段，用來決勝 */
 const roadOf = (s) => (String(s || '').match(/(?:中壢區|大園區)([^0-9]{2,12}?(?:路|街|大道))/) || [])[1] || '';
 
@@ -55,13 +61,16 @@ async function main() {
 
   const matched = [];
   const ambiguous = [];
+  const householdGap = [];
   for (const p of pins) {
     const already = extra.byName[p.name];
     if (already && already.公共設施) continue;          // 已經有公設就不動它
     const n = norm(p.name);
     if (n.length < 2) continue;
 
-    let cands = byAlias.get(n) || [];
+    const pTail = tailNo(p.name);
+    let cands = (byAlias.get(n) || []).filter((c) => aliases(c.rec.名稱).some((a, i) =>
+      a === n && tailNo(String(c.rec.名稱).split(/[/／]/)[i]) === pTail));
     let how = '同名';
     if (!cands.length && n.length >= 3) {
       how = '包含';
@@ -70,7 +79,15 @@ async function main() {
       for (const [a, list] of byAlias) {
         if (a.length < 2) continue;
         if (!(a.includes(n) || n.includes(a))) continue;
-        for (const c of list) if (!seen.has(c.id)) { seen.add(c.id); cands.push(c); }
+        for (const c of list) {
+          if (seen.has(c.id)) continue;
+          /* 尾碼不同就是不同社區（一期／二期、No.1／No.2、V1／V2） */
+          const cTail = aliases(c.rec.名稱).includes(a)
+            ? tailNo(String(c.rec.名稱).split(/[/／]/)[aliases(c.rec.名稱).indexOf(a)])
+            : tailNo(c.rec.名稱);
+          if (cTail !== pTail) continue;
+          seen.add(c.id); cands.push(c);
+        }
       }
     }
     if (!cands.length) continue;
@@ -84,12 +101,29 @@ async function main() {
     }
 
     const { id, rec } = cands[0];
+    /* 最後一道：兩邊都有戶數的話要對得上。差超過兩成就是配到別棟，寧可不收。
+       （店面那種一群幾戶的除外 —— 母棟幾百戶、店面十幾戶是正常的） */
+    const a1 = hh(p.households);
+    const b1 = hh(rec.戶數);
+    if (a1 && b1 && !/店面|管理|委員/.test(p.name)) {
+      const big = Math.max(a1, b1);
+      const small = Math.min(a1, b1);
+      if (small / big < 0.8) {
+        householdGap.push([p.name, `${a1} 戶`, `${rec.名稱} ${b1} 戶`, id]);
+        continue;
+      }
+    }
     matched.push([p.name, rec.名稱, id, how, rec.公共設施 ? '有公設' : '無公設']);
     extra.byName[p.name] = { ...rec, id, at: new Date().toISOString(), via: 'sweep' };
   }
 
   console.log(`\n配對成功 ${matched.length} 筆：`);
   for (const m of matched) console.log('  ' + m.join('\t'));
+  if (householdGap.length) {
+    console.log(`
+戶數對不上、故意放掉的 ${householdGap.length} 筆：`);
+    for (const g of householdGap) console.log('  ' + g.join('	'));
+  }
   if (ambiguous.length) {
     console.log(`\n對不起來、故意放掉的 ${ambiguous.length} 筆（多個候選，不猜）：`);
     for (const a of ambiguous) console.log('  ' + a.join('\t'));
