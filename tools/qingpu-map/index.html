@@ -219,6 +219,15 @@ body{
 .card-acts .leju.direct{background:#1F7A4D; border-color:#1F7A4D}
 .card-acts .leju.direct:hover{background:#17603C}
 .card-acts .setleju{grid-column:1 / -1; font-size:.68rem; font-weight:600; color:var(--text-muted); padding:6px}
+/* 排路線時最常按的一顆，所以放在卡片最上面、做到手指標準大小 */
+.card-share{
+  display:block; width:100%; margin:0 0 11px; min-height:44px;
+  font:inherit; font-size:.8rem; font-weight:800; cursor:pointer;
+  border-radius:9px; border:1px solid var(--tour);
+  background:var(--tour); color:#fff;
+}
+.card-share:hover{background:#096139}
+.card-share.ok{background:var(--secondary); border-color:var(--secondary)}
 .card-acts .db{background:var(--primary); border-color:var(--primary); color:#fff}
 .card-acts .db:hover{background:var(--primary-deep)}
 @media print{ .card-acts{display:none} }
@@ -1154,6 +1163,13 @@ function showCard(id) {
   $('#card').innerHTML =
     /* 已經排進路線的，第一行就講清楚是第幾站 —— 客戶看到的也是這句 */
     (tour.includes(p.id) ? `<div class="pop-tour">✓ 今天的帶看路線　第 ${tour.indexOf(p.id) + 1} 站</div>` : '')
+    /* 加完社區就在同一個視窗按「複製連結」，不必捲到卡片最下面、也不必回到上面那條帶看列。
+       放在最上面是因為排路線時最常按的就是它；卡片下半段的資料是看房時才會用到。
+       只有這個社區已經在路線上才出現 —— 還沒加就給連結，複製到的是不含它的舊路線。
+       客戶不該看到（他按了會把我排好的路線複製走，而且他也不需要）。 */
+    + (tour.includes(p.id) && !guestMode()
+        ? `<button class="card-share" data-share="1">📋 複製連結傳給客戶（${tour.length} 站）</button>`
+        : '')
     + (wan
         ? `<div class="px">${wan} 萬 / 坪 ${trend}</div>`
         : `<div class="px" style="color:var(--text-faint);font-size:1rem">尚無成交資料</div>`)
@@ -1681,6 +1697,9 @@ function bindMap() {
     // 複製社區名＋地址，直接貼給客戶
     const txt = e.target.dataset?.copy;
     if (txt) { copyText(txt, e.target); return; }
+
+    // 複製整條路線的連結
+    if (e.target.dataset?.share) { shareRoute(e.target); return; }
 
     // 翻到帶看路線的上／下一站：卡片換掉，地圖平移過去（不改縮放，免得客戶迷路）
     const step = e.target.dataset?.step;
@@ -2386,21 +2405,7 @@ function bindTour() {
     if (id) toggleTour(id);
   });
 
-  $('#tourShare').onclick = async () => {
-    if (!tour.length) { toastTour('先挑幾個社區'); return; }
-    const url = shareUrl();
-    try {
-      await navigator.clipboard.writeText(url);
-      toastTour(onPublicSite()
-        ? `已複製連結（${tour.length} 個社區），貼到 LINE 傳給客戶`
-        : `已複製「客戶看得到的網址」（${tour.length} 個社區）—— 不是這台電腦上的位址`);
-      // 把網址整串印出來，她可以自己看一眼是不是 localhost
-      $('#status').textContent = '傳給客戶的連結：' + url;
-    } catch {
-      // 有些瀏覽器不給剪貼簿權限，退回選取讓她自己複製
-      prompt('複製這個連結傳給客戶：', url);
-    }
-  };
+  $('#tourShare').onclick = () => shareRoute();
 
   $('#tourPng').onclick = exportPNG;
 
@@ -2410,6 +2415,35 @@ function bindTour() {
     $('#tourBtn').textContent = '🚗 帶看中';
     $('#tourHint').textContent = '點地圖上的社區加入路線，再點一次移除';
   };
+}
+
+/* 複製整條路線的連結。帶看列上那顆與資料視窗裡那顆走同一支。
+   btn 有給的話，按鈕本身也會變成「✓ 已複製」當回饋 —— 資料視窗蓋住帶看列時看不到 toast。 */
+async function shareRoute(btn) {
+  if (!tour.length) { toastTour('先挑幾個社區'); return; }
+  const url = shareUrl();
+  const ok = () => {
+    toastTour(onPublicSite()
+      ? `已複製連結（${tour.length} 個社區），貼到 LINE 傳給客戶`
+      : `已複製「客戶看得到的網址」（${tour.length} 個社區）—— 不是這台電腦上的位址`);
+    // 把網址整串印出來，可以自己看一眼是不是 localhost
+    $('#status').textContent = '傳給客戶的連結：' + url;
+    if (btn) {
+      btn.textContent = '✓ 已複製，去 LINE 貼上';
+      btn.classList.add('ok');
+      setTimeout(() => {
+        btn.textContent = `📋 複製連結傳給客戶（${tour.length} 站）`;   // 站數可能在這 1.8 秒內被改過，重算一次
+        btn.classList.remove('ok');
+      }, 1800);
+    }
+  };
+  try {
+    await navigator.clipboard.writeText(url);
+    ok();
+  } catch {
+    // 有些瀏覽器不給剪貼簿權限，退回選取讓她自己複製
+    prompt('複製這個連結傳給客戶：', url);
+  }
 }
 
 function toastTour(msg) {
