@@ -368,11 +368,15 @@ async function main() {
       .map((l) => l.split('\t'));
     for (const r of rows) {
       const name = (r[0] || '').trim();
-      if (!name || sinyi[name]) continue;          // 信義有的就不用這份蓋掉
-      const rec = { manual: true };                // 卡片靠這個欄位分辨來源
+      if (!name) continue;
+      /* 信義有這個社區，不代表每一欄都有 —— 中悅森PLAZA 在信義有頁面，
+         但那頁沒有公共設施那一欄。所以是「一欄一欄補空的」，不是整筆讓路。
+         信義已經有值的欄位絕不覆蓋。 */
+      const rec = sinyi[name] || {};
+      const had = { ...rec };
       const put = (k, v, unit) => {
         const t = (v || '').trim();
-        if (t) rec[k] = unit ? t + unit : t;
+        if (t && !(rec[k] || '').toString().trim()) rec[k] = unit ? t + unit : t;
       };
       put('公共設施', r[1]);
       put('建設公司', r[2]);
@@ -380,6 +384,9 @@ async function main() {
       put('樓高', r[4], '層');
       put('公設比', r[5], '%');
       put('戶數', r[6], '戶');
+      /* 卡片的來源說明要講實話：整筆都是人工查的，跟信義補了一半的，
+         講法不一樣。只要這次真的補進了什麼，就標記一下。 */
+      if (Object.keys(rec).some((k) => rec[k] !== had[k])) rec.manual = true;
       sinyi[name] = rec;
     }
   } catch { /* 沒這份檔就只是少幾個社區的公設 */ }
