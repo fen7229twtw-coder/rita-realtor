@@ -21,8 +21,13 @@
 
 <style>
 /* ===================================================================
-   帶看行程區塊 —— 只有網址帶了 #v=社區id,… 才會出現。
+   帶看行程 —— 只有網址帶了 #v=社區id,… 才會出現。
    沒帶就是原本那張電子名片，一個像素都不會變。
+
+   有行程的時候版面整個換一套：
+   大頭照從 150px 換成 56px、自我介紹收起來，
+   客戶一打開第一眼就是「今天要去哪、開多久、怎麼走」。
+   形象照與聯絡方式沒有不見，只是縮小移到最上面那條。
 
    行程資料哪裡來：社區名與地址讀青埔地圖的 data/pins.json，
    每段車程直接寫在網址裡（&t= 分鐘 &d= 公里），由地圖那端算好帶過來。
@@ -31,64 +36,105 @@
 =================================================================== */
 :root{
   --c-primary:#005335; --c-primary-deep:#0B2E20; --c-secondary:#4FAF38;
-  --c-tour:#0B7A4B; --c-amber:#C8811A;
-  --c-text:#173D30; --c-muted:#64776F; --c-line:#E4EFE8;
+  --c-tour:#0B7A4B; --c-muted:#64776F; --c-line:#E4EFE8;
 }
+
+/* 有行程時：大頭照那一整塊收起來，換成上面那條小的 */
+body.has-tour #hero{display:none}
+body.has-tour #miniMe{display:block}
+#miniMe{display:none}
+
+/* ---------- 上面那條：小照片 + 名字 + 電話 ---------- */
+.mm-top{
+  display:flex; align-items:center; gap:12px; padding:16px 18px;
+  background:linear-gradient(120deg,#4FAF38,#005335); color:#fff;
+}
+.mm-top img{
+  flex:none; width:56px; height:56px; border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.9); object-fit:cover; object-position:center 12%;
+}
+.mm-who{min-width:0}
+.mm-who b{display:block; font-size:18px; font-weight:800; letter-spacing:.5px}
+.mm-who b i{font-style:normal; font-weight:500; font-size:13px; opacity:.85; margin-left:7px}
+.mm-who .co{display:block; font-size:12.5px; opacity:.9; margin-top:2px}
+.mm-who .tel{display:block; font-size:15px; font-weight:700; margin-top:3px; letter-spacing:.5px}
+.mm-acts{display:grid; grid-template-columns:1fr 1fr; gap:9px; padding:12px 18px 4px}
+.mm-acts a{
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  min-height:46px; border-radius:11px; text-decoration:none;
+  font-size:15px; font-weight:800;
+  background:var(--c-primary); color:#fff;
+}
+.mm-acts a.line{background:#06C755}
+
+/* ---------- 行程 ---------- */
 #tourSec{display:none; padding:4px 18px 20px}
 #tourSec.on{display:block}
-/* 有行程時把那段自我介紹收成一行，客戶一打開就看得到今天要去哪 */
-body.has-tour #bio{display:none}
 
 .t-head{
-  display:flex; align-items:baseline; gap:8px; margin:14px 0 11px;
+  display:flex; align-items:baseline; gap:8px; margin:14px 0 10px;
   padding-bottom:7px; border-bottom:2px solid var(--c-secondary);
 }
 .t-head b{font-size:15px; font-weight:800; letter-spacing:1.5px; color:var(--c-primary)}
 .t-head span{font-size:12px; color:var(--c-muted); margin-left:auto}
 
-/* ---------- 地圖預覽 ---------- */
+/* ---------- 路線圖 ---------- */
 .t-map{
   position:relative; border-radius:14px; overflow:hidden;
-  border:1px solid var(--c-line); background:#FBF8F3; margin-bottom:13px;
+  border:1px solid var(--c-line); background:#FBF8F3;
 }
 .t-map iframe{
-  display:block; width:100%; height:280px; border:0;
+  display:block; width:100%; height:290px; border:0;
   pointer-events:none;   /* 手指在上面滑＝捲頁面，不會被地圖吃掉 */
+}
+/* 地圖上的編號熱區：地圖那端回報位置，這裡蓋上去讓客戶點得到 */
+.t-hots{position:absolute; inset:0; pointer-events:none}
+.t-hots a{
+  position:absolute; pointer-events:auto; border-radius:50%;
+  box-shadow:0 0 0 3px rgba(11,122,75,.28);
+  -webkit-tap-highlight-color:rgba(11,122,75,.3);
 }
 .t-map .open{
   position:absolute; right:9px; bottom:9px;
   background:rgba(11,46,32,.86); color:#fff; text-decoration:none;
   font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:9px;
-  display:inline-flex; align-items:center; gap:5px;
 }
+.t-map .t-fail{
+  padding:22px 16px; font-size:13px; color:var(--c-muted); line-height:1.8; text-align:center;
+}
+.t-map .t-fail a{color:var(--c-primary); font-weight:800}
 .t-map .load{
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
   font-size:13px; color:var(--c-muted); background:#FBF8F3;
 }
+.t-tip{font-size:12px; color:var(--c-muted); margin:8px 2px 4px; line-height:1.6}
 
-/* ---------- 行程清單 ---------- */
+/* ---------- 行程清單：整列都可以點 ---------- */
 .t-list{list-style:none; margin:0; padding:0}
-.t-stop{display:flex; align-items:flex-start; gap:10px; padding:9px 0}
+.t-stop a{
+  display:flex; align-items:center; gap:10px; padding:11px 10px 11px 0;
+  text-decoration:none; color:inherit; border-radius:11px;
+}
+.t-stop a:active{background:#F2F7F3}
 .t-stop .no{
-  flex:none; width:24px; height:24px; border-radius:50%;
-  background:var(--c-tour); color:#fff; font-size:12.5px; font-weight:800;
-  display:flex; align-items:center; justify-content:center; margin-top:1px;
+  flex:none; width:28px; height:28px; border-radius:50%;
+  background:var(--c-tour); color:#fff; font-size:14px; font-weight:800;
+  display:flex; align-items:center; justify-content:center;
 }
 .t-stop .who{flex:1; min-width:0}
-.t-stop .who b{display:block; font-size:15px; font-weight:700; line-height:1.35}
+.t-stop .who b{display:block; font-size:15.5px; font-weight:700; line-height:1.35}
 .t-stop .who span{display:block; font-size:12.5px; color:var(--c-muted); margin-top:2px}
 .t-stop .go{
-  flex:none; text-decoration:none; font-size:12px; font-weight:700;
-  color:var(--c-primary); background:#F2F7F3; border:1px solid #D8E7DD;
-  border-radius:9px; padding:0 11px; min-height:44px;   /* 手指標準大小，35px 會點不準 */
-  display:inline-flex; align-items:center; gap:4px;
+  flex:none; font-size:12.5px; font-weight:800; color:var(--c-primary);
+  background:#F2F7F3; border:1px solid #D8E7DD; border-radius:9px;
+  min-height:40px; padding:0 11px; display:inline-flex; align-items:center; gap:4px;
 }
 .t-leg{
-  display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--c-muted);
-  padding:2px 0 2px 34px; position:relative;
+  font-size:12.5px; color:var(--c-muted);
+  padding:3px 0 3px 40px; position:relative;
 }
 .t-leg::before{
-  content:''; position:absolute; left:11px; top:0; bottom:0;
+  content:''; position:absolute; left:13px; top:-2px; bottom:-2px;
   border-left:2px dotted #C3D6CA;
 }
 .t-total{
@@ -98,7 +144,7 @@ body.has-tour #bio{display:none}
 }
 .t-total small{display:block; font-weight:400; font-size:11.5px; color:var(--c-muted); margin-top:4px; line-height:1.6}
 
-/* ---------- 行動按鈕 ---------- */
+/* ---------- 大按鈕 ---------- */
 .t-acts{display:grid; gap:10px; margin-top:14px}
 .t-acts a{
   display:flex; align-items:center; justify-content:center; gap:8px;
@@ -114,25 +160,46 @@ body.has-tour #bio{display:none}
   <div style="max-width:440px;margin:0 auto">
     <div style="background:#FFFFFF;border-radius:22px;box-shadow:0 12px 44px rgba(0,83,53,0.14);overflow:hidden">
 
-      <!-- 頂部品牌條 -->
-      <div style="height:92px;background:linear-gradient(120deg,#4FAF38,#005335);position:relative">
-        <div style="position:absolute;top:14px;right:18px;font-size:12.5px;color:#FFFFFF;letter-spacing:2px;font-weight:800">青埔花媽 ‧ Rita</div>
+      <!-- 帶看行程版的抬頭：照片縮小，名字電話直接看得到。沒有行程時整塊不出現 -->
+      <div id="miniMe">
+        <div class="mm-top">
+          <img src="../assets/photo.jpg"
+               onerror="this.onerror=null;this.src='../assets/photo-placeholder.svg';"
+               alt="桃園房產顧問蕭沛縈形象照" width="56" height="56">
+          <div class="mm-who">
+            <b>蕭沛縈<i>Rita ‧ 青埔花媽</i></b>
+            <span class="co">有巢氏房屋　青埔IKEA店</span>
+            <span class="tel">0981-456-399</span>
+          </div>
+        </div>
+        <div class="mm-acts">
+          <a href="tel:0981456399">📞 打給我</a>
+          <a class="line" href="https://line.me/ti/p/~ritahaiao" target="_blank" rel="noopener noreferrer">💬 LINE</a>
+        </div>
       </div>
 
-      <!-- 形象照 -->
-      <div style="margin-top:-78px;text-align:center;position:relative;z-index:2">
-        <img src="../assets/photo.jpg"
-             onerror="this.onerror=null;this.src='../assets/photo-placeholder.svg';"
-             alt="桃園房產顧問蕭沛縈形象照" width="150" height="150"
-             style="width:150px;height:150px;border-radius:50%;border:5px solid #fff;box-shadow:0 8px 26px rgba(0,83,53,0.18);object-fit:cover;object-position:center 12%">
-      </div>
+      <!-- 一般名片版的抬頭：大形象照。有帶看行程時整塊收起來 -->
+      <div id="hero">
+        <!-- 頂部品牌條 -->
+        <div style="height:92px;background:linear-gradient(120deg,#4FAF38,#005335);position:relative">
+          <div style="position:absolute;top:14px;right:18px;font-size:12.5px;color:#FFFFFF;letter-spacing:2px;font-weight:800">青埔花媽 ‧ Rita</div>
+        </div>
 
-      <!-- 姓名與簡介 -->
-      <div style="text-align:center;padding:14px 26px 6px">
-        <div style="font-size:25px;font-weight:800;letter-spacing:0.5px">蕭沛縈<span style="color:#64776F;font-size:17px;font-weight:500;margin-left:10px">青埔花媽</span></div>
-        <div style="font-size:15px;color:#3F5B4E;margin-top:6px;font-weight:500">有巢氏房屋　青埔IKEA店</div>
-        <div style="font-size:13.5px;color:#64776F;margin-top:3px">桃園在地房產顧問 ‧ 不動產投資規劃</div>
-        <div id="bio" style="font-size:14px;color:#64776F;margin-top:12px;line-height:1.7">5 年+ 房產服務 ‧ 深耕桃園青埔、全省可服務。資產配置、稅務諮詢、簡易裝潢一站式，用暖心與專業陪你做對每一個決定。</div>
+        <!-- 形象照 -->
+        <div style="margin-top:-78px;text-align:center;position:relative;z-index:2">
+          <img src="../assets/photo.jpg"
+               onerror="this.onerror=null;this.src='../assets/photo-placeholder.svg';"
+               alt="桃園房產顧問蕭沛縈形象照" width="150" height="150"
+               style="width:150px;height:150px;border-radius:50%;border:5px solid #fff;box-shadow:0 8px 26px rgba(0,83,53,0.18);object-fit:cover;object-position:center 12%">
+        </div>
+
+        <!-- 姓名與簡介 -->
+        <div style="text-align:center;padding:14px 26px 6px">
+          <div style="font-size:25px;font-weight:800;letter-spacing:0.5px">蕭沛縈<span style="color:#64776F;font-size:17px;font-weight:500;margin-left:10px">青埔花媽</span></div>
+          <div style="font-size:15px;color:#3F5B4E;margin-top:6px;font-weight:500">有巢氏房屋　青埔IKEA店</div>
+          <div style="font-size:13.5px;color:#64776F;margin-top:3px">桃園在地房產顧問 ‧ 不動產投資規劃</div>
+          <div style="font-size:14px;color:#64776F;margin-top:12px;line-height:1.7">5 年+ 房產服務 ‧ 深耕桃園青埔、全省可服務。資產配置、稅務諮詢、簡易裝潢一站式，用暖心與專業陪你做對每一個決定。</div>
+        </div>
       </div>
 
       <!-- 今天的帶看行程：網址有帶 #v= 才出現，內容由最下方的 script 填 -->
@@ -303,29 +370,33 @@ var SOCIAL = {
       var totalKm = kms.length === stops.length - 1
         ? kms.reduce(function (a, b) { return a + b; }, 0) : 0;
 
+      var mapHash = '#v=' + ids.join(',');
       var html = '';
 
       html += '<div class="t-head"><b>🚗 今天的帶看行程</b>'
         + '<span>' + stops.length + ' 個社區</span></div>';
 
-      /* 地圖預覽：直接鑲青埔地圖的帶看畫面（?embed=1 只留地圖本體）。
-         iframe 設 pointer-events:none —— 手指在上面滑是要捲頁面，
-         不是要拖地圖。要看細節就點右下角開大圖。 */
-      var mapHash = '#v=' + ids.join(',');
+      /* 路線圖：直接鑲青埔地圖的帶看畫面（?embed=1 只留地圖本體）。
+         iframe 設 pointer-events:none —— 手指在上面滑是要捲頁面，不是要拖地圖。
+         地圖上的編號要能點，靠 .t-hots 那層透明熱區（位置由地圖那端回報）。 */
       html += '<div class="t-map">'
         + '<div class="load">地圖載入中…</div>'
-        + '<iframe loading="lazy" title="帶看路線地圖" src="' + esc(MAP_TOOL + '?embed=1' + mapHash) + '"></iframe>'
+        + '<iframe title="帶看路線地圖" src="' + esc(MAP_TOOL + '?embed=1' + mapHash) + '"></iframe>'
+        + '<div class="t-hots" id="tHots"></div>'
         + '<a class="open" href="' + esc(MAP_TOOL + mapHash) + '" target="_blank" rel="noopener">🔍 點開大地圖</a>'
         + '</div>';
+
+      html += '<div class="t-tip">點地圖上的號碼、或下面任何一站，直接開 Google 地圖帶你過去。</div>';
 
       html += '<ol class="t-list">';
       stops.forEach(function (p, i) {
         html += '<li class="t-stop">'
+          + '<a href="' + esc(stopUrl(p)) + '" target="_blank" rel="noopener"'
+          + ' aria-label="導航到' + esc(p.name) + '">'
           + '<span class="no">' + (i + 1) + '</span>'
           + '<span class="who"><b>' + esc(p.name) + '</b><span>' + esc(addrOf(p)) + '</span></span>'
-          + '<a class="go" href="' + esc(stopUrl(p)) + '" target="_blank" rel="noopener"'
-          + ' aria-label="導航到' + esc(p.name) + '">🧭 導航</a>'
-          + '</li>';
+          + '<span class="go">🧭 導航 ›</span>'
+          + '</a></li>';
         if (i < stops.length - 1 && hasLeg) {
           html += '<li class="t-leg">🚗 開車約 ' + mins[i] + ' 分鐘'
             + (kms[i] ? '　‧　' + kms[i].toFixed(1) + ' 公里' : '') + '</li>';
@@ -356,10 +427,60 @@ var SOCIAL = {
       sec.classList.add('on');
       document.body.classList.add('has-tour');
 
-      // 地圖 iframe 載好就把「載入中」收掉；載不出來就留著那行字，版面不會破
+      /* 地圖載好就把「載入中」收掉。
+         ⚠ 這個 iframe 一定不能加 loading="lazy" —— 實測會出現「整塊沒載入、
+         客戶只看到名片」的情況，而且時好時壞，在自己電腦上很難重現。
+
+         8 秒還沒載好就換成一行字加連結。行程清單與導航按鈕本來就不靠地圖，
+         客戶照樣走得完今天的行程，只是少一張圖。 */
       var fr = sec.querySelector('.t-map iframe');
       var load = sec.querySelector('.t-map .load');
-      if (fr && load) fr.addEventListener('load', function () { load.remove(); });
+      if (fr && load) {
+        var done = false;
+        var ask = function () {
+          try { fr.contentWindow.postMessage({ type: 'qingpu-ask-badges' }, location.origin); }
+          catch (err) { /* 還沒好，下一次再要 */ }
+        };
+        fr.addEventListener('load', function () {
+          done = true;
+          load.remove();
+          // 地圖畫完路線才量得到編號位置，隔一下再要一次比較穩
+          ask(); setTimeout(ask, 400); setTimeout(ask, 1200);
+        });
+        setTimeout(function () {
+          if (done || !load.parentNode) return;
+          var box = sec.querySelector('.t-map');
+          box.innerHTML = '<div class="t-fail">地圖這次沒載出來（網路慢）。'
+            + '<a href="' + esc(MAP_TOOL + mapHash) + '" target="_blank" rel="noopener">點這裡開地圖</a>'
+            + '　下面的行程與導航照常可以用。</div>';
+        }, 8000);
+      }
+
+      /* 地圖那端回報編號徽章的螢幕位置，這裡蓋上同樣位置的透明熱區。
+         為什麼不讓客戶直接點 iframe 裡的地圖：那樣手指在地圖上滑會被地圖吃掉，
+         客戶會卡在那一塊捲不動頁面。熱區是名片頁自己的元素，捲動照常。 */
+      window.addEventListener('resize', function () {
+        var f = sec.querySelector('.t-map iframe');
+        if (!f) return;
+        try { f.contentWindow.postMessage({ type: 'qingpu-ask-badges' }, location.origin); } catch (err) {}
+      });
+
+      window.addEventListener('message', function (e) {
+        if (e.origin !== location.origin) return;
+        var d = e.data;
+        if (!d || d.type !== 'qingpu-tour-badges' || !Array.isArray(d.badges)) return;
+        var hots = document.getElementById('tHots');
+        if (!hots) return;
+        var SIZE = 40;                       // 徽章本身只有 20px，熱區放大到手指標準大小
+        hots.innerHTML = d.badges.map(function (b) {
+          var p = stops[b.i];
+          if (!p) return '';
+          return '<a href="' + esc(stopUrl(p)) + '" target="_blank" rel="noopener"'
+            + ' aria-label="導航到' + esc(p.name) + '"'
+            + ' style="left:' + Math.round(b.x - SIZE / 2) + 'px;top:' + Math.round(b.y - SIZE / 2)
+            + 'px;width:' + SIZE + 'px;height:' + SIZE + 'px"></a>';
+        }).join('');
+      });
     })
     .catch(function () { /* 讀不到社區資料就當作沒有行程，名片本身照常 */ });
 })();

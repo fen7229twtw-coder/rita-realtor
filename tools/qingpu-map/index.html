@@ -518,7 +518,7 @@ body{
 .embed .toolbar, .embed .brand, .embed .tourbar, .embed .side, .embed .foot{display:none !important}
 .embed .poster{margin:0; max-width:none; border-radius:0; box-shadow:none; border:0}
 .embed .body{height:100vh}
-.embed #map{height:100%; cursor:default}
+.embed #map{height:100%; cursor:default; touch-action:auto}
 
 /* ---------- 地圖內元素 ---------- */
 .pin-label{font-size:10.5px; font-weight:600; fill:#3F2D52; paint-order:stroke; stroke:#fff; stroke-width:3px; stroke-linejoin:round}
@@ -761,7 +761,33 @@ const svgNS = 'http://www.w3.org/2000/svg';
 
 /* 名片頁把這張地圖鑲進去時會帶 ?embed=1，只顯示地圖本體。
    要在載入資料之前就掛上，不然客戶會先看到完整版閃一下才收合。 */
-if (/[?&]embed=1/.test(location.search)) document.body.classList.add('embed');
+const embedMode = /[?&]embed=1/.test(location.search);
+if (embedMode) document.body.classList.add('embed');
+
+/* 把編號徽章現在的螢幕位置回報給名片頁。
+   iframe 本身設了 pointer-events:none（不然手指滑過去會被地圖吃掉、頁面捲不動），
+   所以「點站點看怎麼走」是由名片頁在同樣位置蓋一層透明熱區做的 —— 位置從這裡送出去。
+   縮放、轉向、重排路線都要重送一次，不然熱區會停在舊位置。 */
+/* 名片頁載好 iframe 後會來要位置。它主動要比我主動送可靠：
+   我送的時候它可能還沒掛上監聽，它要的時候我一定已經畫好了。 */
+if (embedMode) {
+  window.addEventListener('message', (e) => {
+    if (e.origin === location.origin && e.data?.type === 'qingpu-ask-badges') postBadges();
+  });
+}
+
+function postBadges() {
+  if (!embedMode || window.parent === window) return;
+  const badges = [...document.querySelectorAll('#tour-badges circle')].map((c, i) => {
+    const r = c.getBoundingClientRect();
+    return { i, x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 };
+  });
+  const box = document.querySelector('#map')?.getBoundingClientRect();
+  try {
+    window.parent.postMessage({ type: 'qingpu-tour-badges', badges, w: box?.width, h: box?.height },
+      location.origin);
+  } catch { /* 跨網域鑲進來就算了，名片頁自己會退回只顯示清單 */ }
+}
 
 const COLORS = {
   farm:'var(--m-farm)', residential:'var(--m-residential)', commercial:'var(--m-commercial)',
@@ -1636,7 +1662,14 @@ function zoom(f, cx, cy) {
 }
 function bindMap() {
   const svg = $('#map');
-  svg.addEventListener('wheel', e => {
+
+  /* 鑲在名片頁裡的那份不吃地圖手勢（縮放、拖曳、點社區）。
+     客戶的手指在地圖上滑是想捲頁面 —— 被地圖攔下來就卡在那一塊。
+     要點的站點由名片頁蓋在上面的熱區處理（見 postBadges）。
+     只擋這幾顆，其他照綁：解析網址的 gotoHash 也在這支裡面，整支跳過連路線都不會畫。 */
+  const onMap = (type, fn, opt) => { if (!embedMode) svg.addEventListener(type, fn, opt); };
+
+  onMap('wheel', e => {
     e.preventDefault();
     const r = svg.getBoundingClientRect();
     const cx = view.x + (e.clientX - r.left) / r.width * view.w;
@@ -1657,10 +1690,10 @@ function bindMap() {
      實測後果：帶看模式點一下冒出兩個社區；客戶點編號徽章跳出隔壁社區的資料。
      所以記下 pointerup 的時間，緊接著那顆 click 直接忽略。 */
   let lastTapAt = 0;
-  svg.addEventListener('pointerdown', e => {
+  onMap('pointerdown', e => {
     drag = { px: e.clientX, py: e.clientY, vx: view.x, vy: view.y, moved: false, id: e.pointerId };
   });
-  svg.addEventListener('pointermove', e => {
+  onMap('pointermove', e => {
     if (!drag) return;
     const dx = e.clientX - drag.px;
     const dy = e.clientY - drag.py;
@@ -1675,7 +1708,7 @@ function bindMap() {
     view.y = drag.vy - dy / r.height * view.h;
     apply();
   });
-  svg.addEventListener('pointerup', e => {
+  onMap('pointerup', e => {
     if (!drag) return;
     lastTapAt = Date.now();
     const wasTap = !drag.moved;
@@ -1692,7 +1725,7 @@ function bindMap() {
     if (tourOn() && !guestMode()) { toggleTour(id); showCard(id); }
     else showCard(id);
   });
-  svg.addEventListener('pointercancel', () => {
+  onMap('pointercancel', () => {
     if (drag?.moved) { try { svg.releasePointerCapture(drag.id); } catch {} }
     drag = null;
     svg.classList.remove('dragging');
@@ -1739,7 +1772,7 @@ function bindMap() {
 
   /* 點社區圈圈的處理在上面的 pointerup 裡（要自己分辨拖曳與點選）。
      這裡留一個 click 後備，給不送 pointer 事件的環境（例如程式模擬點擊）。 */
-  svg.addEventListener('click', e => {
+  onMap('click', e => {
     // 手指或滑鼠剛剛才放開 → 上面已經處理過了，這顆是瀏覽器補的，不要再算一次
     if (Date.now() - lastTapAt < 700) return;
     const id = e.target.dataset?.id;
@@ -2293,6 +2326,12 @@ function renderTour() {
     renderTrip(stops, legs, totalSec);
     setOptBtn();
     fitTour();
+    /* 等 fitTour 的縮放套用完再量位置。
+       ⚠ 不要用 requestAnimationFrame —— 頁面沒在畫面上（背景分頁、還沒捲到的
+       iframe）時 rAF 根本不會被呼叫，位置就永遠送不出去，熱區是空的。
+       名片頁那邊也會主動來要一次，這裡送不到還有那條路。 */
+    setTimeout(postBadges, 0);
+    setTimeout(postBadges, 300);
   }
   saveTourHash();
 }
@@ -2757,10 +2796,12 @@ try {
   /* 第一次載入時 SVG 常常還沒完成版面計算，寬度量到 0 —— rescale 會直接 return，
      圓點就停在原始的 5.5 單位、觸控範圍只剩該有的一半，等使用者去縮放才修正。
      ResizeObserver 在元素第一次拿到尺寸時就會叫一次，補掉這個空窗。 */
-  if (window.ResizeObserver) new ResizeObserver(() => rescale()).observe($('#map'));
-  else requestAnimationFrame(rescale);
+  // 尺寸一變，鑲在名片頁裡那份的站點熱區位置也要跟著更新
+  const onResize = () => { rescale(); postBadges(); };
+  if (window.ResizeObserver) new ResizeObserver(onResize).observe($('#map'));
+  else requestAnimationFrame(onResize);
   // 轉向或改視窗大小時要重算，不然橫轉直之後圓點又變回點不到
-  window.addEventListener('resize', rescale);
+  window.addEventListener('resize', onResize);
   $('#status').textContent = statusLine();
 } catch (err) {
   $('#status').textContent = '底圖載入失敗：' + err.message + '（先跑「更新青埔地圖.cmd」）';
