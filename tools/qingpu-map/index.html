@@ -511,6 +511,15 @@ body{
 /* 截圖時（存成圖片）不需要操作列 */
 .shooting .toolbar, .shooting .tourbar{display:none}
 
+/* 嵌入模式（?embed=1）：名片頁用 iframe 把這張地圖鑲進去。
+   只留地圖本體 —— 品牌抬頭、帶看列、側欄、頁尾在名片頁上都已經有一份，
+   再出現一次就是同一張紙印兩遍。 */
+.embed{background:var(--m-bg)}
+.embed .toolbar, .embed .brand, .embed .tourbar, .embed .side, .embed .foot{display:none !important}
+.embed .poster{margin:0; max-width:none; border-radius:0; box-shadow:none; border:0}
+.embed .body{height:100vh}
+.embed #map{height:100%; cursor:default}
+
 /* ---------- 地圖內元素 ---------- */
 .pin-label{font-size:10.5px; font-weight:600; fill:#3F2D52; paint-order:stroke; stroke:#fff; stroke-width:3px; stroke-linejoin:round}
 .poi-label{font-size:13px; font-weight:700; fill:var(--primary-deep); paint-order:stroke; stroke:#fff; stroke-width:3.5px; stroke-linejoin:round}
@@ -749,6 +758,10 @@ body{
 <script type="module">
 const $ = s => document.querySelector(s);
 const svgNS = 'http://www.w3.org/2000/svg';
+
+/* 名片頁把這張地圖鑲進去時會帶 ?embed=1，只顯示地圖本體。
+   要在載入資料之前就掛上，不然客戶會先看到完整版閃一下才收合。 */
+if (/[?&]embed=1/.test(location.search)) document.body.classList.add('embed');
 
 const COLORS = {
   farm:'var(--m-farm)', residential:'var(--m-residential)', commercial:'var(--m-commercial)',
@@ -1778,16 +1791,17 @@ function bindMap() {
 
   /* 網址帶進來的兩種情境：
        #c=<社區id>        從社區資料庫點過來，飛到該社區並開卡
-       #v=id1,id2,id3     帶看連結，客戶點開直接看到排好的路線 */
+       #v=id1,id2,id3     帶看連結，客戶點開直接看到排好的路線
+
+     #v 後面可能還跟著 &t=（每段幾分鐘）&d=（每段幾公里）—— 那是給名片頁用的，
+     地圖自己會重算，這裡只要別把它們當成社區 id 就好。 */
   const gotoHash = () => {
     if (!PINS) return;
-    const tourMatch = /^#v=(.+)$/.exec(location.hash);
-    if (tourMatch) {
-      enterTour(decodeURIComponent(tourMatch[1]).split(',').filter(Boolean), true);
-      return;
-    }
-    const one = /^#c=(.+)$/.exec(location.hash);
-    if (one) focusPin(decodeURIComponent(one[1]));
+    const q = new URLSearchParams(location.hash.replace(/^#/, ''));
+    const v = q.get('v');
+    if (v) { enterTour(v.split(',').filter(Boolean), true); return; }
+    const c = q.get('c');
+    if (c) focusPin(c);
   };
   gotoHash();
   window.addEventListener('hashchange', gotoHash);
@@ -2210,7 +2224,7 @@ function renderTour() {
     /* 先畫路線（走實際道路），再畫徽章壓在上面 */
     const gPath = group('tour-path');
     let totalSec = 0;
-    const legs = [];
+    const legs = tourLegs = [];
     for (let i = 0; i < stops.length - 1; i++) {
       const leg = routeBetween(stops[i], stops[i + 1]);
       legs.push(leg);
@@ -2334,7 +2348,8 @@ function tripText() {
     }
   });
   lines.push('');
-  lines.push('地圖：' + shareUrl());
+  lines.push('行程與導航：' + shareUrl());
+  lines.push('');
   lines.push('有巢氏房屋 青埔IKEA店');
   lines.push('蕭沛縈 Rita（青埔花媽）‧ 0981-456-399 ‧ LINE：ritahaiao');
   return lines.join('\n');
@@ -2374,8 +2389,9 @@ function hideTrip() {
    http://localhost:9000/tools/qingpu-map/#v=... —— localhost 是「這台電腦自己」，
    客戶手機打開只會連到他自己的手機，一片空白。她傳了兩次都被退回來。
 
-   ⚠ 下面這串網址在官網搬家時要跟著換。不要手改，跑 scripts/switch-domain.mjs。 */
-const PUBLIC_MAP = 'https://fen7229twtw-coder.github.io/rita-realtor/tools/qingpu-map/';
+   ⚠ 下面這兩串網址在官網搬家時要跟著換。不要手改，跑 scripts/switch-domain.mjs。 */
+const PUBLIC_MAP  = 'https://fen7229twtw-coder.github.io/rita-realtor/tools/qingpu-map/';
+const PUBLIC_CARD = 'https://fen7229twtw-coder.github.io/rita-realtor/card/';
 
 /** 現在是不是就開在公開網站上（不是本機、也不是離線單檔） */
 function onPublicSite() {
@@ -2383,12 +2399,41 @@ function onPublicSite() {
     && !/^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(location.hostname);
 }
 
-/** 要傳給客戶的網址 */
-function shareUrl() {
-  const hash = tour.length ? '#v=' + tour.join(',') : '';
-  // 已經在公開網站上就沿用現在的網址 —— 之後換自訂網域也不必再改這裡
-  return (onPublicSite() ? location.origin + location.pathname : PUBLIC_MAP) + hash;
+/* 每段車程也編進網址。
+   名片頁沒有路網資料（那是 108KB，名片不該為了算時間背這個），
+   時間由這裡算好帶過去 —— 客戶看到的分鐘數就跟我排路線時看到的一模一樣。 */
+function tourHash() {
+  if (!tour.length) return '';
+  let h = '#v=' + tour.join(',');
+  const legs = tourLegs;
+  // 只有一站就沒有「段」，這時不要吐出空的 &t=&d= 讓名片頁去解析
+  if (tour.length > 1 && legs.length === tour.length - 1 && legs.every(Boolean)) {
+    h += '&t=' + legs.map(l => Math.max(1, Math.round(l.s / 60))).join(',');
+    h += '&d=' + legs.map(l => (l.m / 1000).toFixed(1)).join(',');
+  }
+  return h;
 }
+
+/** 地圖本身的網址（存成圖片的頁尾、名片頁的「看地圖」都用這個） */
+function mapUrl() {
+  return (onPublicSite() ? location.origin + location.pathname : PUBLIC_MAP) + tourHash();
+}
+
+/** 要傳給客戶的網址 —— 名片頁。
+   客戶點開先看到我是誰、再看到今天的行程，最後才是地圖。
+   直接丟地圖給他，他不知道這是誰傳的。 */
+function shareUrl() {
+  let base = PUBLIC_CARD;
+  if (onPublicSite()) {
+    const p = location.pathname.replace(/tools\/qingpu-map\/?$/, 'card/');
+    // 換不掉表示這支不是放在預期的位置，那就用寫死的官網網址，別產生一個死連結
+    if (p !== location.pathname) base = location.origin + p;
+  }
+  return base + tourHash();
+}
+
+/* 每段路的時間與距離，renderTour 算完存在這裡，分享連結要用 */
+let tourLegs = [];
 
 /* 把挑選編進網址列，重新整理不會掉 */
 function saveTourHash() {
@@ -2470,7 +2515,7 @@ async function shareRoute(btn) {
       ? `已複製連結（${tour.length} 個社區），貼到 LINE 傳給客戶`
       : `已複製「客戶看得到的網址」（${tour.length} 個社區）—— 不是這台電腦上的位址`);
     // 把網址整串印出來，可以自己看一眼是不是 localhost
-    $('#status').textContent = '傳給客戶的連結：' + url;
+    $('#status').textContent = '傳給客戶（名片頁）：' + url + '　｜　只要地圖：' + mapUrl();
     if (btn) {
       btn.textContent = '✓ 已複製，去 LINE 貼上';
       btn.classList.add('ok');

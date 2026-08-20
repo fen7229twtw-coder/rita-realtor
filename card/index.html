@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>蕭沛縈（青埔花媽）‧ 桃園房產顧問 | 電子名片・預約諮詢</title>
-<meta name="description" content="蕭沛縈（青埔花媽），桃園在地房產顧問。資產配置、稅務諮詢、簡易裝潢一站式服務，深耕桃園青埔、全省可服務。電話 0981-456-399、LINE：ritahaiao。">
+<meta name="description" content="蕭沛縈（青埔花媽），有巢氏房屋青埔IKEA店。資產配置、稅務諮詢、簡易裝潢一站式服務，深耕桃園青埔、全省可服務。電話 0981-456-399、LINE：ritahaiao。">
 <meta name="author" content="蕭沛縈">
 <link rel="canonical" href="https://fen7229twtw-coder.github.io/rita-realtor/card/">
 
@@ -18,6 +18,95 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ===================================================================
+   帶看行程區塊 —— 只有網址帶了 #v=社區id,… 才會出現。
+   沒帶就是原本那張電子名片，一個像素都不會變。
+
+   行程資料哪裡來：社區名與地址讀青埔地圖的 data/pins.json，
+   每段車程直接寫在網址裡（&t= 分鐘 &d= 公里），由地圖那端算好帶過來。
+   名片頁不背路網資料（108KB），也不重算 —— 客戶看到的分鐘數
+   要跟 Rita 排路線時看到的一模一樣，重算反而可能不一樣。
+=================================================================== */
+:root{
+  --c-primary:#005335; --c-primary-deep:#0B2E20; --c-secondary:#4FAF38;
+  --c-tour:#0B7A4B; --c-amber:#C8811A;
+  --c-text:#173D30; --c-muted:#64776F; --c-line:#E4EFE8;
+}
+#tourSec{display:none; padding:4px 18px 20px}
+#tourSec.on{display:block}
+/* 有行程時把那段自我介紹收成一行，客戶一打開就看得到今天要去哪 */
+body.has-tour #bio{display:none}
+
+.t-head{
+  display:flex; align-items:baseline; gap:8px; margin:14px 0 11px;
+  padding-bottom:7px; border-bottom:2px solid var(--c-secondary);
+}
+.t-head b{font-size:15px; font-weight:800; letter-spacing:1.5px; color:var(--c-primary)}
+.t-head span{font-size:12px; color:var(--c-muted); margin-left:auto}
+
+/* ---------- 地圖預覽 ---------- */
+.t-map{
+  position:relative; border-radius:14px; overflow:hidden;
+  border:1px solid var(--c-line); background:#FBF8F3; margin-bottom:13px;
+}
+.t-map iframe{
+  display:block; width:100%; height:280px; border:0;
+  pointer-events:none;   /* 手指在上面滑＝捲頁面，不會被地圖吃掉 */
+}
+.t-map .open{
+  position:absolute; right:9px; bottom:9px;
+  background:rgba(11,46,32,.86); color:#fff; text-decoration:none;
+  font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:9px;
+  display:inline-flex; align-items:center; gap:5px;
+}
+.t-map .load{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:13px; color:var(--c-muted); background:#FBF8F3;
+}
+
+/* ---------- 行程清單 ---------- */
+.t-list{list-style:none; margin:0; padding:0}
+.t-stop{display:flex; align-items:flex-start; gap:10px; padding:9px 0}
+.t-stop .no{
+  flex:none; width:24px; height:24px; border-radius:50%;
+  background:var(--c-tour); color:#fff; font-size:12.5px; font-weight:800;
+  display:flex; align-items:center; justify-content:center; margin-top:1px;
+}
+.t-stop .who{flex:1; min-width:0}
+.t-stop .who b{display:block; font-size:15px; font-weight:700; line-height:1.35}
+.t-stop .who span{display:block; font-size:12.5px; color:var(--c-muted); margin-top:2px}
+.t-stop .go{
+  flex:none; text-decoration:none; font-size:12px; font-weight:700;
+  color:var(--c-primary); background:#F2F7F3; border:1px solid #D8E7DD;
+  border-radius:9px; padding:0 11px; min-height:44px;   /* 手指標準大小，35px 會點不準 */
+  display:inline-flex; align-items:center; gap:4px;
+}
+.t-leg{
+  display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--c-muted);
+  padding:2px 0 2px 34px; position:relative;
+}
+.t-leg::before{
+  content:''; position:absolute; left:11px; top:0; bottom:0;
+  border-left:2px dotted #C3D6CA;
+}
+.t-total{
+  margin-top:12px; padding:11px 13px; border-radius:11px;
+  background:#F2F7F3; border:1px solid #D8E7DD;
+  font-size:13.5px; font-weight:700; color:var(--c-primary);
+}
+.t-total small{display:block; font-weight:400; font-size:11.5px; color:var(--c-muted); margin-top:4px; line-height:1.6}
+
+/* ---------- 行動按鈕 ---------- */
+.t-acts{display:grid; gap:10px; margin-top:14px}
+.t-acts a{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  font-size:16px; font-weight:800; padding:15px; border-radius:13px; text-decoration:none;
+}
+.t-acts a.nav{background:#1A73E8; color:#fff; box-shadow:0 8px 20px rgba(26,115,232,.26)}
+.t-acts a.map{background:#fff; color:var(--c-primary); border:1.5px solid #C3D6CA; font-size:15px; padding:13px}
+</style>
 </head>
 <body style="margin:0">
 
@@ -41,9 +130,13 @@
       <!-- 姓名與簡介 -->
       <div style="text-align:center;padding:14px 26px 6px">
         <div style="font-size:25px;font-weight:800;letter-spacing:0.5px">蕭沛縈<span style="color:#64776F;font-size:17px;font-weight:500;margin-left:10px">青埔花媽</span></div>
-        <div style="font-size:15px;color:#3F5B4E;margin-top:6px;font-weight:500">桃園在地房產顧問 ‧ 不動產投資規劃</div>
-        <div style="font-size:14px;color:#64776F;margin-top:12px;line-height:1.7">5 年+ 房產服務 ‧ 深耕桃園青埔、全省可服務。資產配置、稅務諮詢、簡易裝潢一站式，用暖心與專業陪你做對每一個決定。</div>
+        <div style="font-size:15px;color:#3F5B4E;margin-top:6px;font-weight:500">有巢氏房屋　青埔IKEA店</div>
+        <div style="font-size:13.5px;color:#64776F;margin-top:3px">桃園在地房產顧問 ‧ 不動產投資規劃</div>
+        <div id="bio" style="font-size:14px;color:#64776F;margin-top:12px;line-height:1.7">5 年+ 房產服務 ‧ 深耕桃園青埔、全省可服務。資產配置、稅務諮詢、簡易裝潢一站式，用暖心與專業陪你做對每一個決定。</div>
       </div>
+
+      <!-- 今天的帶看行程：網址有帶 #v= 才出現，內容由最下方的 script 填 -->
+      <section id="tourSec" aria-live="polite"></section>
 
       <!-- 主要行動按鈕 -->
       <div style="padding:18px 26px 6px;display:grid;gap:11px">
@@ -107,7 +200,7 @@
 
     </div>
 
-    <div style="text-align:center;font-size:12px;color:#64776F;margin-top:18px">© <span id="year">2026</span> 蕭沛縈 ‧ 桃園房產顧問</div>
+    <div style="text-align:center;font-size:12px;color:#64776F;margin-top:18px">© <span id="year">2026</span> 蕭沛縈 ‧ 有巢氏房屋 青埔IKEA店</div>
   </div>
 </main>
 
@@ -132,6 +225,143 @@ var SOCIAL = {
   });
   // 三個都沒填就把整個「追蹤」區塊收起來
   if (!shown) document.getElementById('socialRow').parentNode.style.display = 'none';
+})();
+</script>
+
+<script>
+/* ===================================================================
+   今天的帶看行程
+   -------------------------------------------------------------------
+   網址長這樣：  card/#v=id1,id2,id3&t=5,8&d=1.2,3.4
+     v = 社區 id，順序就是帶看順序
+     t = 每一段開車幾分鐘（第 1→2 段、第 2→3 段…）
+     d = 每一段幾公里
+   t 與 d 是選配：沒帶就只列社區、不寫時間，Google 導航照樣能開。
+
+   ⚠ 對不到社區就整塊不顯示。寧可客戶看到一張純名片，
+     也不要給他一張標錯地方的行程 —— 他會照著跑去空地等我。
+=================================================================== */
+(function () {
+  var MAP_TOOL = '../tools/qingpu-map/';
+  var PINS_URL = MAP_TOOL + 'data/pins.json';
+
+  var q = new URLSearchParams(location.hash.replace(/^#/, ''));
+  var ids = (q.get('v') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  if (!ids.length) return;
+
+  var mins = (q.get('t') || '').split(',').filter(Boolean).map(Number);
+  var kms  = (q.get('d') || '').split(',').filter(Boolean).map(Number);
+  var sec  = document.getElementById('tourSec');
+
+  var esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+
+  /* 導航目標：有門牌就用地址，Google 認得比座標精準也比較好認。
+     沒門牌（社區位置是用路段推估的）就用座標，至少不會導到別條路。 */
+  var target = function (p) {
+    return /號/.test(p.lejuAddr || '')
+      ? '桃園市' + (p.dist || '') + p.lejuAddr
+      : p.lat + ',' + p.lon;
+  };
+  var addrOf = function (p) {
+    if (p.lejuAddr) return p.lejuAddr;
+    var bits = [p.road];
+    if (p.addrRange && p.addrRange !== p.road) bits.push(p.addrRange);
+    return bits.filter(Boolean).join(' ');
+  };
+
+  /* Google 地圖一次跑完整條路線。
+     api=1 的 waypoints 上限是 9 個中繼點（＝最多 11 站）。 */
+  var GMAX = 11;
+  var routeUrl = function (stops) {
+    var use = stops.slice(0, GMAX);
+    var u = 'https://www.google.com/maps/dir/?api=1&travelmode=driving';
+    if (use.length === 1) return u + '&destination=' + encodeURIComponent(target(use[0]));
+    u += '&origin=' + encodeURIComponent(target(use[0]));
+    u += '&destination=' + encodeURIComponent(target(use[use.length - 1]));
+    var mid = use.slice(1, -1);
+    if (mid.length) u += '&waypoints=' + mid.map(function (p) { return encodeURIComponent(target(p)); }).join('|');
+    return u;
+  };
+  var stopUrl = function (p) {
+    return 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + encodeURIComponent(target(p));
+  };
+
+  fetch(PINS_URL, { cache: 'no-cache' })
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function (data) {
+      var byId = {};
+      (data.pins || []).forEach(function (p) { byId[p.id] = p; });
+      var stops = ids.map(function (id) { return byId[id]; }).filter(Boolean);
+      if (stops.length !== ids.length || !stops.length) return;   // 對不到就整塊不顯示
+
+      var hasLeg = mins.length === stops.length - 1;
+      var totalMin = hasLeg ? mins.reduce(function (a, b) { return a + b; }, 0) : 0;
+      var totalKm = kms.length === stops.length - 1
+        ? kms.reduce(function (a, b) { return a + b; }, 0) : 0;
+
+      var html = '';
+
+      html += '<div class="t-head"><b>🚗 今天的帶看行程</b>'
+        + '<span>' + stops.length + ' 個社區</span></div>';
+
+      /* 地圖預覽：直接鑲青埔地圖的帶看畫面（?embed=1 只留地圖本體）。
+         iframe 設 pointer-events:none —— 手指在上面滑是要捲頁面，
+         不是要拖地圖。要看細節就點右下角開大圖。 */
+      var mapHash = '#v=' + ids.join(',');
+      html += '<div class="t-map">'
+        + '<div class="load">地圖載入中…</div>'
+        + '<iframe loading="lazy" title="帶看路線地圖" src="' + esc(MAP_TOOL + '?embed=1' + mapHash) + '"></iframe>'
+        + '<a class="open" href="' + esc(MAP_TOOL + mapHash) + '" target="_blank" rel="noopener">🔍 點開大地圖</a>'
+        + '</div>';
+
+      html += '<ol class="t-list">';
+      stops.forEach(function (p, i) {
+        html += '<li class="t-stop">'
+          + '<span class="no">' + (i + 1) + '</span>'
+          + '<span class="who"><b>' + esc(p.name) + '</b><span>' + esc(addrOf(p)) + '</span></span>'
+          + '<a class="go" href="' + esc(stopUrl(p)) + '" target="_blank" rel="noopener"'
+          + ' aria-label="導航到' + esc(p.name) + '">🧭 導航</a>'
+          + '</li>';
+        if (i < stops.length - 1 && hasLeg) {
+          html += '<li class="t-leg">🚗 開車約 ' + mins[i] + ' 分鐘'
+            + (kms[i] ? '　‧　' + kms[i].toFixed(1) + ' 公里' : '') + '</li>';
+        }
+      });
+      html += '</ol>';
+
+      if (hasLeg && stops.length > 1) {
+        html += '<div class="t-total">全程車程約 ' + totalMin + ' 分鐘'
+          + (totalKm ? ' ‧ ' + totalKm.toFixed(1) + ' 公里' : '')
+          + '<small>走實際道路算的，不是直線距離。不含每間看房的時間。</small></div>';
+      }
+
+      html += '<div class="t-acts">'
+        + '<a class="nav" href="' + esc(routeUrl(stops)) + '" target="_blank" rel="noopener">'
+        + '🧭 用 Google 地圖跑完這條路線</a>'
+        + '<a class="map" href="' + esc(MAP_TOOL + mapHash) + '" target="_blank" rel="noopener">'
+        + '🗺 打開青埔地圖看社區資料</a>'
+        + '</div>';
+
+      // 超過 Google 一次能排的站數就講明白，不要默默少帶幾站
+      if (stops.length > GMAX) {
+        html += '<div class="t-total"><small>⚠ Google 地圖一次最多排 ' + GMAX
+          + ' 站，上面那顆導航只會帶前 ' + GMAX + ' 站。剩下的請點各站自己的「導航」。</small></div>';
+      }
+
+      sec.innerHTML = html;
+      sec.classList.add('on');
+      document.body.classList.add('has-tour');
+
+      // 地圖 iframe 載好就把「載入中」收掉；載不出來就留著那行字，版面不會破
+      var fr = sec.querySelector('.t-map iframe');
+      var load = sec.querySelector('.t-map .load');
+      if (fr && load) fr.addEventListener('load', function () { load.remove(); });
+    })
+    .catch(function () { /* 讀不到社區資料就當作沒有行程，名片本身照常 */ });
 })();
 </script>
 </body>
