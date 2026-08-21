@@ -520,7 +520,29 @@ body{
 .embed .toolbar, .embed .brand, .embed .tourbar, .embed .side, .embed .foot{display:none !important}
 .embed .poster{margin:0; max-width:none; border-radius:0; box-shadow:none; border:0}
 .embed .body{height:100vh}
-.embed #map{height:100%; cursor:default; touch-action:auto}
+.embed #map{height:100%}
+
+/* 手勢政策 —— 這是整個嵌入版最關鍵的一行。
+   鑲在名片頁裡（不是全螢幕）時 touch-action:pan-y：
+     單指上下滑 = 捲名片頁（客戶最常做的事，不能被地圖攔下來）
+     兩指 = 縮放地圖（下面 touchstart/touchmove 自己處理）
+   全螢幕時 touch-action:none：背後沒有頁面要捲，單指就是拖地圖。 */
+.embed:not(.full) #map{touch-action:pan-y}
+.embed.full #map{touch-action:none}
+
+/* 嵌入版的縮放鈕。客戶不一定會用兩指，一定要給看得到的按鈕。 */
+.embed-ctl{display:none}
+.embed .embed-ctl{
+  display:flex; flex-direction:column; gap:6px;
+  position:absolute; right:8px; top:8px; z-index:5;
+}
+.embed-ctl button{
+  width:42px; height:42px; border-radius:11px; cursor:pointer;
+  border:1px solid var(--border-strong); background:rgba(255,255,255,.95);
+  font-size:18px; font-weight:800; color:var(--text); line-height:1;
+  box-shadow:0 2px 8px rgba(11,46,32,.18);
+}
+.embed-ctl button:active{background:var(--bg)}
 
 /* ---------- 地圖內元素 ---------- */
 .pin-label{font-size:10.5px; font-weight:600; fill:#3F2D52; paint-order:stroke; stroke:#fff; stroke-width:3px; stroke-linejoin:round}
@@ -689,7 +711,15 @@ body{
   </div>
 
   <div class="body">
-    <div class="mapwrap"><svg id="map" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="mapwrap">
+      <svg id="map" xmlns="http://www.w3.org/2000/svg"></svg>
+      <!-- 鑲在名片頁裡才出現。客戶不一定會用兩指縮放，要給按鈕。 -->
+      <div class="embed-ctl">
+        <button id="ecIn" type="button" aria-label="放大">＋</button>
+        <button id="ecOut" type="button" aria-label="縮小">−</button>
+        <button id="ecFit" type="button" aria-label="回到整條路線">⤢</button>
+      </div>
+    </div>
 
     <aside class="side">
       <!-- 帶看行程：有挑社區才出現，排在最前面（手機上就在地圖正下方） -->
@@ -765,6 +795,9 @@ const svgNS = 'http://www.w3.org/2000/svg';
    要在載入資料之前就掛上，不然客戶會先看到完整版閃一下才收合。 */
 const embedMode = /[?&]embed=1/.test(location.search);
 if (embedMode) document.body.classList.add('embed');
+/* 全螢幕：名片頁把整個地圖框撐滿畫面時會通知我。
+   背後沒有頁面要捲了，所以單指就可以拖地圖。 */
+let fullMode = false;
 
 /* 把編號徽章現在的螢幕位置回報給名片頁。
    iframe 本身設了 pointer-events:none（不然手指滑過去會被地圖吃掉、頁面捲不動），
@@ -774,7 +807,16 @@ if (embedMode) document.body.classList.add('embed');
    我送的時候它可能還沒掛上監聽，它要的時候我一定已經畫好了。 */
 if (embedMode) {
   window.addEventListener('message', (e) => {
-    if (e.origin === location.origin && e.data?.type === 'qingpu-ask-badges') postBadges();
+    if (e.origin !== location.origin) return;
+    const d = e.data;
+    if (d?.type === 'qingpu-ask-badges') postBadges();
+    if (d?.type === 'qingpu-full') {
+      /* 名片頁把地圖框撐滿畫面（不是重新載入一份，是同一張圖放大）。
+         切換的是「單指要不要拖地圖」與視野範圍，圖本身不動。 */
+      fullMode = !!d.on;
+      document.body.classList.toggle('full', fullMode);
+      setTimeout(() => { if (typeof fitTour === 'function' && tour.length) fitTour(); rescale(); postBadges(); }, 60);
+    }
   });
 }
 
@@ -1674,13 +1716,17 @@ function zoom(f, cx, cy) {
 function bindMap() {
   const svg = $('#map');
 
-  /* 鑲在名片頁裡的那份不吃地圖手勢（縮放、拖曳、點社區）。
-     客戶的手指在地圖上滑是想捲頁面 —— 被地圖攔下來就卡在那一塊。
-     要點的站點由名片頁蓋在上面的熱區處理（見 postBadges）。
-     只擋這幾顆，其他照綁：解析網址的 gotoHash 也在這支裡面，整支跳過連路線都不會畫。 */
-  const onMap = (type, fn, opt) => { if (!embedMode) svg.addEventListener(type, fn, opt); };
+  const onMap = (type, fn, opt) => svg.addEventListener(type, fn, opt);
+
+  /* 只有「鑲在名片頁裡、而且沒放大成全螢幕」時，單指不拖地圖 ——
+     客戶的手指在地圖上滑是想捲名片頁，被地圖攔下來就卡在那一塊。
+     那種情況下要縮放就用兩指、或右上角那三顆按鈕。 */
+  const inlineEmbed = () => embedMode && !fullMode;
 
   onMap('wheel', e => {
+    /* 鑲在名片頁裡時滾輪不縮放地圖 —— 桌機使用者滾輪是想捲名片頁，
+       游標剛好在地圖上就被搶去縮放，會很煩。要縮放用右上角按鈕或放大成全螢幕。 */
+    if (inlineEmbed()) return;
     e.preventDefault();
     const r = svg.getBoundingClientRect();
     const cx = view.x + (e.clientX - r.left) / r.width * view.w;
@@ -1702,16 +1748,19 @@ function bindMap() {
      所以記下 pointerup 的時間，緊接著那顆 click 直接忽略。 */
   let lastTapAt = 0;
   onMap('pointerdown', e => {
-    drag = { px: e.clientX, py: e.clientY, vx: view.x, vy: view.y, moved: false, id: e.pointerId };
+    // noPan：記下這一下（放開時才判斷得出是不是「點一下」），但不讓它拖動地圖
+    const noPan = inlineEmbed() && e.pointerType === 'touch';
+    drag = { px: e.clientX, py: e.clientY, vx: view.x, vy: view.y, moved: false, id: e.pointerId, noPan };
   });
   onMap('pointermove', e => {
-    if (!drag) return;
+    if (!drag || drag.noPan) return;
     const dx = e.clientX - drag.px;
     const dy = e.clientY - drag.py;
     if (!drag.moved) {
       if (Math.hypot(dx, dy) < TAP_SLOP) return;      // 還在容許的手抖範圍內
       drag.moved = true;
-      svg.setPointerCapture(drag.id);
+      // 放開那邊已經包了 try，這邊也要包：丟例外會讓整個拖曳當場斷掉
+      try { svg.setPointerCapture(drag.id); } catch {}
       svg.classList.add('dragging');
     }
     const r = svg.getBoundingClientRect();
@@ -1729,6 +1778,9 @@ function bindMap() {
     drag = null;
     svg.classList.remove('dragging');
     if (!wasTap || $('#tgEdit')?.checked) return;
+    /* 名片頁裡那張只有 290px 高，跳出來的社區視窗會塞不下。
+       要看社區資料請按「放大地圖」，全螢幕才開視窗。 */
+    if (inlineEmbed()) return;
 
     // 自己從放開的位置找出點到哪個社區
     const id = pinNear(px, py) || document.elementFromPoint(px, py)?.dataset?.id;
@@ -1741,6 +1793,50 @@ function bindMap() {
     drag = null;
     svg.classList.remove('dragging');
   });
+
+  /* 兩指縮放。手機上本來完全沒有這個 —— #map 設了 touch-action:none，
+     等於連瀏覽器內建的縮放也擋掉了，只能靠工具列那兩顆按鈕。
+     這裡自己實作：兩指的中點當錨，張開放大、收攏縮小，中點移動就跟著平移。
+     所有模式都能用，不只嵌入版。 */
+  let pinch = null;
+  const pinchAt = (a, b) => ({
+    d: Math.max(1, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)),
+    cx: (a.clientX + b.clientX) / 2,
+    cy: (a.clientY + b.clientY) / 2,
+  });
+  svg.addEventListener('touchstart', e => {
+    if (e.touches.length !== 2) return;
+    drag = null;                                   // 兩指一下去就取消單指那條路
+    svg.classList.remove('dragging');
+    pinch = { ...pinchAt(e.touches[0], e.touches[1]), v: { ...view } };
+    e.preventDefault();
+  }, { passive: false });
+  svg.addEventListener('touchmove', e => {
+    if (!pinch || e.touches.length !== 2) return;
+    e.preventDefault();
+    const now = pinchAt(e.touches[0], e.touches[1]);
+    const r = svg.getBoundingClientRect();
+    if (!r.width) return;
+    // 起始中點在地圖上的座標（用手指按下去那一刻的視野算）
+    const gx = pinch.v.x + (pinch.cx - r.left) / r.width * pinch.v.w;
+    const gy = pinch.v.y + (pinch.cy - r.top) / r.height * pinch.v.h;
+    const w = Math.min(home.w * 1.05, Math.max(home.w * 0.06, pinch.v.w * (pinch.d / now.d)));
+    const h = pinch.v.h * (w / pinch.v.w);
+    view = {
+      x: gx - (now.cx - r.left) / r.width * w,
+      y: gy - (now.cy - r.top) / r.height * h,
+      w, h,
+    };
+    apply();
+  }, { passive: false });
+  const endPinch = e => { if (e.touches.length < 2) pinch = null; };
+  svg.addEventListener('touchend', endPinch);
+  svg.addEventListener('touchcancel', endPinch);
+
+  /* 嵌入版右上角那三顆。客戶不一定會用兩指，一定要有看得到的按鈕。 */
+  $('#ecIn').onclick  = () => zoom(0.7, view.x + view.w / 2, view.y + view.h / 2);
+  $('#ecOut').onclick = () => zoom(1.42, view.x + view.w / 2, view.y + view.h / 2);
+  $('#ecFit').onclick = () => { if (tour.length) fitTour(); else { view = { ...home }; apply(); } };
 
   /* 手機上工具列預設只留三顆，這裡負責展開收合。
      展開後要重算一次：工具列變高會把地圖往下推，圓點的螢幕座標跟著變。 */
@@ -1786,6 +1882,7 @@ function bindMap() {
   onMap('click', e => {
     // 手指或滑鼠剛剛才放開 → 上面已經處理過了，這顆是瀏覽器補的，不要再算一次
     if (Date.now() - lastTapAt < 700) return;
+    if (inlineEmbed()) return;
     const id = e.target.dataset?.id;
     if (!id || $('#tgEdit')?.checked) return;
     if (tourOn() && !guestMode()) { toggleTour(id); showCard(id); }
