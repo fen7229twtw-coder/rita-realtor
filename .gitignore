@@ -49,6 +49,14 @@ tools/qingpu-map/data/cache/
 # 進版控只會把紀錄洗掉，而且對客戶端沒有意義。
 tools/qingpu-map/data/auto-update-state.json
 tools/qingpu-map/data/pins.backup.json
+# 信義社區頁抓來的座標，是 build/refine-pins.mjs 的輸入不是成品。
+# 跟 OSM 的 cache 同樣道理：別人網站的資料不要跟著發佈到公開官網。
+# 沒有這個檔照樣能跑，只是少一個對照來源；要補就跑 build/fetch-sinyi-xy.mjs。
+tools/qingpu-map/data/sinyi-xy.json
+# 位置待確認清單：這是我自己校正時用的工作清單，不是給客戶看的東西。
+# 校正是在本機（中控台 localhost:9000）做的，公開官網不需要這個檔。
+tools/qingpu-map/data/pins-review.json
+tools/qingpu-map/data/pins.bak-before-refine.json
 
 # 開發信生成：裝的是整棟社區屋主的姓名與寄信住址，全都是個資。
 # netlify.toml publish = "." 會把根目錄進版控的檔案發佈到公開官網，
@@ -80,3 +88,38 @@ tools/qingpu-map/青埔地圖_離線版.html
 # netlify.toml publish="." 會把根目錄進版控的檔案發佈到公開官網，所以整包排除。
 # 排除後仍可從 localhost:9000/tools/photo-studio/ 與中控台正常使用。
 tools/photo-studio/
+
+# 各社區格局圖庫：圖是建商與代銷做的，而且每張都帶 591 浮水印。
+# 自己帶看前查沒問題，公開重製就是另一回事 —— netlify.toml publish="." 會把根目錄
+# 進版控的檔案發佈到公開官網，所以整包排除，跟修圖系統同一個理由。
+# 排除後仍可從中控台與 localhost 正常使用。
+# 資料檔（units.json、match.json）隨時可用 build/ 底下的腳本重跑產生。
+tools/qingpu-layouts/
+
+# RITA 室內設計系統：跟修圖系統同一個理由 —— netlify.toml publish="." 會把根目錄
+# 進版控的檔案發佈到公開官網。這是她自己畫圖用的工具，沒必要公開，而且裡面
+# 附了一份 687KB 的 three.js（3D 引擎），推上公開站等於白白多傳一份。
+# 排除後仍可從 localhost:9000/tools/interior-studio/ 與中控台正常使用。
+# 要公開的話把這一行拿掉就好，設計檔本身存在瀏覽器裡，不在版控中。
+tools/interior-studio/
+
+# 實價登錄異動通知：兩個理由都是硬的。
+# ① data/line-config.json 裝的是 LINE 推播金鑰，netlify.toml publish="." 會把根目錄
+#    進版控的檔案發佈到公開官網，金鑰外流等於任何人都能用你的機器人發訊息。
+# ② data/cache/ 是政府那幾包 zip，一期 15MB、留六期就 90MB，不該進版控。
+# 排除後仍可從 localhost:9000/tools/lvr-watch/ 與中控台正常使用。
+tools/lvr-watch/
+
+# 影片自動剪輯：inbox 是屋主家的影片、out 是剪好的成品，兩個都是客戶資產。
+# netlify.toml publish="." 會把根目錄進版控的檔案發佈到公開官網，所以整包排除。
+# 排除後仍可從 localhost:9200 與中控台正常使用。
+tools/video-cut/inbox/
+tools/video-cut/out/
+tools/video-cut/work/
+tools/video-cut/bgm/
+
+# 時事貼文產生器：抓回來的是各報社的新聞標題與內文摘要，那是別人的著作，
+# 不該由我的官網再發佈一次（netlify.toml publish="." 會把根目錄進版控的檔案
+# 發到公開官網）。寫好的貼文與 Claude 金鑰存在 rita-hub/data/（已整包排除）。
+# 排除後仍可從 localhost:9000/tools/news-post/ 與中控台正常使用。
+tools/news-post/

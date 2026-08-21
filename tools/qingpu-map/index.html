@@ -544,6 +544,25 @@ body{
 }
 .embed-ctl button:active{background:var(--bg)}
 
+/* ---------- 校正待辦 ---------- */
+#reviewBox{display:none}
+.editing #reviewBox{display:block}
+.rv-hint{font-size:.72rem; color:var(--text-muted); line-height:1.65; margin-bottom:8px}
+.rv-list{list-style:none; margin:0; padding:0; max-height:340px; overflow:auto}
+.rv-list li{
+  display:flex; align-items:center; gap:8px; padding:7px 6px;
+  border-bottom:1px solid var(--border); cursor:pointer; font-size:.76rem;
+}
+.rv-list li:hover{background:var(--bg)}
+.rv-list li.done{opacity:.45}
+.rv-list li.on{background:#FFF6E2}
+.rv-list .n{
+  flex:none; min-width:44px; text-align:right; font-weight:800; color:var(--amber);
+  font-size:.72rem;
+}
+.rv-list .nm{flex:1; min-width:0; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.rv-list .st{flex:none; font-size:.9rem}
+
 /* ---------- 地圖內元素 ---------- */
 .pin-label{font-size:10.5px; font-weight:600; fill:#3F2D52; paint-order:stroke; stroke:#fff; stroke-width:3px; stroke-linejoin:round}
 .poi-label{font-size:13px; font-weight:700; fill:var(--primary-deep); paint-order:stroke; stroke:#fff; stroke-width:3.5px; stroke-linejoin:round}
@@ -722,6 +741,14 @@ body{
     </div>
 
     <aside class="side">
+      <!-- 校正待辦：只有勾了「校正模式」才出現。
+           位置沒把握的社區照成交量排，成交多的先修 —— 那些才是我天天在講的社區。 -->
+      <section id="reviewBox" hidden>
+        <h2>位 置 待 確 認</h2>
+        <div class="rv-hint" id="rvHint"></div>
+        <ol class="rv-list" id="rvList"></ol>
+      </section>
+
       <!-- 帶看行程：有挑社區才出現，排在最前面（手機上就在地圖正下方） -->
       <section id="tripBox" hidden>
         <h2>今 天 的 行 程</h2>
@@ -848,6 +875,7 @@ const ROAD_W = { major:9, primary:7, secondary:5.5, tertiary:4.2, minor:2.6, ser
 
 let MAP = null;
 let PINS = null;
+let REVIEW = null;      // data/pins-review.json：位置沒把握、要人眼確認的社區（開校正模式才載）
 let view = null;      // 目前 viewBox
 let home = null;      // 全區 viewBox
 
@@ -1077,8 +1105,12 @@ function renderPins(svg, placer) {
       c.setAttribute('stroke', '#fff'); c.setAttribute('stroke-width', 1.6);
     }
     c.dataset.id = p.id;
-    // 路段中點與街角定位的位置不準，畫成橘色虛線圈提醒要校正
-    if (p.conf === 'road' || p.conf === 'corner') {
+    /* 位置沒把握的畫成橘色虛線圈。
+       needCheck 是 build/refine-pins.mjs 給的：三個來源（OSM 門牌點、591、信義）
+       投不出多數、也沒有建物可以佐證的那些。
+       不要再單看 conf —— conf 記的是「當初用什麼方法定位」，投票過後那個講法會過期：
+       conf 是 road 但 591 與信義都指同一個地方，它其實是準的。 */
+    if (p.needCheck || (p.needCheck === undefined && (p.conf === 'road' || p.conf === 'corner'))) {
       c.setAttribute('stroke', 'var(--amber)');
       c.setAttribute('stroke-dasharray', '2 1.5');
     }
@@ -1348,13 +1380,28 @@ function showCard(id) {
         ? `<div class="from">戶數與公設比：樂居這邊還沒對上名字（樂居用銷售名、我們用登記名），先空著</div>`
         : '')
     + (srcBits.length ? `<div class="from">${srcBits.join('；')}</div>` : '')
+    /* 這個點是怎麼定出來的，只給我自己看。客戶不需要知道，也不該懷疑位置。 */
+    + (!guestMode() && p.posSrc
+        ? `<div class="from">位置：${{
+            verified3: '三個來源（門牌點、591、信義）都指同一個地方',
+            verified: '兩個來源互相印證',
+            vote3: '三個來源都指同一個地方',
+            vote2: '兩個來源互相印證',
+            'building-name': 'OSM 上這棟建物就標著這個社區名',
+            building: '貼齊到旁邊的建物',
+            split: '⚠ 各來源說法不一致，沒有多數',
+            'only-osm': '⚠ 只有 OSM 門牌點一個來源',
+            manual: '你自己拖過的',
+          }[p.posSrc] || p.posSrc}</div>` : '')
 
-    + (p.conf === 'road'
-        ? `<div class="warn">位置是用路段推估的，還沒校正到實際門牌。開「校正模式」拖曳可修正。</div>` : '')
-    + (p.conf === 'corner'
-        ? `<div class="warn">樂居只給了幾條路的四至，位置抓在街角，可能差一整個街廓。開「校正模式」拖曳可修正。</div>` : '')
-    + (p.conf === 'addr-near'
-        ? `<div class="warn">門牌範圍在 OSM 查不到，用最接近的門牌定位，可能有數十公尺誤差。</div>` : '')
+    + (p.needCheck
+        ? `<div class="warn">${
+            p.conf === 'corner'
+              ? '樂居只給了幾條路的四至，位置抓在街角，可能差一整個街廓。'
+              : p.conf === 'road'
+                ? '位置是用路段推估的，還沒校正到實際門牌。'
+                : '這個位置只有一個資料來源，沒有第二家可以對照。'
+          }開「校正模式」拖曳可修正。</div>` : '')
     + (p.nudged
         ? `<div class="warn">這個點原本跟別的社區壓在一起，往旁邊挪了幾十公尺才畫得出來。</div>` : '')
 
@@ -1957,6 +2004,36 @@ function bindMap() {
   };
 }
 
+/* 校正待辦清單。成交量大的排前面 —— 那些是天天在跟客戶講的社區，位置歪掉最傷。 */
+async function renderReview() {
+  /* 待確認清單只在本機有（.gitignore 排除了，客戶端不需要）。
+     所以等真的開校正模式才去讀 —— 不然公開官網每個客戶開一次就多一個 404。 */
+  if (REVIEW === null) REVIEW = await jsonOr('data/pins-review.json', false);
+  const box = document.querySelector('#reviewBox');
+  if (!box || !PINS) return;
+  const items = (REVIEW && REVIEW.items ? REVIEW.items : []).filter(x => PINS.pins.some(p => p.id === x.id));
+  if (!items.length) {
+    document.querySelector('#rvHint').textContent =
+      REVIEW && REVIEW.items ? '沒有待確認的社區，全部都有第二個來源可以對照。' : '這台電腦上還沒有待確認清單 —— 跑一次「更新青埔地圖.cmd」就會產生。';
+    document.querySelector('#rvList').innerHTML = '';
+    return;
+  }
+  const done = items.filter(x => manual[x.id]).length;
+  document.querySelector('#rvHint').innerHTML =
+    '這些社區只有一個資料來源、或幾個來源互相矛盾，位置沒有把握。<br>'
+    + '點一下會飛過去並放大，拖圓點到正確的建物上。改完按上面的「匯出校正檔」。<br>'
+    + '<b>已確認 ' + done + ' / ' + items.length + '</b>';
+  document.querySelector('#rvList').innerHTML = items.map(x => {
+    const p = PINS.pins.find(y => y.id === x.id);
+    return '<li data-id="' + esc(x.id) + '" class="' + (manual[x.id] ? 'done' : '') + '"'
+      + ' title="' + esc(x.addr || '') + '　' + esc(x.why || '') + '">'
+      + '<span class="n">' + (x.deals || 0) + ' 筆</span>'
+      + '<span class="nm">' + esc(p?.name || x.name) + '</span>'
+      + '<span class="st">' + (manual[x.id] ? '✓' : '›') + '</span>'
+      + '</li>';
+  }).join('');
+}
+
 /* ---------- 校正模式 ----------
    自動定位有 5 個社區只推估到路段、3 個是就近門牌，位置不準。
    這裡讓 Rita 直接拖曳修正，改動存 localStorage，按「匯出校正檔」下載 pins-manual.json，
@@ -1990,6 +2067,7 @@ function bindEdit() {
     $('#status').textContent = e.target.checked
       ? '校正模式：拖曳社區圓點修正位置，改完按「匯出校正檔」'
       : statusLine();
+    if (e.target.checked) renderReview();
   };
 
   // 校正模式下，拖曳圓點改的是 pin 位置，不是整張圖
@@ -2017,10 +2095,29 @@ function bindEdit() {
     localStorage.setItem(MANUAL_KEY, JSON.stringify(manual));
     const p = PINS.pins.find(x => x.id === dragPin.id);
     $('#status').textContent = `已校正「${p?.name}」，共 ${Object.keys(manual).length} 筆待匯出`;
+    renderReview();       // 這一筆在待辦清單裡的話，打勾
     dragPin.el.removeAttribute('stroke-dasharray');
     dragPin.el.setAttribute('stroke', '#fff');
     dragPin = null;
   }, true);
+
+  /* 待辦清單：點一下就飛到那個社區，而且放大到看得見建物的程度，
+     不然拖了半天也不知道該對到哪一棟。 */
+  $('#rvList').onclick = (e) => {
+    const li = e.target.closest('li[data-id]');
+    if (!li) return;
+    const p = PINS.pins.find(x => x.id === li.dataset.id);
+    if (!p) return;
+    document.querySelectorAll('#rvList li').forEach(x => x.classList.remove('on'));
+    li.classList.add('on');
+    // 視野寬 260 個單位 ≈ 現場 200 公尺，剛好看得到這棟跟隔壁棟
+    const w = 260, h = w * (view.h / view.w);
+    view = { x: p._x - w / 2, y: p._y - h / 2, w, h };
+    apply();
+    markFocus(p.id);
+    $('#status').textContent = '「' + p.name + '」' + (p.lejuAddr ? '（' + p.lejuAddr + '）' : '')
+      + ' —— 拖到正確的建物上；沒把握就跳過';
+  };
 
   $('#exportPins').onclick = () => {
     const n = Object.keys(manual).length;
