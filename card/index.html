@@ -157,6 +157,7 @@ body.map-full{overflow:hidden}
 }
 .t-acts a.nav{background:#1A73E8; color:#fff; box-shadow:0 8px 20px rgba(26,115,232,.26)}
 .t-acts a.map{background:#fff; color:var(--c-primary); border:1.5px solid #C3D6CA; font-size:15px; padding:13px}
+.t-note{font-size:12px; color:var(--c-muted); text-align:center; margin-top:9px; line-height:1.6}
 </style>
 </head>
 <body style="margin:0">
@@ -422,6 +423,11 @@ var SOCIAL = {
         + '<a class="map" href="' + esc(MAP_TOOL + mapHash) + '" target="_blank" rel="noopener">'
         + '🗺 打開青埔地圖看社區資料</a>'
         + '</div>';
+
+      /* 客戶最常擔心的一件事：我沒裝 Google 地圖是不是點了會壞掉。
+         不會 —— 整條路線那顆的起點終點都寫死在網址裡，沒裝 app 就用瀏覽器顯示路線。
+         寫在按鈕正下方，他猶豫的那一秒剛好看到。 */
+      html += '<div class="t-note">沒裝 Google 地圖也開得起來，會用瀏覽器顯示路線。</div>';
 
       // 超過 Google 一次能排的站數就講明白，不要默默少帶幾站
       if (stops.length > GMAX) {
