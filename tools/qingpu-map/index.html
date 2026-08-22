@@ -485,6 +485,8 @@ body{
    「加入帶看」會改到我排好的路線、「設定樂居連結」是後台設定，
    「完整資料」指到 tools/qingpu-communities/，那支沒發佈到官網，客戶點下去是 404。 */
 .guest .card-acts{display:none}
+/* 行情色階整塊不給客戶看。Rita 拍板：傳給客人的東西只要社區資料，不要實價登錄。 */
+.guest #priceBox{display:none}
 /* 定位精度的提醒也是寫給我自己看的（還叫我去開校正模式），客戶看了只會覺得資料不牢靠 */
 .guest .card .warn{display:none}
 /* 客戶檢視時品牌列也壓扁一點，把空間讓給地圖 */
@@ -1178,6 +1180,25 @@ function buildPriceLegend() {
     + `紫色深淺為實價登錄住家類成交的每坪中位數，不是開價。橘色虛線圈代表位置是推估的、待校正。`;
 }
 
+/* 社區圓點要不要照每坪單價上色。
+   客戶檢視一律關掉 —— 紫色深淺就是行情，等於把實價登錄畫在地圖上。
+   Rita 拍板：傳給客人的東西只要社區資料，不要實價登錄。 */
+function paintPins(withPrice) {
+  if (!PINS) return;
+  document.querySelectorAll('#pins circle').forEach(c => {
+    const p = PINS.pins.find(x => x.id === c.dataset.id);
+    if (p?.src === 'leju') {
+      // 樂居點的綠色不是價格，是「沒有行情可查」，關色階時照樣要留著
+      c.setAttribute('fill', p.presale ? LEJU_DOT_PRESALE : LEJU_DOT);
+      return;
+    }
+    const band = withPrice ? priceBand(p?.upMedian) : null;
+    c.setAttribute('fill', band ? band.color : (withPrice ? NO_PRICE : '#8C82BF'));
+  });
+  const lg = document.querySelector('#priceLegend');
+  if (lg) lg.style.display = withPrice ? '' : 'none';
+}
+
 /* 飛到某個社區並打開資料卡。搜尋、深層連結都走這支。 */
 function focusPin(id) {
   const p = PINS?.pins.find(x => x.id === id);
@@ -1242,8 +1263,10 @@ function showCard(id) {
   const p = PINS.pins.find(x => x.id === id);
   if (!p) return;
   const wan = p.upMedian ? (p.upMedian / 10000).toFixed(1) : null;
+  /* 筆數是實價登錄的成交數，客戶那邊只留房型不留筆數 */
   const rooms = p.rooms
-    ? Object.entries(p.rooms).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k}房 ${v}筆`).join('、')
+    ? Object.entries(p.rooms).sort((a, b) => b[1] - a[1]).slice(0, 3)
+        .map(([k, v]) => (guestMode() ? `${k}房` : `${k}房 ${v}筆`)).join('、')
     : '—';
   const trend = p.trend == null ? '' :
     `<span class="${p.trend > 0 ? 'up' : 'dn'}">${p.trend > 0 ? '▲' : '▼'} ${Math.abs(p.trend)}%</span>`;
@@ -1280,8 +1303,11 @@ function showCard(id) {
 
   const srcBits = [];
   if (!isLeju) {
-    srcBits.push('單價、屋齡、樓高、格局與成交筆數來自實價登錄'
-      + (isOffice ? `（這個社區的統計基準是${esc(p.statBase || p.propertyKind)}，不是住家）` : ''));
+    // 客戶那邊看不到單價與成交筆數，來源就不必提實價登錄了
+    srcBits.push(guestMode()
+      ? '屋齡、樓高與格局來自政府公開資料'
+      : '單價、屋齡、樓高、格局與成交筆數來自實價登錄'
+        + (isOffice ? `（這個社區的統計基準是${esc(p.statBase || p.propertyKind)}，不是住家）` : ''));
   }
   /* 同一句話對客戶要換人稱 —— 客戶看到「你人工核對來的」會愣住 */
   if (lejuHit(p)) srcBits.push(guestMode()
@@ -1305,9 +1331,12 @@ function showCard(id) {
     + (tour.includes(p.id) && !guestMode()
         ? `<button class="card-share" data-share="1">📋 複製連結傳給客戶（${tour.length} 站）</button>`
         : '')
-    + (wan
-        ? `<div class="px">${wan} 萬 / 坪 ${trend}</div>`
-        : `<div class="px" style="color:var(--text-faint);font-size:1rem">尚無成交資料</div>`)
+    /* 客戶那一端不給行情。Rita 拍板：傳給客人的東西只要社區資料，
+       實價登錄的單價、漲跌、成交筆數都不放 —— 那是坐下來談的時候她自己講的。 */
+    + (guestMode() ? ''
+        : wan
+          ? `<div class="px">${wan} 萬 / 坪 ${trend}</div>`
+          : `<div class="px" style="color:var(--text-faint);font-size:1rem">尚無成交資料</div>`)
     // 樂居補的點沒有門牌，addrRange 會等於路名，印兩次很怪
     + `<div class="sub">${esc(p.dist)} ${esc(p.road)}　${esc(p.addrRange === p.road ? '' : (p.addrRange || ''))}　${esc(p.block)}</div>`
 
@@ -1356,9 +1385,11 @@ function showCard(id) {
        印一排「—」和「0 筆」看起來像資料掉了，所以整塊換成一句說明。 */
     + (isLeju
       ? `<div class="src-note">`
-        + (p.presale
-          ? `還沒交屋的預售案，實價登錄自然還沒有成交紀錄。`
-          : `實價登錄查不到這個社區的成交紀錄（成交量少或登記名不同）。`)
+        + (guestMode()
+          ? (p.presale ? `還沒交屋的預售案。` : '')
+          : (p.presale
+            ? `還沒交屋的預售案，實價登錄自然還沒有成交紀錄。`
+            : `實價登錄查不到這個社區的成交紀錄（成交量少或登記名不同）。`))
         + (guestMode() ? `上面的資料整理自樂居。` : `上面的資料是你在樂居人工核對來的。`)
         + `</div>`
       : `<dl class="rows" style="margin-top:11px">`
@@ -1370,10 +1401,11 @@ function showCard(id) {
               : ''}${p.doneRoc ? `<small style="color:var(--text-faint)">（民國 ${p.doneRoc} 年）</small>` : ''}</dd>`
           : '')
         + `<dt>格局</dt><dd>${rooms}</dd>`
-        + (p.parkMedian ? `<dt>車位</dt><dd>約 ${p.parkMedian} 萬</dd>` : '')
-        + `<dt>成交</dt><dd>近一年 ${p.deals1y || 0} 筆／累計 ${p.dealsAll || 0} 筆`
-        +   (isOffice ? `<small style="color:var(--text-faint)">（${esc(p.statBase || p.propertyKind)}類）</small>` : '')
-        +   `</dd>`
+        + (!guestMode() && p.parkMedian ? `<dt>車位</dt><dd>約 ${p.parkMedian} 萬</dd>` : '')
+        + (guestMode() ? ''
+          : `<dt>成交</dt><dd>近一年 ${p.deals1y || 0} 筆／累計 ${p.dealsAll || 0} 筆`
+            + (isOffice ? `<small style="color:var(--text-faint)">（${esc(p.statBase || p.propertyKind)}類）</small>` : '')
+            + `</dd>`)
         + `</dl>`)
 
     /* 沒對到樂居的社區要講清楚是「還沒對上名字」，不然看起來像功能壞了 */
@@ -1910,20 +1942,7 @@ function bindMap() {
     $('#pin-labels').style.display = d;
     $('#priceBox').hidden = !e.target.checked;
   };
-  $('#tgPrice').onchange = e => {
-    // 關掉色階時全部改成中性灰，位置還在但不透露價格 —— 給買方看的版本用這個
-    document.querySelectorAll('#pins circle').forEach(c => {
-      const p = PINS.pins.find(x => x.id === c.dataset.id);
-      if (p?.src === 'leju') {
-        // 樂居點的綠色不是價格，是「沒有行情可查」，關色階時照樣要留著
-        c.setAttribute('fill', p.presale ? LEJU_DOT_PRESALE : LEJU_DOT);
-        return;
-      }
-      const band = e.target.checked ? priceBand(p?.upMedian) : null;
-      c.setAttribute('fill', band ? band.color : (e.target.checked ? NO_PRICE : '#8C82BF'));
-    });
-    $('#priceLegend').style.display = e.target.checked ? '' : 'none';
-  };
+  $('#tgPrice').onchange = e => { paintPins(e.target.checked); };
 
   /* 點社區圈圈的處理在上面的 pointerup 裡（要自己分辨拖曳與點選）。
      這裡留一個 click 後備，給不送 pointer 事件的環境（例如程式模擬點擊）。 */
@@ -2437,7 +2456,7 @@ function renderTour() {
     box.innerHTML = tour.map((id, i) => {
       const p = PINS.pins.find(x => x.id === id);
       if (!p) return '';
-      const wan = p.upMedian ? `${(p.upMedian / 10000).toFixed(0)}萬` : '';
+      const wan = (!guestMode() && p.upMedian) ? `${(p.upMedian / 10000).toFixed(0)}萬` : '';
       return `<span class="tb-item"><span class="no">${i + 1}</span>${p.name}`
         + (wan ? `<span class="px">${wan}</span>` : '')
         + `<button class="x" data-drop="${id}" title="移除">×</button></span>`;
@@ -2563,7 +2582,7 @@ function renderTrip(stops, legs, totalSec) {
   const addrOf = (p) => p.lejuAddr || [p.road, p.addrRange === p.road ? '' : p.addrRange].filter(Boolean).join(' ');
   let html = '';
   stops.forEach((p, i) => {
-    const wan = p.upMedian ? `${(p.upMedian / 10000).toFixed(1)}萬` : '';
+    const wan = (!guestMode() && p.upMedian) ? `${(p.upMedian / 10000).toFixed(1)}萬` : '';
     html += `<li class="stop"><span class="no">${i + 1}</span>`
       + `<span class="who"><b>${esc(p.name)}</b><span>${esc(addrOf(p))}</span></span>`
       + (wan ? `<span class="px">${wan}</span>` : '')
@@ -2697,6 +2716,8 @@ function saveTourHash() {
 function enterTour(ids, readonly) {
   document.body.classList.add('touring');
   document.body.classList.toggle('guest', !!readonly);
+  // 客戶檢視不給行情：圓點改成中性色，色階圖例整塊收掉
+  if (readonly) paintPins(false);
   $('#tourbar').hidden = false;
   $('#tourBtn').textContent = readonly ? '🚗 帶看行程' : '🚗 帶看中';
   $('#tourHint').textContent = readonly
@@ -2750,6 +2771,9 @@ function bindTour() {
   /* 客戶檢視切回可編輯。給 Rita 自己用 —— 她也會點自己傳出去的連結。 */
   $('#tourEdit').onclick = () => {
     document.body.classList.remove('guest');
+    // 切回我自己的畫面，行情色階與帶看列上的單價都要還原
+    paintPins($('#tgPrice').checked);
+    renderTour();
     $('#tourBtn').textContent = '🚗 帶看中';
     $('#tourHint').textContent = '點地圖上的社區加入路線，再點一次移除';
   };
@@ -2888,7 +2912,8 @@ async function exportPNG() {
       ctx.fillText(String(i + 1), x + px(9), ly - px(1));
       ctx.textAlign = 'left';
       ctx.fillStyle = '#173D30';
-      const wan = p.upMedian ? `　${(p.upMedian / 10000).toFixed(0)} 萬/坪` : '';
+      // 這張圖是傳給客戶的，不放行情
+      const wan = '';
       fitText(p.name + wan, colW - px(30), 13, '600');
       ctx.fillText(p.name + wan, x + px(24), ly);
     });
@@ -2901,7 +2926,7 @@ async function exportPNG() {
   ctx.fillStyle = '#fff';
   fitText(me, innerW, 14, '700');
   ctx.fillText(me, pad, y + px(20));
-  const src = '底圖 © OpenStreetMap contributors　行情為實價登錄成交中位數，非開價　參考用';
+  const src = '底圖 © OpenStreetMap contributors　社區資料整理自公開資訊，實際以現場為準';
   ctx.fillStyle = 'rgba(255,255,255,.62)';
   fitText(src, innerW, 11);
   ctx.fillText(src, pad, y + px(37));
