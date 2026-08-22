@@ -557,7 +557,7 @@ body{
 .rv-list li.done{opacity:.45}
 .rv-list li.on{background:#FFF6E2}
 .rv-list .n{
-  flex:none; min-width:44px; text-align:right; font-weight:800; color:var(--amber);
+  flex:none; min-width:58px; text-align:right; font-weight:800; color:var(--amber);
   font-size:.72rem;
 }
 .rv-list .nm{flex:1; min-width:0; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
@@ -2022,12 +2022,13 @@ async function renderReview() {
   document.querySelector('#rvHint').innerHTML =
     '這些社區只有一個資料來源、或幾個來源互相矛盾，位置沒有把握。<br>'
     + '點一下會飛過去並放大，拖圓點到正確的建物上。改完按上面的「匯出校正檔」。<br>'
+    + '<b>⚠</b> 的那幾個沒有門牌，客戶按導航時 Google 收到的是地圖上的座標 —— 這幾個修了最有用。<br>'
     + '<b>已確認 ' + done + ' / ' + items.length + '</b>';
   document.querySelector('#rvList').innerHTML = items.map(x => {
     const p = PINS.pins.find(y => y.id === x.id);
     return '<li data-id="' + esc(x.id) + '" class="' + (manual[x.id] ? 'done' : '') + '"'
       + ' title="' + esc(x.addr || '') + '　' + esc(x.why || '') + '">'
-      + '<span class="n">' + (x.deals || 0) + ' 筆</span>'
+      + '<span class="n">' + (x.navByCoord ? '⚠ ' : '') + (x.deals || 0) + ' 筆</span>'
       + '<span class="nm">' + esc(p?.name || x.name) + '</span>'
       + '<span class="st">' + (manual[x.id] ? '✓' : '›') + '</span>'
       + '</li>';

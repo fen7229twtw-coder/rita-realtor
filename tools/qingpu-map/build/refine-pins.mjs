@@ -301,6 +301,10 @@ for (const v of votes) {
     review.push({
       id: v.p.id, name: v.p.name, deals: v.p.dealsAll || 0,
       addr: v.p.lejuAddr || v.p.road || '',
+      /* 沒有門牌的社區，客戶按導航時 Google 收到的是地圖上的座標。
+         有門牌的那些，導航吃的是門牌，地圖點歪一點也不會害人走錯 ——
+         所以「沒門牌 ＋ 位置沒把握」才是真正會出事的組合，要排最前面。 */
+      navByCoord: !/號/.test(v.p.lejuAddr || ''),
       why: v.why === 'split' ? '三個來源各說各話，沒有多數'
         : v.why === 'lone-building' ? '只有一家在講，我照它搬了但沒有第二個來源背書'
         : '只有一個來源，沒得對照',
@@ -345,8 +349,9 @@ moved.filter((m) => (m.p.dealsAll || 0) > 0).sort((a, b) => b.d - a.d).slice(0, 
 
 console.log('');
 console.log('=== 沒把握、要你自己看一眼的（照成交量排，前 20）===');
-review.sort((a, b) => b.deals - a.deals).slice(0, 20)
-  .forEach((r) => console.log('  ' + (r.deals + '筆').padEnd(8) + r.name.padEnd(20) + r.why));
+review.sort((a, b) => (b.navByCoord - a.navByCoord) || (b.deals - a.deals)).slice(0, 20)
+  .forEach((r) => console.log('  ' + (r.navByCoord ? '⚠導航吃座標 ' : '　　　　　　 ')
+    + (r.deals + '筆').padEnd(8) + r.name.padEnd(20) + r.why));
 console.log('  …共 ' + review.length + ' 個');
 
 if (DRY) { console.log('\n（--dry：沒有寫檔）'); process.exit(0); }
@@ -360,7 +365,8 @@ await writeFile(join(DATA, 'pins-review.json'), JSON.stringify({
   generatedAt: new Date().toISOString(),
   note: '這些社區的位置沒有第二個來源可以對照，只能靠人眼確認。'
     + '開地圖 → 勾「校正模式」→ 拖到對的位置 → 按「匯出校正檔」，把檔案放進 data/pins-manual.json。',
-  items: review.sort((a, b) => b.deals - a.deals),
+  // 會害客戶走錯的排最前面（導航吃座標的），其次照成交量
+  items: review.sort((a, b) => (b.navByCoord - a.navByCoord) || (b.deals - a.deals)),
 }, null, 1), 'utf8');
 
 console.log('\n已寫回 data/pins.json，待確認清單在 data/pins-review.json');
