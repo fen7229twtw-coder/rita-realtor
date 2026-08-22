@@ -201,7 +201,12 @@ for (const p of pins) {
   const now = { lat: p.p0.lat, lon: p.p0.lon };
   if (manual[p.id]) { votes.push({ p, pt: { lat: p.lat, lon: p.lon }, srcs: ['manual'], why: 'manual' }); continue; }
 
-  const myRoad = roadGap(now, p.road);
+  /* ⚠ 門牌是「○○巷 250 號」的社區，這道裁判要整個關掉。
+     巷子可以從大路一路延伸好幾百公尺，離大路遠一點都不代表定位錯 ——
+     Rita 看過青城之愛（青昇路一段48巷250號）說位置是對的，而它離青昇路一段 467 公尺。
+     裁判只對「直接掛在大路上」的門牌有效。 */
+  const inLane = /巷/.test(p.addrRange || '') || /巷/.test(p.lejuAddr || '');
+  const myRoad = inLane ? null : roadGap(now, p.road);
 
   /* 離現在的點超過 FAR 的，多半是對到別的同名社區（實測差到 2 公里）——
      除非它明顯更貼近「這個社區自己那條路」，那就是地圖本身錯了。 */
@@ -233,7 +238,7 @@ for (const p of pins) {
     if (addrHit && grp.some((x) => x.k === '591')) s += 3; // 591 的門牌跟樂居一致
     /* 離自己那條路太遠幾乎不可能對。實測青城之戀地圖上的點離青昇路一段 231 公尺，
        591 的只有 40 公尺 —— 光這一項就分得出誰對。 */
-    const rg = roadGap(c.pt, p.road);
+    const rg = inLane ? null : roadGap(c.pt, p.road);
     if (rg != null) {
       if (rg <= 40) s += 3;
       else if (rg > 150) s -= 4;
@@ -258,7 +263,7 @@ for (const p of pins) {
      兩個條件都成立才搬，而且照樣列進待確認清單讓我自己看一眼。 */
   let lone = false;
   if (win.r.grp.length === 1 && win.c.k !== 'osm') {
-    const rgWin = roadGap(win.c.pt, p.road);
+    const rgWin = inLane ? null : roadGap(win.c.pt, p.road);
     /* 放行的第二條路：它就在社區自己那條路旁邊，而現在的點離那條路遠得離譜。
        門牌寫在青昇路一段，點卻在 231 公尺外 —— 那不是誤差，是定位定錯了。 */
     const roadProves = rgWin != null && myRoad != null && rgWin <= 40 && myRoad > 150;
@@ -356,6 +361,14 @@ for (const v of votes) {
          有門牌的那些，導航吃的是門牌，地圖點歪一點也不會害人走錯 ——
          所以「沒門牌 ＋ 位置沒把握」才是真正會出事的組合，要排最前面。 */
       navByCoord: !/號/.test(v.p.lejuAddr || ''),
+      /* 這個點就在社區門牌那條路旁邊 —— 不能證明是哪一棟，但至少排除了「整個定錯區域」。
+         實測桃裏紅離五青路 5 公尺、591 的座標離 1209 公尺，那種等級的錯這一項就擋掉了。
+         巷弄門牌不算（巷子可以離大路好幾百公尺）。 */
+      roadOk: (() => {
+        if (/巷/.test(v.p.addrRange || '') || /巷/.test(v.p.lejuAddr || '')) return false;
+        const g = roadGap(v.pt, v.p.road);
+        return g != null && g <= 40;
+      })(),
       why: v.why === 'split' ? '三個來源各說各話，沒有多數'
         : v.why === 'lone-building' ? '只有一家在講，我照它搬了但沒有第二個來源背書'
         : '只有一個來源，沒得對照',
