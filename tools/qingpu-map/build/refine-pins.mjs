@@ -149,7 +149,35 @@ if (existsSync(manualFile)) manual = (JSON.parse(await readFile(manualFile, 'utf
 
 /* ---------- 第一輪：投票決定位置 ---------- */
 const AGREE = 35;        // 兩個來源差在這個距離內就算「說的是同一個地方」
-const FAR = 400;         // 差超過這個距離的不是誤差，是對到別的同名社區，整筆丟掉
+const FAR = 400;         // 差超過這個距離的多半是對到別的同名社區
+const FAR_MAX = 900;     // 但如果它明顯更貼近社區自己那條路，最遠到這裡都還可以考慮
+
+/* 社區門牌寫在哪條路，它就該在那條路旁邊 —— 這是最直白的一道裁判。
+   實測靠這條分得出來：桃裏紅的 591 座標離「五青路」1209 公尺（591 對到別的同名社區），
+   而青城之戀相反，地圖上的點離「青昇路一段」231 公尺、591 的只有 40 公尺（地圖錯了）。 */
+const CN_ROAD = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+const normRoad = (s) => String(s || '').replace(/\s/g, '')
+  .replace(/(\d+)段/, (_, d) => (CN_ROAD[+d] || d) + '段').replace(/台/g, '臺');
+
+const roadIndex = new Map();
+{
+  const raw = JSON.parse(await readFile(join(CACHE, 'roads.json'), 'utf8')).elements;
+  for (const w of raw) {
+    const n = normRoad(w.tags?.name || '');
+    if (!n) continue;
+    const list = roadIndex.get(n) || [];
+    for (const p of (w.geometry || [])) list.push(p);
+    roadIndex.set(n, list);
+  }
+}
+/** 這個位置離「這個社區自己那條路」多遠。OSM 上找不到那條路就回 null（不加分也不扣分）。 */
+function roadGap(pt, roadName) {
+  const list = roadIndex.get(normRoad(roadName));
+  if (!list || list.length < 3) return null;
+  let m = Infinity;
+  for (const q of list) m = Math.min(m, dist(pt, q));
+  return m;
+}
 
 /* 這個位置離最近的「像住宅的大樓」多遠。0 = 就站在裡面。
    投票時拿來當證據：站在房子裡的位置，比兩家網站嘴巴講的還可信。 */
@@ -173,11 +201,23 @@ for (const p of pins) {
   const now = { lat: p.p0.lat, lon: p.p0.lon };
   if (manual[p.id]) { votes.push({ p, pt: { lat: p.lat, lon: p.lon }, srcs: ['manual'], why: 'manual' }); continue; }
 
+  const myRoad = roadGap(now, p.road);
+
+  /* 離現在的點超過 FAR 的，多半是對到別的同名社區（實測差到 2 公里）——
+     除非它明顯更貼近「這個社區自己那條路」，那就是地圖本身錯了。 */
+  const keep = (q) => {
+    const d = dist(now, q);
+    if (d <= FAR) return true;
+    if (d > FAR_MAX) return false;
+    const g = roadGap(q, p.road);
+    return g != null && myRoad != null && g + 100 < myRoad;
+  };
+
   const cand = [{ k: 'osm', pt: now }];
   const s5 = by591.get(p.id);
-  if (s5 && dist(now, s5) <= FAR) cand.push({ k: '591', pt: { lat: s5.lat, lon: s5.lon } });
+  if (s5 && keep(s5)) cand.push({ k: '591', pt: { lat: s5.lat, lon: s5.lon } });
   const sy = bySinyi.get(normName(p.name));
-  if (sy && dist(now, sy) <= FAR) cand.push({ k: 'sinyi', pt: sy });
+  if (sy && keep(sy)) cand.push({ k: 'sinyi', pt: sy });
 
   /* 591 自己標的門牌就等於樂居核對過的門牌 → 它的座標多算一票。
      ⚠ 只是多一票，不是說了算。第一版讓它直接蓋過其他證據，實測把本來
@@ -191,6 +231,13 @@ for (const p of pins) {
     const grp = cand.filter((b) => dist(c.pt, b.pt) <= AGREE);
     let s = grp.length * 2;                               // 有幾個來源說同一個地方
     if (addrHit && grp.some((x) => x.k === '591')) s += 3; // 591 的門牌跟樂居一致
+    /* 離自己那條路太遠幾乎不可能對。實測青城之戀地圖上的點離青昇路一段 231 公尺，
+       591 的只有 40 公尺 —— 光這一項就分得出誰對。 */
+    const rg = roadGap(c.pt, p.road);
+    if (rg != null) {
+      if (rg <= 40) s += 3;
+      else if (rg > 150) s -= 4;
+    }
     const bd = nearestHome(c.pt);
     if (bd === 0) s += 4;                                 // 落在住宅大樓裡
     else if (bd <= 12) s += 2;                            // 貼著住宅大樓
