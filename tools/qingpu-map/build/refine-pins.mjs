@@ -258,7 +258,11 @@ for (const p of pins) {
      兩個條件都成立才搬，而且照樣列進待確認清單讓我自己看一眼。 */
   let lone = false;
   if (win.r.grp.length === 1 && win.c.k !== 'osm') {
-    if (win.r.bd === 0 && nearestHome(now) > 60) lone = true;
+    const rgWin = roadGap(win.c.pt, p.road);
+    /* 放行的第二條路：它就在社區自己那條路旁邊，而現在的點離那條路遠得離譜。
+       門牌寫在青昇路一段，點卻在 231 公尺外 —— 那不是誤差，是定位定錯了。 */
+    const roadProves = rgWin != null && myRoad != null && rgWin <= 40 && myRoad > 150;
+    if ((win.r.bd === 0 && nearestHome(now) > 60) || roadProves) lone = true;
     else win = { c: cand[0], r: score(cand[0]) };        // 退回原本的位置
   }
 
