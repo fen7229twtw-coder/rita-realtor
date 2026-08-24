@@ -298,6 +298,28 @@ body{
 .trip .who b{display:block; font-size:.84rem; font-weight:700; color:var(--text); line-height:1.35}
 .trip .who span{display:block; font-size:.66rem; color:var(--text-faint); margin-top:1px}
 .trip .px{flex:none; font-size:.76rem; font-weight:800; color:var(--accent)}
+/* 跟屋主約的時間。我這邊是可以打字的欄位，客戶那邊只是一行字。 */
+.trip .tm{
+  flex:none; width:88px; font:inherit; font-size:.76rem; font-weight:700;
+  color:var(--primary); text-align:center;
+  border:1px solid var(--border-strong); border-radius:8px; padding:0 4px; min-height:40px;
+  background:var(--surface);
+}
+.trip .tm:focus{outline:2px solid var(--secondary); outline-offset:1px}
+.trip .tmv{
+  flex:none; font-size:.82rem; font-weight:800; color:var(--primary);
+  background:#EAF4EE; border-radius:7px; padding:4px 8px;
+}
+.trip-warn{
+  margin-top:9px; padding:9px 11px; border-radius:9px;
+  background:#FFF6E2; border:1px solid #E4CFA6;
+  font-size:.72rem; font-weight:600; color:#8A5A12; line-height:1.7;
+}
+.trip-warn button{
+  display:block; margin-top:6px; font:inherit; font-size:.72rem; font-weight:800;
+  cursor:pointer; border:1px solid var(--amber); background:var(--amber); color:#fff;
+  border-radius:8px; padding:7px 11px; min-height:36px;
+}
 .trip .go{
   display:flex; align-items:center; gap:7px; margin-left:11px;
   padding:5px 0 5px 13px; border-left:2px dashed var(--amber);
@@ -769,6 +791,7 @@ body{
       <section id="tripBox" hidden>
         <h2>今 天 的 行 程</h2>
         <ol class="trip" id="tripList"></ol>
+        <div class="trip-warn" id="tripWarn" hidden></div>
         <div class="trip-total" id="tripTotal"></div>
         <!-- 客戶滑到行程最下面，正好看到是誰帶他看的、怎麼找到人 -->
         <div class="trip-me">
@@ -2020,7 +2043,20 @@ function bindMap() {
     if (!PINS) return;
     const q = new URLSearchParams(location.hash.replace(/^#/, ''));
     const v = q.get('v');
-    if (v) { enterTour(v.split(',').filter(Boolean), true); return; }
+    if (v) {
+      const ids = v.split(',').filter(Boolean);
+      /* 時間是照位置對的，不能 filter 掉空的 —— 空一格代表那一站沒約時間 */
+      const hs = (q.get('h') || '').split(',');
+      tourTimes = {};
+      ids.forEach((id, i) => {
+        const raw = (hs[i] || '').trim();
+        if (/^\d{3,4}$/.test(raw)) {
+          tourTimes[id] = raw.padStart(4, '0').replace(/(\d\d)(\d\d)/, '$1:$2');
+        }
+      });
+      enterTour(ids, true);
+      return;
+    }
     const c = q.get('c');
     if (c) focusPin(c);
   };
@@ -2604,9 +2640,17 @@ function renderTrip(stops, legs, totalSec) {
   let html = '';
   stops.forEach((p, i) => {
     const wan = (!guestMode() && p.upMedian) ? `${(p.upMedian / 10000).toFixed(1)}萬` : '';
+    /* 跟屋主約的時間。我這邊給一個時間欄位（手機會跳出系統的時間選擇器），
+       客戶那邊沒填就整個不出現，填了就是一行字 —— 他不該改得動。 */
+    const tm = tourTimes[p.id] || '';
+    const tmHtml = guestMode()
+      ? (tm ? `<span class="tmv">${esc(tm)}</span>` : '')
+      : `<input class="tm" type="time" data-tm="${p.id}" value="${esc(tm)}" `
+        + `aria-label="跟屋主約幾點" title="跟屋主約幾點">`;
     html += `<li class="stop"><span class="no">${i + 1}</span>`
       + `<span class="who"><b>${esc(p.name)}</b><span>${esc(addrOf(p))}</span></span>`
       + (wan ? `<span class="px">${wan}</span>` : '')
+      + tmHtml
       + `</li>`;
     const leg = legs[i];
     if (i < stops.length - 1) {
@@ -2617,6 +2661,24 @@ function renderTrip(stops, legs, totalSec) {
     }
   });
   $('#tripList').innerHTML = html;
+
+  /* 時間填了卻跟順序對不起來就講一聲。
+     不自動重排 —— 她剛剛才用自訂排序排好，程式擅自動掉會嚇到人。
+     但把「照時間重排」放在提醒裡，要修一鍵就好。 */
+  const timed = stops.map((p) => tourTimes[p.id] || '');
+  let bad = null;
+  for (let i = 1; i < timed.length; i++) {
+    if (timed[i] && timed[i - 1] && timed[i] < timed[i - 1]) { bad = i; break; }
+  }
+  const warn = $('#tripWarn');
+  if (warn) {
+    warn.hidden = !(bad && !guestMode());
+    if (bad && !guestMode()) {
+      warn.innerHTML = `⚠ 第 ${bad + 1} 站約 ${esc(timed[bad])}，比第 ${bad} 站的 `
+        + `${esc(timed[bad - 1])} 還早 —— 順序跟時間對不起來。`
+        + `<button id="tripByTime">⏰ 照時間重排</button>`;
+    }
+  }
 
   $('#tripTotal').innerHTML = stops.length > 1 && totalSec
     ? `全程車程約 ${sumMin} 分鐘 ‧ ${(legs.reduce((m, l) => m + (l?.m || 0), 0) / 1000).toFixed(1)} 公里`
@@ -2631,7 +2693,8 @@ function tripText() {
   const lines = ['【今天的帶看行程】'];
   stops.forEach((p, i) => {
     const addr = p.lejuAddr || [p.road, p.addrRange === p.road ? '' : p.addrRange].filter(Boolean).join(' ');
-    lines.push(`${i + 1}. ${p.name}${addr ? '（' + addr + '）' : ''}`);
+    const tm = tourTimes[p.id];
+    lines.push(`${i + 1}. ${tm ? tm + '　' : ''}${p.name}${addr ? '（' + addr + '）' : ''}`);
     if (i < stops.length - 1) {
       const leg = routeBetween(stops[i], stops[i + 1]);
       if (leg) lines.push(`　　↓ 開車約 ${Math.max(1, Math.round(leg.s / 60))} 分鐘`);
@@ -2695,6 +2758,9 @@ function onPublicSite() {
 function tourHash() {
   if (!tour.length) return '';
   let h = '#v=' + tour.join(',');
+  /* 跟屋主約的時間。空的位置要留著（用逗號佔位），不然對不回是哪一站。 */
+  const hs = tour.map((id) => (tourTimes[id] || '').replace(':', ''));
+  if (hs.some(Boolean)) h += '&h=' + hs.join(',');
   const legs = tourLegs;
   // 只有一站就沒有「段」，這時不要吐出空的 &t=&d= 讓名片頁去解析
   if (tour.length > 1 && legs.length === tour.length - 1 && legs.every(Boolean)) {
@@ -2728,6 +2794,21 @@ let tourLegs = [];
 /* 現在是不是在「自己排順序」的狀態 */
 const sorting = () => document.body.classList.contains('sorting');
 
+/* 跟屋主約的時間：{ 社區id: 'HH:MM' }。編進分享網址的 &h=，客戶看得到。 */
+let tourTimes = {};
+
+/* 照約定時間重排。沒填時間的維持原本的相對位置，接在有時間的後面。 */
+function sortByTime() {
+  const timed = tour.filter((id) => tourTimes[id]);
+  const rest = tour.filter((id) => !tourTimes[id]);
+  timed.sort((a, b) => tourTimes[a].localeCompare(tourTimes[b]));
+  tour = [...timed, ...rest];
+  tourBefore = null;
+  renderTour();
+  setOptBtn();
+  $('#status').textContent = '已照跟屋主約的時間重排';
+}
+
 /* 把第 i 站往前或往後挪一格。
    帶看順序常常不是「哪條路最順」決定的，是屋主幾點有空決定的 ——
    自動排序排得再順，屋主三點半才到就是不能先去。 */
@@ -2753,8 +2834,10 @@ function moveStop(i, dir) {
 
 /* 把挑選編進網址列，重新整理不會掉 */
 function saveTourHash() {
-  const h = tour.length ? '#v=' + tour.join(',') : '';
-  history.replaceState(null, '', location.pathname + location.search + h);
+  /* ⚠ 一定要用 tourHash()，不要自己組 '#v='。
+     自己組的那版把跟屋主約的時間（&h=）丟掉了 —— 網址列一被改寫，
+     重新整理就整批時間不見，而且畫面上看不出來哪裡錯。 */
+  history.replaceState(null, '', location.pathname + location.search + tourHash());
 }
 
 /* readonly = 客戶從我傳的連結點進來的。
@@ -2805,7 +2888,7 @@ function exitTour() {
 function bindTour() {
   $('#tourBtn').onclick = () => (tourOn() ? exitTour() : enterTour());
   $('#tourExit').onclick = exitTour;
-  $('#tourClear').onclick = () => { tour = []; exitSorting(); renderTour(); };
+  $('#tourClear').onclick = () => { tour = []; tourTimes = {}; exitSorting(); renderTour(); };
   $('#tourOpt').onclick = optimizeTour;
   $('#tripCopy').onclick = (e) => copyText(tripText(), e.target);
   $('#tourList').addEventListener('click', e => {
@@ -2813,6 +2896,19 @@ function bindTour() {
     if (mv) { const [i, d] = mv.split(':').map(Number); moveStop(i, d); return; }
     const id = e.target.dataset?.drop;
     if (id) toggleTour(id);
+  });
+
+  /* 時間欄位：change 才存（input 每打一個字就存會一直重畫整條路線）。
+     時間一改就重新渲染，順序有沒有對不起來的提醒才會跟著更新。 */
+  $('#tripList').addEventListener('change', (e) => {
+    const id = e.target.dataset?.tm;
+    if (!id) return;
+    const v = e.target.value;
+    if (v) tourTimes[id] = v; else delete tourTimes[id];
+    renderTour();
+  });
+  $('#tripWarn').addEventListener('click', (e) => {
+    if (e.target.id === 'tripByTime') sortByTime();
   });
 
   $('#tourSort').onclick = () => {
@@ -2974,10 +3070,11 @@ async function exportPNG() {
       ctx.fillText(String(i + 1), x + px(9), ly - px(1));
       ctx.textAlign = 'left';
       ctx.fillStyle = '#173D30';
-      // 這張圖是傳給客戶的，不放行情
-      const wan = '';
-      fitText(p.name + wan, colW - px(30), 13, '600');
-      ctx.fillText(p.name + wan, x + px(24), ly);
+      /* 這張圖是傳給客戶的，不放行情。跟屋主約的時間要放，而且擺在社區名前面 ——
+         跟名片頁的行程一致，客戶第一眼看到的是「幾點」不是「哪一間」。 */
+      const when = tourTimes[p.id] ? tourTimes[p.id] + '　' : '';
+      fitText(when + p.name, colW - px(30), 13, '600');
+      ctx.fillText(when + p.name, x + px(24), ly);
     });
     y += listH;
   }

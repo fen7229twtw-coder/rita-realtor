@@ -128,6 +128,11 @@ body.map-full{overflow:hidden}
 }
 .t-stop .who{flex:1; min-width:0}
 .t-stop .who b{display:block; font-size:15.5px; font-weight:700; line-height:1.35}
+/* 跟 Rita 約好的時間。客戶最需要知道的就是幾點要到，所以放在社區名前面。 */
+.t-stop .who b i{
+  font-style:normal; font-size:14px; font-weight:800; color:var(--c-primary);
+  background:#EAF4EE; border-radius:6px; padding:2px 7px; margin-right:7px;
+}
 .t-stop .who span{display:block; font-size:12.5px; color:var(--c-muted); margin-top:2px}
 .t-stop .go{
   flex:none; font-size:12.5px; font-weight:800; color:var(--c-primary);
@@ -324,6 +329,12 @@ var SOCIAL = {
 
   var mins = (q.get('t') || '').split(',').filter(Boolean).map(Number);
   var kms  = (q.get('d') || '').split(',').filter(Boolean).map(Number);
+  /* 跟屋主約的時間，格式 HHMM，空的位置用逗號佔位。
+     ⚠ 這個不能 filter 掉空的 —— 空一格代表那一站沒約時間，濾掉就對不回是哪一站。 */
+  var hrs  = (q.get('h') || '').split(',').map(function (x) {
+    x = String(x || '').trim();
+    return /^[0-9]{3,4}$/.test(x) ? ('000' + x).slice(-4).replace(/([0-9][0-9])([0-9][0-9])/, '$1:$2') : '';
+  });
   var sec  = document.getElementById('tourSec');
 
   var esc = function (s) {
@@ -376,7 +387,9 @@ var SOCIAL = {
       var totalKm = kms.length === stops.length - 1
         ? kms.reduce(function (a, b) { return a + b; }, 0) : 0;
 
-      var mapHash = '#v=' + ids.join(',');
+      /* 傳給地圖的網址要把時間一起帶過去，不然鑲進來那張跟大地圖都不會顯示時間。
+         車程（&t= &d=）不用帶，地圖自己會算。 */
+      var mapHash = '#v=' + ids.join(',') + (q.get('h') ? '&h=' + q.get('h') : '');
       var html = '';
 
       html += '<div class="t-head"><b>🚗 今天的帶看行程</b>'
@@ -401,7 +414,8 @@ var SOCIAL = {
           + '<a href="' + esc(stopUrl(p)) + '" target="_blank" rel="noopener"'
           + ' aria-label="導航到' + esc(p.name) + '">'
           + '<span class="no">' + (i + 1) + '</span>'
-          + '<span class="who"><b>' + esc(p.name) + '</b><span>' + esc(addrOf(p)) + '</span></span>'
+          + '<span class="who"><b>' + (hrs[i] ? '<i class="tm">' + esc(hrs[i]) + '</i>' : '') + esc(p.name) + '</b>'
+          + '<span>' + esc(addrOf(p)) + '</span></span>'
           + '<span class="go">🧭 導航 ›</span>'
           + '</a></li>';
         if (i < stops.length - 1 && hasLeg) {
