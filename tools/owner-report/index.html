@@ -278,6 +278,22 @@ select.control{
 .mk-row .p{font-weight:800;color:var(--accent);white-space:nowrap}
 .mk-row.mine{background:#EEF6F0;margin:0 -12px;padding:9px 12px;border-radius:8px;border-bottom:none}
 .mk-row.mine .p{color:var(--primary)}
+.mk-form{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.mk-form .control{flex:1;min-width:120px;padding:8px 26px 8px 10px;font-size:.83rem}
+.mk-form #mkCustom{flex:1 1 100%;padding:8px 10px}
+.mk-scope{font-size:.79rem;color:var(--text-faint);margin-bottom:8px}
+.mk-scope b{color:var(--primary);font-weight:800}
+.mk-chg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px}
+.mk-chg .c{font-size:.76rem;font-weight:800;padding:3px 10px;border-radius:99px;border:1px solid}
+.mk-chg .dn{background:#EEF7EA;color:#2E7D22;border-color:#CDE9C6}
+.mk-chg .up{background:#FDF2F1;color:var(--accent);border-color:#F6DAD7}
+.mk-chg .new{background:#EAF2FB;color:var(--blue);border-color:#D3E4F5}
+.mk-chg .gone{background:#F3F4F3;color:var(--text-faint);border-color:#E2E6E3}
+.mk-first{font-size:.79rem;color:var(--text-faint);margin-bottom:11px;line-height:1.6}
+.mk-more{font-size:.76rem;color:var(--text-faint);text-align:center;padding-top:9px}
+.mk-row .p .mv{display:block;font-size:.72rem;font-weight:800;margin-top:1px}
+.mk-row .p .mv.dn{color:#2E7D22}
+.mk-row .p .mv.up{color:var(--accent)}
 .mk-sum{
   display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);
   border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:12px;
@@ -370,6 +386,25 @@ select.control{
 .mk-tbl .price{font-weight:800;color:var(--accent)}
 .mk-note{font-size:.76rem;color:var(--text-faint);margin-top:9px;line-height:1.7}
 
+.chg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:14px}
+.chg-box{border:1.5px solid var(--border);border-radius:var(--r-md);padding:12px 8px;text-align:center;background:#FAFCFA}
+.chg-box .n{font-size:1.5rem;font-weight:900;line-height:1.15}
+.chg-box .k{font-size:.74rem;color:var(--text-muted);font-weight:700;margin-top:2px}
+.chg-box.dn .n{color:#2E7D22}
+.chg-box.up .n{color:var(--accent)}
+.chg-box.new .n{color:var(--blue)}
+.chg-box.gone .n{color:var(--text-faint)}
+.chg-list{display:flex;flex-direction:column;gap:7px}
+.chg-list li{display:flex;gap:10px;align-items:baseline;font-size:.86rem;color:var(--text-muted);flex-wrap:wrap}
+.chg-list .nm{font-weight:700;color:var(--text)}
+.chg-list .sp{font-size:.78rem;color:var(--text-faint)}
+.chg-list .mv{margin-left:auto;font-weight:800;white-space:nowrap}
+.chg-list .mv.dn{color:#2E7D22}
+.chg-list .mv.up{color:var(--accent)}
+.chg-list .mv s{color:var(--text-faint);font-weight:500;margin-right:5px}
+@media (max-width:640px){ .chg-grid{grid-template-columns:1fr 1fr} .chg-list .mv{margin-left:0;width:100%} }
+.mk-band{font-size:.82rem;color:var(--text-muted);line-height:1.75;margin-top:10px;padding:10px 13px;background:#F5F9F6;border-radius:9px}
+.mk-band b{color:var(--primary);font-weight:800}
 .advice{
   background:#F5F9F6;border-left:3px solid var(--secondary);
   border-radius:0 10px 10px 0;padding:14px 18px;
@@ -650,6 +685,7 @@ body.owner-mode .view{padding:26px 20px 60px}
 
 <div class="toast" id="toast"></div>
 
+<script src="../_shared/identity.js"></script>
 <script>
 (function(){
 'use strict';
@@ -657,12 +693,19 @@ body.owner-mode .view{padding:26px 20px 60px}
 const KEY = 'rita-owner-report-v1';
 const PUBLIC_BASE = 'https://fen7229twtw-coder.github.io/rita-realtor/tools/owner-report/';
 
-const AGENT = {
+const AGENT = Object.assign({
   name:'蕭沛縈 Rita', title:'桃園房產顧問',
   tel:'0981-456-399', telRaw:'0981456399',
   line:'ritahaiao', lineUrl:'https://line.me/ti/p/~ritahaiao',
-  services:'資產配置｜稅務諮詢｜簡易裝潢　深耕桃園．服務全省'
-};
+  services:'資產配置｜稅務諮詢｜簡易裝潢　深耕桃園．服務全省',
+  /* 招牌店名＋法定經紀業名稱。經紀業管理條例第 21 條：
+     廣告要與事實相符並註明經紀業名稱，罰則 6~30 萬（罰經紀業）。
+     這份是拿委託物件給客戶看的，屬於廣告，一定要有。
+     共用設定在 tools/_shared/identity.js，那個檔沒載到就用這裡的值。 */
+  firm: '有巢氏房屋　青埔IKEA店',
+  company: '熊理想有限公司',
+  firmLine: '有巢氏房屋　青埔IKEA店　熊理想有限公司',
+}, window.RITA_ID || {});
 
 const AREAS = ['青埔／高鐵特區','中壢區','桃園區','蘆竹南崁','八德區','平鎮區','龜山區','大園區','觀音／新屋','龍潭區','其他'];
 /* 新增類型一律往後加，不要插在中間或重排：
@@ -671,6 +714,20 @@ const AREAS = ['青埔／高鐵特區','中壢區','桃園區','蘆竹南崁','�
 const TYPES = ['電梯大樓','華廈','公寓','透天','別墅','店面','土地','辦公室','一般事務所'];
 const ACTIONS = ['591 刊登更新','照片重拍','影片上架','社群貼文','LINE 群發','派報／DM','開放參觀','同業聯賣','電話陌開','買方回訪'];
 const FB_TYPES = ['價格','格局','樓層','採光','屋況','環境','學區','車位','其他'];
+
+/* 競品查詢範圍。屋主最在意的不是「同棟有幾件」，是「同價位帶的對手在幹嘛」，
+   所以除了本社區，還能掃整個青埔再用總價帶篩。 */
+const MARKET_SCOPES = [
+  { id:'community', label:'本社區' },
+  { id:'qingpu',    label:'青埔全區', q:'青埔' },
+  { id:'custom',    label:'自訂關鍵字' }
+];
+const PRICE_BANDS = [
+  { id:'',     label:'總價不限' },
+  { id:'2000', label:'2,000 萬以下' },
+  { id:'3000', label:'3,000 萬以下' },
+  { id:'4000', label:'4,000 萬以下' }
+];
 
 /* 跟買方配案共用同一支本機小幫手 */
 const LOCAL_PORTS = [8899, 9100, 8900];
@@ -688,7 +745,12 @@ async function findLocalHelper(){
 let state = { listings:[], activeId:null, doc:null };
 let editingId = null;
 let ownerMode = false;
-let market = { loading:false, error:null, rows:null, forId:null };
+let market = { loading:false, error:null, rows:null, forId:null,
+               scope:'community', band:'', customQ:'', label:'', fetched:0, changes:null };
+
+/* 跨期追蹤用的「戶別指紋」——刻意不含價格，價格是要被追蹤的那個值。
+   社區＋坪數取整＋樓層一樣，實務上就是同一戶。 */
+const unitKey = r => [r.name, Math.round(Number(r.size)||0), String(r.floor||'')].join('|');
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -790,6 +852,14 @@ function packDoc(d){
   if(l.origPrice) o.l.op = l.origPrice;
   if(d.prev) o.pv = { v:d.prev.views, f:d.prev.favs, c:d.prev.calls, s:d.prev.visits };
   if(d.market && d.market.length) o.mk = d.market.map(m=>[m.name, m.price, m.size, m.room, m.floor, m.mine?1:0]);
+  if(d.marketLabel) o.ml = d.marketLabel;
+  if(d.marketStats) o.ms = [d.marketStats.n, d.marketStats.lo, d.marketStats.mid, d.marketStats.hi];
+  if(d.changes){
+    const pk = a => (a||[]).map(x=>[x.name, x.price, x.size, x.floor, x.from ?? null]);
+    o.ch = { d:pk(d.changes.down), u:pk(d.changes.up),
+             a:(d.changes.added||[]).length, g:(d.changes.gone||[]).length,
+             p:d.changes.partial?1:0, s:d.changes.since||'' };
+  }
   if(d.totals) o.tt = d.totals;
   return o;
 }
@@ -809,6 +879,15 @@ function unpackDoc(z){
     },
     prev: z.pv ? {views:z.pv.v, favs:z.pv.f, calls:z.pv.c, visits:z.pv.s} : null,
     market: (z.mk||[]).map(m=>({name:m[0],price:m[1],size:m[2],room:m[3],floor:m[4],mine:!!m[5]})),
+    marketLabel: z.ml || '',
+    marketStats: z.ms ? {n:z.ms[0], lo:z.ms[1], mid:z.ms[2], hi:z.ms[3]} : null,
+    changes: z.ch ? (()=>{
+      const un = a => (a||[]).map(x=>({name:x[0], price:x[1], size:x[2], floor:x[3], from:x[4],
+                                       diff:(x[4]!=null? x[1]-x[4] : 0)}));
+      return { down:un(z.ch.d), up:un(z.ch.u),
+               added:new Array(z.ch.a||0).fill(0), gone:new Array(z.ch.g||0).fill(0),
+               partial:!!z.ch.p, since:z.ch.s||'' };
+    })() : null,
     totals: z.tt || null
   };
 }
@@ -922,9 +1001,20 @@ function renderWrite(){
 
       '<div class="side-sticky">' +
         '<div class="card" style="margin-bottom:16px">' +
-          '<div class="card-head"><div><h2>同社區行情</h2><div class="hint">591 即時在售</div></div>' +
+          '<div class="card-head"><div><h2>競品行情</h2><div class="hint">591 即時在售，會比對上期價格</div></div>' +
             '<div class="right"><button class="btn btn-ghost btn-sm" id="btnMarket">查詢</button></div></div>' +
-          '<div class="card-body" id="marketBox"><div style="font-size:.85rem;color:var(--text-faint);text-align:center;padding:14px 0">按「查詢」抓 591 上同社區在賣的物件，會一起印在回報單上。</div></div>' +
+          '<div class="card-body">' +
+            '<div class="mk-form">' +
+              '<select class="control" id="mkScope">' +
+                MARKET_SCOPES.map(x=>'<option value="'+x.id+'"'+(market.scope===x.id?' selected':'')+'>'+esc(x.label)+'</option>').join('') +
+              '</select>' +
+              '<select class="control" id="mkBand">' +
+                PRICE_BANDS.map(x=>'<option value="'+x.id+'"'+(market.band===x.id?' selected':'')+'>'+esc(x.label)+'</option>').join('') +
+              '</select>' +
+              '<input class="control" id="mkCustom" placeholder="關鍵字，例：領航北路" value="'+esc(market.customQ)+'"'+(market.scope==='custom'?'':' hidden')+'>' +
+            '</div>' +
+            '<div id="marketBox"><div style="font-size:.85rem;color:var(--text-faint);text-align:center;padding:14px 0">選好範圍按「查詢」，抓 591 在售競品，會一起印在回報單上。</div></div>' +
+          '</div>' +
         '</div>' +
         '<div class="card">' +
           '<div class="card-head"><h2>過去回報</h2></div>' +
@@ -972,41 +1062,126 @@ function renderHist(l){
 }
 
 /* ============ 同社區行情（591） ============ */
+/* 找出這個委託案「上一次」存下來的競品快照，用來比價格。
+   只比同一個查詢範圍的快照，不然拿本社區去比青埔全區會得出亂七八糟的異動。 */
+function lastSnapshot(l, scopeLabel){
+  const rs = (l.reports||[]).slice().reverse();
+  for(const r of rs){
+    if(r.market && r.market.label === scopeLabel && (r.market.rows||[]).length) return r.market;
+  }
+  return null;
+}
+
+/* 本期 vs 上期：誰降價、誰漲價、誰新上架、誰不見了。
+   屋主最吃這一段——「同價位帶這半個月有 3 件降價」比任何話術都有說服力。 */
+function diffMarket(curRows, snap, complete){
+  if(!snap) return null;
+  /* 降價漲價一定準（同一戶在兩次都出現，比價格就好）；
+     新上架／已下架只有兩邊都是完整清單才敢講——
+     591 翻頁回來的集合會飄，不設這道會跟屋主說「5 件下架了」但其實沒有。 */
+  const trustInOut = !!complete && snap.complete !== false;
+  const prev = new Map((snap.rows||[]).map(r=>[unitKey(r), r]));
+  const cur  = new Map(curRows.map(r=>[unitKey(r), r]));
+  const down=[], up=[], added=[];
+  cur.forEach((r,k)=>{
+    const o = prev.get(k);
+    if(!o){ added.push(r); return; }
+    const diff = Number(r.price) - Number(o.price);
+    if(diff < 0) down.push({...r, from:o.price, diff});
+    else if(diff > 0) up.push({...r, from:o.price, diff});
+  });
+  const gone = [];
+  prev.forEach((r,k)=>{ if(!cur.has(k)) gone.push(r); });
+  down.sort((a,b)=>a.diff-b.diff);
+  up.sort((a,b)=>b.diff-a.diff);
+  return { down, up,
+           added: trustInOut ? added : [],
+           gone:  trustInOut ? gone  : [],
+           partial: !trustInOut,
+           since: snap.at || '' };
+}
+
 async function loadMarket(){
   const l = activeListing();
   if(!l) return;
-  market = { loading:true, error:null, rows:null, forId:l.id };
+
+  const scope = $('#mkScope') ? $('#mkScope').value : market.scope;
+  const band  = $('#mkBand')  ? $('#mkBand').value  : market.band;
+  const customQ = $('#mkCustom') ? $('#mkCustom').value.trim() : market.customQ;
+
+  let q = l.name, scopeName = '本社區';
+  if(scope === 'qingpu'){ q = '青埔'; scopeName = '青埔全區'; }
+  else if(scope === 'custom'){
+    if(!customQ){ toast('請輸入自訂關鍵字', true); return; }
+    q = customQ; scopeName = customQ;
+  }
+  const bandLabel = (PRICE_BANDS.find(x=>x.id===band) || PRICE_BANDS[0]).label;
+  const label = scopeName + '｜' + bandLabel;
+
+  market = { ...market, loading:true, error:null, rows:null, changes:null,
+             forId:l.id, scope, band, customQ, label };
   renderMarket();
+
   try{
     if(apiBase === null && !(await findLocalHelper())) throw new Error('__helper__');
-    const res = await fetch(apiBase + '/api/591-search?q=' + encodeURIComponent(l.name));
+    /* 掃全區再篩價格，一頁 30 筆不夠，所以本社區以外都翻 4 頁 */
+    const params = new URLSearchParams({ q, pages: scope === 'community' ? '1' : '4' });
+    if(band) params.set('maxPrice', band);
+    const res = await fetch(apiBase + '/api/591-search?' + params.toString());
     const data = await res.json();
     if(!data.ok) throw new Error(data.error || '查詢失敗');
-    /* 同一戶常被好幾家房仲同時刊登，用「社區|格局|坪數|樓層」當指紋合併，
-       不然回報單上會出現五筆其實是同一戶的物件，屋主看了會覺得亂。 */
+
+    /* 同一戶常被好幾家房仲同時刊登，先合併成一筆。
+       這裡用「不含價格」的指紋，同一戶不同房仲開價不同時取最低的那個，
+       跨期才比得出價格異動。 */
     const seen = new Map();
     (data.houses||[]).forEach(h=>{
       if(!h.price) return;
-      /* 坪數取整數、房數只取數字：591 同一戶被不同房仲刊登時，
-         坪數常差 0.01、房數偶爾標不一樣，比對太嚴就合併不掉。
-         開價 + 坪數 + 樓層都一樣，實務上就是同一戶。 */
-      const key = [h.price, Math.round(Number(h.area)||0), String(h.floor||'')].join('|');
-      const row = seen.get(key);
-      if(row){ row.agencies++; return; }
-      seen.set(key, {
+      const row = {
         name: h.community || h.title,
-        price: h.price, size: h.area,
-        room: (String(h.room).match(/^\d+房/)||[''])[0],
-        floor: h.floor, unit: h.unitPrice, agencies: 1, mine: false
-      });
+        price: Number(h.price), size: h.area,
+        room: (String(h.room).match(/^d+房/)||[''])[0],
+        floor: String(h.floor||''), unit: h.unitPrice,
+        cut: !!h.isDownPrice, agencies: 1, mine:false
+      };
+      const k = unitKey(row);
+      const old = seen.get(k);
+      if(old){
+        old.agencies++;
+        if(row.price < old.price) old.price = row.price;
+        old.cut = old.cut || row.cut;
+        return;
+      }
+      seen.set(k, row);
     });
-    const rows = [...seen.values()].sort((a,b)=>a.price-b.price).slice(0,8);
-    market = { loading:false, error:null, rows, forId:l.id };
+    const all = [...seen.values()].sort((a,b)=>a.price-b.price);
+    /* 撈到頁數上限就代表後面還有，這次拿到的只是一個窗口 */
+    const pages = scope === 'community' ? 1 : 4;
+    const complete = (data.fetched || 0) < pages * 30;
+    const changes = diffMarket(all, lastSnapshot(l, label), complete);
+
+    market = { ...market, loading:false, error:null,
+               rows: all, fetched: data.fetched || 0, complete, changes, forId:l.id };
   }catch(e){
     apiBase = null;
-    market = { loading:false, error: e.message === '__helper__' ? '__helper__' : e.message, rows:null, forId:l.id };
+    market = { ...market, loading:false,
+               error: e.message === '__helper__' ? '__helper__' : e.message,
+               rows:null, changes:null, forId:l.id };
   }
   renderMarket();
+}
+
+function changeChips(c){
+  if(!c) return '<div class="mk-first">這是這個範圍的第一次查詢，下一期再查就會比出價格異動。</div>';
+  const n = c.down.length + c.up.length + c.added.length + c.gone.length;
+  if(!n) return '<div class="mk-first">跟上期相比，價格沒有任何異動。</div>';
+  return '<div class="mk-chg">' +
+    (c.down.length  ? '<span class="c dn">降價 '+c.down.length+'</span>' : '') +
+    (c.up.length    ? '<span class="c up">漲價 '+c.up.length+'</span>' : '') +
+    (c.added.length ? '<span class="c new">新上架 '+c.added.length+'</span>' : '') +
+    (c.gone.length  ? '<span class="c gone">已下架 '+c.gone.length+'</span>' : '') +
+    '</div>' +
+    (c.partial ? '<div class="mk-first">這個範圍在售量超過一次能撈的量，所以只比得出降價與漲價；新上架與已下架不列入，避免把翻頁差異講成市場異動。</div>' : '');
 }
 
 function renderMarket(){
@@ -1021,20 +1196,43 @@ function renderMarket(){
     return;
   }
   if(market.error){ box.innerHTML = '<div style="color:var(--accent);font-size:.85rem;padding:10px 0">查詢失敗：'+esc(market.error)+'</div>'; return; }
-  if(!market.rows){ box.innerHTML = '<div style="font-size:.85rem;color:var(--text-faint);text-align:center;padding:14px 0">按「查詢」抓 591 上同社區在賣的物件，會一起印在回報單上。</div>'; return; }
-  if(!market.rows.length){ box.innerHTML = '<div style="font-size:.85rem;color:var(--text-faint);padding:10px 0">591 上目前查不到同社區的在售物件。</div>'; return; }
+  if(!market.rows){ box.innerHTML = '<div style="font-size:.85rem;color:var(--text-faint);text-align:center;padding:14px 0">選好範圍按「查詢」，抓 591 在售競品，會一起印在回報單上。</div>'; return; }
+  if(!market.rows.length){ box.innerHTML = '<div style="font-size:.85rem;color:var(--text-faint);padding:10px 0">這個範圍在 591 上查不到在售物件，把總價帶放寬或換關鍵字試試。</div>'; return; }
 
   const ps = market.rows.map(r=>r.price);
   const lo = Math.min(...ps), hi = Math.max(...ps);
-  const mid = ps.slice().sort((a,b)=>a-b)[Math.floor(ps.length/2)];
+  const sorted = ps.slice().sort((a,b)=>a-b);
+  const mid = sorted[Math.floor(sorted.length/2)];
+  const c = market.changes;
+
+  /* 清單只顯示前 8 筆，但統計用全部；異動的優先排進來 */
+  const chg = new Set();
+  if(c){ [...c.down, ...c.up].forEach(r=>chg.add(unitKey(r))); }
+  const show = [
+    ...market.rows.filter(r=>chg.has(unitKey(r))),
+    ...market.rows.filter(r=>!chg.has(unitKey(r)))
+  ].slice(0,8);
+  const chgMap = new Map();
+  if(c){ [...c.down, ...c.up].forEach(r=>chgMap.set(unitKey(r), r)); }
+
   box.innerHTML =
+    '<div class="mk-scope">' + esc(market.label) + '　<b>' + market.rows.length + '</b> 件在售</div>' +
+    changeChips(c) +
     '<div class="mk-sum">' +
       '<div><div class="n">'+fmtPrice(lo)+'</div><div class="k">最低開價</div></div>' +
       '<div><div class="n">'+fmtPrice(mid)+'</div><div class="k">中位開價</div></div>' +
       '<div><div class="n">'+fmtPrice(hi)+'</div><div class="k">最高開價</div></div>' +
     '</div>' +
     (l ? '<div class="mk-row mine"><div class="l"><b>你的委託：'+esc(l.name)+'</b><span>'+(l.size??'—')+' 坪　'+(l.rooms??0)+'房</span></div><div class="p">'+fmtPrice(l.price)+' 萬</div></div>' : '') +
-    market.rows.map(r=>'<div class="mk-row"><div class="l"><b>'+esc(r.name)+'</b><span>'+(r.size??'—')+' 坪　'+esc(r.room||'')+'　'+esc(r.floor||'')+'</span></div><div class="p">'+fmtPrice(r.price)+' 萬</div></div>').join('');
+    show.map(r=>{
+      const m = chgMap.get(unitKey(r));
+      const mv = m ? '<span class="mv '+(m.diff<0?'dn':'up')+'">'+(m.diff<0?'▼':'▲')+' '+fmtPrice(Math.abs(m.diff))+'</span>' : '';
+      return '<div class="mk-row"><div class="l"><b>'+esc(r.name)+'</b>' +
+        '<span>'+(r.size??'—')+' 坪　'+esc(r.room||'')+'　'+esc(r.floor||'')+
+        (r.agencies>1?'　'+r.agencies+' 家在賣':'')+'</span></div>' +
+        '<div class="p">'+fmtPrice(r.price)+' 萬'+mv+'</div></div>';
+    }).join('') +
+    (market.rows.length > show.length ? '<div class="mk-more">另外還有 '+(market.rows.length-show.length)+' 件，統計已含在上面的區間裡</div>' : '');
 }
 
 /* ============ 回報單 ============ */
@@ -1050,12 +1248,32 @@ function buildDoc(){
     calls:a.calls+(x.calls||0), visits:a.visits+(x.visits||0)
   }), {views:0,favs:0,calls:0,visits:0});
 
+  /* 競品：統計看全部，表格只印最可比的幾筆 */
+  const fresh = !!(market.rows && market.forId === l.id);
+  const all = fresh ? market.rows : [];
+  let mkStats = null, mkPick = [];
+  if(all.length){
+    const ps = all.map(x=>x.price).sort((a,b)=>a-b);
+    mkStats = { n:all.length, lo:ps[0], mid:ps[Math.floor(ps.length/2)], hi:ps[ps.length-1] };
+    const moved = new Set();
+    if(market.changes) [...market.changes.down, ...market.changes.up].forEach(x=>moved.add(unitKey(x)));
+    /* 有異動的先進來，其餘按「跟委託開價的價差」由近到遠——
+       屋主要看的是價位相近的對手，不是最便宜的那幾件 */
+    const movedRows = all.filter(x=>moved.has(unitKey(x)));
+    const rest = all.filter(x=>!moved.has(unitKey(x)))
+      .sort((a,b)=>Math.abs(a.price-l.price) - Math.abs(b.price-l.price));
+    mkPick = [...movedRows, ...rest].slice(0, 10).sort((a,b)=>a.price-b.price);
+  }
+
   state.doc = {
     date: today(),
     listing: JSON.parse(JSON.stringify(l)),
     report: r, prev,
     totals,
-    market: (market.rows && market.forId === l.id) ? market.rows : []
+    market: mkPick,
+    marketStats: mkStats,
+    marketLabel: fresh ? market.label : '',
+    changes: fresh ? market.changes : (r.market ? r.market.changes : null)
   };
   save();
   switchView('doc');
@@ -1138,12 +1356,44 @@ function renderDoc(){
       ((r.actions||[]).length ? '<div class="doc-sec"><div class="doc-sec-t">本期我為您做的行銷</div>' +
         '<div class="act-doc">'+r.actions.map(a=>'<span>'+esc(a)+'</span>').join('')+'</div></div>' : '') +
 
-      (mkRows ? '<div class="doc-sec"><div class="doc-sec-t">同社區目前在售行情</div>' +
+      (function(){
+        const c = d.changes;
+        if(!c) return '';
+        const n = c.down.length + c.up.length + (c.added||[]).length + (c.gone||[]).length;
+        if(!n) return '';
+        const partialNote = c.partial
+          ? '<div class="mk-note">此範圍在售量較大，僅比對得到價格調整；新上架與已下架不列入統計。</div>' : '';
+        const li = (arr, dir) => arr.slice(0,6).map(x =>
+          '<li><span class="nm">'+esc(x.name)+'</span>' +
+          '<span class="sp">'+(x.size??'—')+' 坪　'+esc(x.floor||'')+'</span>' +
+          '<span class="mv '+dir+'">' + (x.from!=null?'<s>'+fmtPrice(x.from)+' 萬</s> → ':'') +
+          fmtPrice(x.price)+' 萬 '+(dir==='dn'?'▼':'▲')+' '+fmtPrice(Math.abs(x.diff||0))+'</span></li>').join('');
+        return '<div class="doc-sec">' +
+          '<div class="doc-sec-t">競品價格異動'+(c.since?'（自 '+fmtDate(c.since)+' 起）':'')+'</div>' +
+          '<div class="chg-grid">' +
+            '<div class="chg-box dn"><div class="n">'+c.down.length+'</div><div class="k">降價</div></div>' +
+            '<div class="chg-box up"><div class="n">'+c.up.length+'</div><div class="k">漲價</div></div>' +
+            (c.partial ? '' :
+              '<div class="chg-box new"><div class="n">'+(c.added||[]).length+'</div><div class="k">新上架</div></div>' +
+              '<div class="chg-box gone"><div class="n">'+(c.gone||[]).length+'</div><div class="k">已下架</div></div>') +
+          '</div>' +
+          (c.down.length ? '<ul class="chg-list">'+li(c.down,'dn')+'</ul>' : '') +
+          (c.up.length ? '<ul class="chg-list" style="margin-top:9px">'+li(c.up,'up')+'</ul>' : '') +
+          partialNote +
+        '</div>';
+      })() +
+
+      (mkRows ? '<div class="doc-sec"><div class="doc-sec-t">'+esc(d.marketLabel||'同社區')+' 目前在售行情</div>' +
         '<table class="mk-tbl"><thead><tr><th>物件</th><th class="r">坪數</th><th class="r">格局</th><th class="r">樓層</th><th class="r">開價</th></tr></thead>' +
         '<tbody><tr class="mine"><td>您的物件</td><td class="r">'+(l.size??'—')+' 坪</td><td class="r">'+(l.rooms??0)+'房</td>' +
         '<td class="r">'+(l.floor?l.floor+(l.totalFloor?'/'+l.totalFloor:''):'—')+'</td><td class="r">'+fmtPrice(l.price)+' 萬</td></tr>' +
         mkRows+'</tbody></table>' +
-        '<div class="mk-note">資料取自 591 公開在售資訊，整理於 '+fmtDate(d.date)+'，為賣方開價非成交價，僅供比較參考。</div></div>' : '') +
+        (d.marketStats ? '<div class="mk-band">這個範圍目前有 <b>'+d.marketStats.n+'</b> 件在售，' +
+          '開價從 <b>'+fmtPrice(d.marketStats.lo)+'</b> 萬到 <b>'+fmtPrice(d.marketStats.hi)+'</b> 萬，' +
+          '中位數 <b>'+fmtPrice(d.marketStats.mid)+'</b> 萬。上表列出與您價位最接近及本期有價格異動的 '+
+          (d.market||[]).length+' 件。</div>' : '') +
+        '<div class="mk-note">資料取自 591 公開在售資訊，整理於 '+fmtDate(d.date)+'，為賣方開價非成交價，僅供比較參考。' +
+        (d.changes ? '價格異動為與上一期回報的同範圍查詢結果比對而得。' : '') + '</div></div>' : '') +
 
       /* 社區位置與區域行情。591 是「在售開價」，這張圖是「實價成交」，
          兩個併在一起，談調價才有依據。社區名對不到就整塊不顯示。 */
@@ -1158,6 +1408,7 @@ function renderDoc(){
     '<div class="doc-foot">' +
       '<div class="doc-foot-grid">' +
         '<div class="who"><div class="n">'+esc(AGENT.name)+'</div><div class="t">'+esc(AGENT.title)+'</div>' +
+          '<div class="t">'+esc(AGENT.firmLine)+'</div>' +
           '<div class="sv">'+esc(AGENT.services)+'</div></div>' +
         '<div class="doc-cta">' +
           '<a class="tel" href="tel:'+AGENT.telRaw+'">'+esc(AGENT.tel)+'</a>' +
@@ -1215,15 +1466,28 @@ function docText(){
     L.push('');
     L.push('本期行銷動作：'+r.actions.join('、'));
   }
+  if(d.changes){
+    const c = d.changes;
+    const n = c.down.length + c.up.length + (c.added||[]).length + (c.gone||[]).length;
+    if(n){
+      L.push('');
+      L.push('競品價格異動'+(c.since?'（自 '+fmtDate(c.since)+'）':'')+'：');
+      L.push('・降價 '+c.down.length+' 件、漲價 '+c.up.length+' 件、新上架 '+(c.added||[]).length+' 件、已下架 '+(c.gone||[]).length+' 件');
+      c.down.slice(0,4).forEach(x=>L.push('　▼ '+x.name+'　'+fmtPrice(x.from)+' → '+fmtPrice(x.price)+' 萬'));
+      c.up.slice(0,4).forEach(x=>L.push('　▲ '+x.name+'　'+fmtPrice(x.from)+' → '+fmtPrice(x.price)+' 萬'));
+    }
+  }
   if((d.market||[]).length){
     L.push('');
-    L.push('同社區在售行情：');
+    L.push((d.marketLabel||'同社區')+' 在售行情：');
+    if(d.marketStats) L.push('・共 '+d.marketStats.n+' 件在售，'+fmtPrice(d.marketStats.lo)+'～'+fmtPrice(d.marketStats.hi)+' 萬，中位 '+fmtPrice(d.marketStats.mid)+' 萬');
     d.market.slice(0,5).forEach(m=>L.push('・'+m.name+'　'+(m.size??'—')+' 坪　'+fmtPrice(m.price)+' 萬'));
   }
   if(r.advice){ L.push(''); L.push('我的建議：'); L.push(r.advice); }
   L.push('');
   L.push('———');
   L.push(AGENT.name+'｜'+AGENT.title);
+  L.push(AGENT.firmLine);
   L.push('電話：'+AGENT.tel);
   L.push('LINE：'+AGENT.lineUrl);
   return L.join('\n');
@@ -1405,6 +1669,15 @@ function bind(){
         actions: $$('#actChips input:checked').map(i=>i.value),
         advice: $('#rAdvice').value.trim()
       };
+      /* 把這期的競品快照一起存起來——下一期查同一個範圍時就能比出漲跌。
+         只存比價需要的欄位，不存照片與房仲名。 */
+      if(market.rows && market.forId === l.id){
+        rec.market = {
+          label: market.label, at: rec.date, complete: market.complete,
+          rows: market.rows.map(r=>({name:r.name, price:r.price, size:r.size, room:r.room, floor:r.floor})),
+          changes: market.changes
+        };
+      }
       l.reports = l.reports || [];
       l.reports.push(rec);
       l.reports.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
@@ -1415,6 +1688,11 @@ function bind(){
   });
 
   $('#view-write').addEventListener('change', e=>{
+    if(e.target.id === 'mkScope'){
+      const el = $('#mkCustom');
+      if(el) el.hidden = e.target.value !== 'custom';
+      return;
+    }
     if(e.target.id === 'pickListing'){
       state.activeId = e.target.value; save();
       market = {loading:false,error:null,rows:null,forId:null};
@@ -1496,6 +1774,7 @@ function initOwnerView(payload){
   band.className = 'owner-band';
   band.innerHTML = '<div class="mk">蕭</div>' +
     '<div class="tx"><b>'+esc(AGENT.name)+'　'+esc(AGENT.title)+'</b>' +
+    '<div style="font-size:.78rem;opacity:.75">'+esc(AGENT.firmLine)+'</div>' +
       '這是您委託物件這期的銷售回報，有任何問題歡迎直接聯絡我。</div>' +
     '<div class="cta"><a class="tel" href="tel:'+AGENT.telRaw+'">'+esc(AGENT.tel)+'</a>' +
       '<a class="line" href="'+AGENT.lineUrl+'" target="_blank" rel="noopener">加 LINE 詢問</a></div>';

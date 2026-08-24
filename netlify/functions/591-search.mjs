@@ -5,13 +5,14 @@
  * 瀏覽器直接打一定被擋。所以由 Netlify 這端代打，再把結果轉給前端。
  *
  * 只讀 591 公開的在售列表，不登入、不送出任何東西、不碰個資。
- * 沿用 realtor-competitor-board 的節制原則：單次最多 30 筆、不自動翻頁、
- * 有速率限制，不做大量批次抓取。
+ * 沿用 realtor-competitor-board 的節制原則：每頁 30 筆、最多翻 4 頁、
+ * 頁與頁之間停 350ms、有速率限制，不做大量批次抓取。
  */
 
 const BFF = 'https://bff-house.591.com.tw/v1/web/sale/list';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
            '(KHTML, like Gecko) Chrome/120.0 Safari/537.36';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 /* 允許呼叫的來源：她的 Netlify 站台與 GitHub Pages 官網 */
 const ALLOWED = [
@@ -87,29 +88,45 @@ export default async (req) => {
     type: '2',
     regionId: String(regionId),
     keywords,
-    firstRow: '0',
     totalRows: '30'
   });
   if(rooms) qs.set('pattern', rooms);
 
+  /* 掃整個區域再篩價格時，一頁 30 筆根本不夠篩，所以允許翻頁。
+     上限 4 頁、每頁之間停 350ms —— 沿用競品戰情室的節制原則，不做大量批次抓取。 */
+  const maxPages = Math.min(Math.max(Number(u.searchParams.get('pages')) || 1, 1), 4);
+
   try{
-    const r = await fetch(`${BFF}?${qs}`, {
-      headers: { 'User-Agent': UA, device: 'pc' }
-    });
-    if(!r.ok){
-      return json({ok:false, error:`591 回應異常（HTTP ${r.status}）`}, 502, origin);
+    const list = [];
+    for(let pg = 0; pg < maxPages; pg++){
+      qs.set('firstRow', String(pg * 30));
+      const r = await fetch(`${BFF}?${qs}`, {
+        headers: { 'User-Agent': UA, device: 'pc' }
+      });
+      if(!r.ok){
+        if(pg === 0) return json({ok:false, error:`591 回應異常（HTTP ${r.status}）`}, 502, origin);
+        break;                        /* 後面幾頁失敗就用已經拿到的 */
+      }
+      const data = await r.json();
+      const page = data?.data?.house_list || [];
+      if(!page.length) break;
+      list.push(...page);
+      if(page.length < 30) break;     /* 已經是最後一頁 */
+      if(pg < maxPages - 1) await sleep(350);
     }
-    const data = await r.json();
-    const list = data?.data?.house_list || [];
     const fetched = list.length;
 
-    /* 總價在這裡篩：只作用在這批抓回來的物件上，前端會照實說明 */
+    /* 總價在這裡篩：591 的關鍵字搜尋不吃價格參數，只能抓回來自己篩 */
     let out = list;
     const lo = Number(minPrice), hi = Number(maxPrice);
-    if(Number.isFinite(lo) && Number.isFinite(hi) && hi > 0){
+    const hasLo = Number.isFinite(lo) && lo > 0, hasHi = Number.isFinite(hi) && hi > 0;
+    if(hasLo || hasHi){
       out = out.filter(h => {
-        const p = Number(h.price);
-        return Number.isFinite(p) && p >= lo && p <= hi;
+        const v = Number(h.price);
+        if(!Number.isFinite(v)) return false;
+        if(hasLo && v < lo) return false;
+        if(hasHi && v > hi) return false;
+        return true;
       });
     }
 
