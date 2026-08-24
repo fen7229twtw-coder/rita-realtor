@@ -461,6 +461,18 @@ body{
   line-height:1; padding:0 3px;
 }
 .tb-item .x:hover{color:var(--accent)}
+/* 自訂排序模式：把「移除」換成「往前／往後」，寬度才不會爆掉。
+   帶看列的社區是橫著排的，所以用 ◀ ▶ 不用 ↑ ↓ —— 方向要跟眼睛看到的一致。 */
+.tb-item .mv{
+  border:0; background:none; cursor:pointer; color:var(--primary); font-size:1.05rem;
+  line-height:1; padding:0 6px; min-width:38px; min-height:38px;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.tb-item .mv:disabled{opacity:.25; cursor:default}
+.tb-item .mv:not(:disabled):hover{color:var(--secondary)}
+.sorting .tb-item{border-color:var(--secondary); background:#F4FBF5; padding:2px 4px 2px 5px}
+#tourSort{display:inline-flex}
+.guest #tourSort{display:none}
 .tb-acts{display:flex; gap:7px; flex-wrap:wrap}
 .btn.btn-sm.green{background:var(--primary); border-color:var(--primary); color:#fff}
 
@@ -722,7 +734,8 @@ body{
     </div>
     <div class="tb-list" id="tourList"></div>
     <div class="tb-acts">
-      <button class="btn btn-sm amber" id="tourOpt">🔀 排出最順的路線</button>
+      <button class="btn btn-sm" id="tourSort">✋ 自訂排序</button>
+      <button class="btn btn-sm amber" id="tourOpt">🔀 自動排序（最順路）</button>
       <button class="btn btn-sm" id="tourClear">清空</button>
       <button class="btn btn-sm" id="tourShare">📋 複製連結</button>
       <button class="btn btn-sm green" id="tourPng">📷 存成圖片</button>
@@ -2395,7 +2408,7 @@ let tourBefore = null;
 /* 按鈕文字跟著狀態走：排過之後變成「還原」，名單一動就變回去 */
 function setOptBtn() {
   const b = document.querySelector('#tourOpt');
-  if (b) b.textContent = tourBefore ? '↩ 還原我原本的順序' : '🔀 排出最順的路線';
+  if (b) b.textContent = tourBefore ? '↩ 還原我原本的順序' : '🔀 自動排序（最順路）';
 }
 
 function optimizeTour() {
@@ -2456,6 +2469,14 @@ function renderTour() {
     box.innerHTML = tour.map((id, i) => {
       const p = PINS.pins.find(x => x.id === id);
       if (!p) return '';
+      /* 自訂排序時把單價與移除鈕收掉，換成往前／往後 ——
+         一顆 chip 塞四樣東西在手機上會擠成兩行，反而更難點。 */
+      if (sorting()) {
+        return `<span class="tb-item"><span class="no">${i + 1}</span>${p.name}`
+          + `<button class="mv" data-mv="${i}:-1" title="往前一站"${i === 0 ? ' disabled' : ''}>◀</button>`
+          + `<button class="mv" data-mv="${i}:1" title="往後一站"${i === tour.length - 1 ? ' disabled' : ''}>▶</button>`
+          + `</span>`;
+      }
       const wan = (!guestMode() && p.upMedian) ? `${(p.upMedian / 10000).toFixed(0)}萬` : '';
       return `<span class="tb-item"><span class="no">${i + 1}</span>${p.name}`
         + (wan ? `<span class="px">${wan}</span>` : '')
@@ -2704,6 +2725,32 @@ function shareUrl() {
 /* 每段路的時間與距離，renderTour 算完存在這裡，分享連結要用 */
 let tourLegs = [];
 
+/* 現在是不是在「自己排順序」的狀態 */
+const sorting = () => document.body.classList.contains('sorting');
+
+/* 把第 i 站往前或往後挪一格。
+   帶看順序常常不是「哪條路最順」決定的，是屋主幾點有空決定的 ——
+   自動排序排得再順，屋主三點半才到就是不能先去。 */
+/* 退出自訂排序（清空、結束帶看、切成客戶檢視時都要收乾淨，
+   不然下次進來按鈕寫著「✓ 排好了」但清單是一般樣子） */
+function exitSorting() {
+  if (!sorting()) return;
+  document.body.classList.remove('sorting');
+  const b = document.querySelector('#tourSort');
+  if (b) { b.textContent = '✋ 自訂排序'; b.classList.remove('green'); }
+}
+
+function moveStop(i, dir) {
+  const j = i + dir;
+  if (i < 0 || j < 0 || i >= tour.length || j >= tour.length) return;
+  [tour[i], tour[j]] = [tour[j], tour[i]];
+  tourBefore = null;              // 順序一動，自動排序那顆的「還原」就失效了
+  renderTour();
+  setOptBtn();
+  const p = PINS.pins.find(x => x.id === tour[j]);
+  $('#status').textContent = `「${p?.name}」移到第 ${j + 1} 站`;
+}
+
 /* 把挑選編進網址列，重新整理不會掉 */
 function saveTourHash() {
   const h = tour.length ? '#v=' + tour.join(',') : '';
@@ -2716,6 +2763,7 @@ function saveTourHash() {
 function enterTour(ids, readonly) {
   document.body.classList.add('touring');
   document.body.classList.toggle('guest', !!readonly);
+  if (readonly) exitSorting();   // 客戶檢視不該停在排序狀態
   // 客戶檢視不給行情：圓點改成中性色，色階圖例整塊收掉
   if (readonly) paintPins(false);
   $('#tourbar').hidden = false;
@@ -2742,6 +2790,7 @@ function enterTour(ids, readonly) {
 const guestMode = () => document.body.classList.contains('guest');
 
 function exitTour() {
+  exitSorting();
   document.body.classList.remove('touring');
   $('#tourbar').hidden = true;
   $('#tourBtn').textContent = '🚗 帶看地圖';
@@ -2756,13 +2805,26 @@ function exitTour() {
 function bindTour() {
   $('#tourBtn').onclick = () => (tourOn() ? exitTour() : enterTour());
   $('#tourExit').onclick = exitTour;
-  $('#tourClear').onclick = () => { tour = []; renderTour(); };
+  $('#tourClear').onclick = () => { tour = []; exitSorting(); renderTour(); };
   $('#tourOpt').onclick = optimizeTour;
   $('#tripCopy').onclick = (e) => copyText(tripText(), e.target);
   $('#tourList').addEventListener('click', e => {
+    const mv = e.target.dataset?.mv;
+    if (mv) { const [i, d] = mv.split(':').map(Number); moveStop(i, d); return; }
     const id = e.target.dataset?.drop;
     if (id) toggleTour(id);
   });
+
+  $('#tourSort').onclick = () => {
+    const on = !sorting();
+    document.body.classList.toggle('sorting', on);
+    $('#tourSort').textContent = on ? '✓ 排好了' : '✋ 自訂排序';
+    $('#tourSort').classList.toggle('green', on);
+    $('#tourHint').textContent = on
+      ? '按 ◀ ▶ 把社區挪到你要的順序 —— 屋主幾點有空就排幾點'
+      : '點地圖上的社區加入路線，再點一次移除';
+    renderTour();
+  };
 
   $('#tourShare').onclick = () => shareRoute();
 
