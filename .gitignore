@@ -87,6 +87,10 @@ tools/qingpu-map/青埔地圖_離線版.html
 # RITA 修圖系統：inbox/ 與 out/ 裝的是屋主家裡的照片，外流等同把客戶的家公開。
 # netlify.toml publish="." 會把根目錄進版控的檔案發佈到公開官網，所以整包排除。
 # 排除後仍可從 localhost:9000/tools/photo-studio/ 與中控台正常使用。
+#
+# ⚠ 這條要繼續留著，不要因為「想給同事用」就打開。
+#   給同事的那一份走 p/ 那條路（見下面），是另外產出來的加密檔，
+#   跟這個資料夾裡的照片、node_modules、.publish.json 完全分開。
 tools/photo-studio/
 
 # 各社區格局圖庫：圖是建商與代銷做的，而且每張都帶 591 浮水印。
@@ -123,3 +127,58 @@ tools/video-cut/bgm/
 # 發到公開官網）。寫好的貼文與 Claude 金鑰存在 rita-hub/data/（已整包排除）。
 # 排除後仍可從 localhost:9000/tools/news-post/ 與中控台正常使用。
 tools/news-post/
+
+# 591 青埔新案監看：兩個理由都是硬的。
+# ① data/line-config.json 裝的是 LINE 推播金鑰，netlify.toml publish="." 會把根目錄
+#    進版控的檔案發佈到公開官網，金鑰外流等於任何人都能用你的機器人發訊息。
+# ② data/feed.json 是別人（同業與屋主）刊登的物件資料，抓回來自己看沒問題，
+#    由我的官網再發佈一次就不對了。
+# 排除後仍可從 localhost:9300 與中控台正常使用。
+tools/591-watch/
+
+# 屋主估價報告：三個理由。
+# ① data/lvr/ 是切好的實價登錄（新北四年就 134MB），data/cache/ 是政府原始 CSV（71MB）。
+#    netlify.toml publish="." 會把根目錄進版控的檔案發佈到公開官網，這種量級不該推上去，
+#    而且隨時可以用「更新估價資料.cmd」重抓。
+# ② 調整係數怎麼算（時間指數、樓層、坪數彈性、哪些訊號判定沒鑑別力）是估價方法本身，
+#    跟 line-reply 的話術同一個道理，同業拿去照抄的成本是零。
+# ③ 報告會印出屋主的門牌與謄本內容，工具頁本身沒有對外的價值。
+# 排除後仍可從 localhost:9000/tools/valuation/ 與中控台正常使用。
+tools/valuation/
+
+# VIP 專屬市場報告：跟 valuation 同一個理由，而且更硬。
+# ① 估價方法本身（濾掉預售簽約、行情指數怎麼建、可比社區怎麼挑、
+#    樓層梯度什麼時候該不採用）是這一行的判斷力，同業拿去照抄的成本是零。
+# ② POLICY_LIB 與新聞的「這對您的意思」是話術資產，跟 line-reply 同一個道理。
+# ③ 後台頁面沒有對外價值 —— 客戶拿到的是 vip/<亂碼>/ 那一頁，不是這裡。
+# 排除後仍可從 localhost:9000/tools/vip-report/ 與中控台正常使用。
+tools/vip-report/
+
+# ⚠ 上面排除 tools/vip-report/，但根目錄的 vip/ 刻意「不」排除 ——
+# 那是要發佈給屋主看的成品，不進版控屋主的連結就打不開。
+# 敢讓它公開的唯一理由：裡面的報告內容是 AES-256-GCM 鎖過的，
+# 鑰匙只存在 rita-hub/data/vip-clients.json（rita-hub/ 整包已排除）
+# 與屋主手上那條網址的 # 後面。# 後面的東西瀏覽器不會送給伺服器，也不會進 git。
+# 所以就算有人翻這個 repo，看到的是一串亂碼。
+#
+# 🚫 vip/ 底下的檔案永遠不可以出現這兩樣的明文：屋主稱謂、社區名。
+#    包含 <title>、OG 標籤、檔名、資料夾名。改 report.mjs 的時候要回來看這一條。
+
+# 青埔在地監看：抓回來的新聞標題與摘要是別人的著作，
+# 而且 netlify 是 publish="."，不排除的話會被發到公開官網。
+# 排除後仍可從 localhost:9000/tools/qingpu-watch/ 與中控台正常使用。
+tools/qingpu-watch/
+
+# ── p/ ── 給同事用的加密發佈檔（要進版控，這是刻意的）
+#
+# p/<亂碼>/index.html 是各工具的 publish.mjs 產出來的單一檔案：
+# 整包用 AES-256 鎖起來，密碼是解鎖的鑰匙。沒有密碼打開只有亂碼。
+# 現在有兩支在用：
+#   tools/photo-studio/publish.mjs      修圖系統（只鎖程式）
+#   tools/property-survey/publish.mjs   物調系統（程式＋社區資料庫＋公司的物調表範本）
+#
+# ⚠ 物調那份鎖進去的東西比較敏感（有巢氏的表格範本、143 個社區的戶數與公設比），
+#   所以密碼比修圖那份更要緊。網址不是秘密，密碼才是。
+#
+# ⚠ 這個資料夾只能放 publish.mjs 產出來的東西，不要手動丟任何檔案進去 ——
+#   repo 是公開的，丟什麼進去全世界都看得到。
