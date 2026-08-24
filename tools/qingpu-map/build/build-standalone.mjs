@@ -18,7 +18,11 @@ const readJSONOr = async (p, fallback) => {
 };
 
 async function main() {
-  const html = await readFile(join(ROOT, 'index.html'), 'utf8');
+  /* 換行一律先正規化成 LF。
+     踩過的坑：git 的 autocrlf 會在 checkout 時把整個檔改成 CRLF，
+     下面那幾個寫死換行的錨點就通通對不到，而錯誤訊息是「index.html 結構變了」，
+     會讓人以為是自己剛剛改壞的。輸出的是離線單檔，換行本來就無所謂。 */
+  const html = (await readFile(join(ROOT, 'index.html'), 'utf8')).replace(/\r\n/g, '\n');
   const basemap = await readJSONOr(join(DATA, 'basemap.json'), null);
   if (!basemap) throw new Error('找不到 data/basemap.json，先跑「更新青埔地圖.cmd」');
   const pins = await readJSONOr(join(DATA, 'pins.json'), null);
