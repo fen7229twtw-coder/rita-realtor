@@ -302,6 +302,36 @@ select.control{
 .mk-sum .n{font-size:1rem;font-weight:900;color:var(--primary)}
 .mk-sum .k{font-size:.68rem;color:var(--text-faint);font-weight:600}
 
+/* ===== 競品分析頁 ===== */
+.rv-form{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.rv-form .field{flex:1;min-width:150px}
+.rv-form .btn{height:41px}
+.rv-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.rv-label{font-size:.92rem;color:var(--text-muted)}
+.rv-label b{color:var(--primary);font-weight:900;font-size:1.1rem}
+.rv-partial{margin-left:8px;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:5px;background:#FDF6EA;color:var(--amber);border:1px solid #F3E3C6}
+.rv-sort{margin-left:auto;display:flex;align-items:center;gap:8px}
+.rv-sort label{font-size:.8rem;color:var(--text-faint);font-weight:600}
+.rv-sort select{width:auto;padding:7px 30px 7px 11px;font-size:.83rem}
+.rv-rank{background:#F5F9F6;border-left:3px solid var(--secondary);border-radius:0 9px 9px 0;padding:11px 14px;font-size:.88rem;line-height:1.7;margin:11px 0 12px}
+.rv-rank b{color:var(--primary);font-weight:800}
+.rv-acts{display:flex;gap:9px;flex-wrap:wrap}
+.rv-table-wrap{overflow-x:auto;border-radius:var(--r-lg)}
+.rv-tbl{width:100%;border-collapse:collapse;font-size:.86rem;min-width:660px}
+.rv-tbl th{background:#F5F9F6;color:var(--text-muted);font-size:.76rem;font-weight:700;padding:10px 12px;text-align:left;border-bottom:1.5px solid var(--border);white-space:nowrap}
+.rv-tbl td{padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+.rv-tbl tr:last-child td{border-bottom:none}
+.rv-tbl td:first-child{white-space:normal;min-width:150px}
+.rv-tbl .r{text-align:right}
+.rv-tbl .price{font-weight:800;color:var(--accent)}
+.rv-tbl tr.mine td{background:#EEF6F0;font-weight:700;color:var(--primary)}
+.rv-tbl tr.mine .price{color:var(--primary)}
+.rv-tbl .ag{margin-left:6px;font-size:.7rem;font-weight:700;padding:1px 6px;border-radius:4px;background:#EAF2FB;color:var(--blue);border:1px solid #D3E4F5}
+.rv-tbl .mv{font-weight:800}
+.rv-tbl .mv.dn{color:#2E7D22}
+.rv-tbl .mv.up{color:var(--accent)}
+@media (max-width:640px){ .rv-sort{margin-left:0;width:100%} .rv-form .field{flex:1 1 100%} .rv-form .btn{width:100%} }
+
 /* ===== 回報單 ===== */
 .doc-wrap{max-width:900px;margin:0 auto}
 .doc-tools{display:flex;gap:9px;justify-content:flex-end;margin-bottom:18px;flex-wrap:wrap}
@@ -502,7 +532,9 @@ body.owner-mode .view{padding:26px 20px 60px}
   .sb-nav{display:flex;gap:4px;padding:8px;flex:1;justify-content:space-between}
   .sb-label{display:none}
   .sb-item .ico{display:none}
-  .sb-item{padding:8px 10px;font-size:.85rem;white-space:nowrap}
+  /* 四個分頁要塞進 375px：圖示與品牌標記都收掉，字再縮一點 */
+  .sb-brand{display:none}
+  .sb-item{padding:8px 7px;font-size:.8rem;white-space:nowrap}
   .sb-foot{display:none}
   .topbar{padding:13px 18px;flex-wrap:wrap;gap:10px}
   .view{padding:18px 16px 80px}
@@ -551,6 +583,10 @@ body.owner-mode .view{padding:26px 20px 60px}
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><path d="M9 21V12h6v9"/></svg>
         委託物件<span class="cnt" id="navCount">0</span>
       </button>
+      <button class="sb-item" data-view="rivals">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+        競品分析
+      </button>
       <button class="sb-item" data-view="write">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 013 3L12 15l-4 1 1-4z"/></svg>
         撰寫回報
@@ -597,6 +633,8 @@ body.owner-mode .view{padding:26px 20px 60px}
     <section class="view" id="view-listings">
       <div class="lst-grid" id="lstGrid"></div>
     </section>
+
+    <section class="view" id="view-rivals" hidden></section>
 
     <section class="view" id="view-write" hidden></section>
 
@@ -730,7 +768,9 @@ const PRICE_BANDS = [
 ];
 
 /* 跟買方配案共用同一支本機小幫手 */
-const LOCAL_PORTS = [8899, 9100, 8900];
+/* 9000 是中控台，排第一個：她本來就天天開著，開了就有 591 查詢。
+   後面幾個是舊的獨立小幫手，留著相容。 */
+const LOCAL_PORTS = [9000, 8899, 9100, 8900];
 let apiBase = null;
 
 async function findLocalHelper(){
@@ -742,7 +782,7 @@ async function findLocalHelper(){
   catch{ apiBase = null; return false; }
 }
 
-let state = { listings:[], activeId:null, doc:null };
+let state = { listings:[], activeId:null, doc:null, marketLog:[] };
 let editingId = null;
 let ownerMode = false;
 let market = { loading:false, error:null, rows:null, forId:null,
@@ -787,6 +827,7 @@ function load(){
       state.listings = Array.isArray(d.listings) ? d.listings : [];
       state.activeId = d.activeId || null;
       state.doc = d.doc || null;
+      state.marketLog = Array.isArray(d.marketLog) ? d.marketLog : [];
       return true;
     }
   }catch{}
@@ -1064,10 +1105,28 @@ function renderHist(l){
 /* ============ 同社區行情（591） ============ */
 /* 找出這個委託案「上一次」存下來的競品快照，用來比價格。
    只比同一個查詢範圍的快照，不然拿本社區去比青埔全區會得出亂七八糟的異動。 */
+/* 每次查詢都記一筆，競品分析與撰寫回報共用同一本查詢紀錄，
+   所以在哪一頁查都能接續比出漲跌。只留最近 24 筆免得塞爆 localStorage。 */
+function pushSnapshot(label, rows, complete){
+  state.marketLog = state.marketLog || [];
+  state.marketLog.push({
+    label, at: today(), complete,
+    rows: rows.map(r=>({name:r.name, price:r.price, size:r.size, room:r.room, floor:r.floor}))
+  });
+  if(state.marketLog.length > 24) state.marketLog = state.marketLog.slice(-24);
+  save();
+}
+
+/* 找同一個範圍上一次的查詢結果。先看共用紀錄，
+   舊資料只有存在各期回報裡，所以再往回相容一次。 */
 function lastSnapshot(l, scopeLabel){
-  const rs = (l.reports||[]).slice().reverse();
-  for(const r of rs){
-    if(r.market && r.market.label === scopeLabel && (r.market.rows||[]).length) return r.market;
+  const log = (state.marketLog||[]).filter(x=>x.label===scopeLabel && (x.rows||[]).length);
+  if(log.length) return log[log.length-1];
+  if(l){
+    const rs = (l.reports||[]).slice().reverse();
+    for(const r of rs){
+      if(r.market && r.market.label === scopeLabel && (r.market.rows||[]).length) return r.market;
+    }
   }
   return null;
 }
@@ -1101,15 +1160,19 @@ function diffMarket(curRows, snap, complete){
            since: snap.at || '' };
 }
 
-async function loadMarket(){
-  const l = activeListing();
-  if(!l) return;
+async function loadMarket(opts){
+  const o = opts || {};
+  /* 競品分析頁沒有「本期回報」的概念，對照的委託案可以不選 */
+  const l = o.listing !== undefined ? o.listing : activeListing();
+  const pre = o.prefix || '';
 
-  const scope = $('#mkScope') ? $('#mkScope').value : market.scope;
-  const band  = $('#mkBand')  ? $('#mkBand').value  : market.band;
-  const customQ = $('#mkCustom') ? $('#mkCustom').value.trim() : market.customQ;
+  const scope = $(pre+'#mkScope') ? $(pre+'#mkScope').value : market.scope;
+  const band  = $(pre+'#mkBand')  ? $(pre+'#mkBand').value  : market.band;
+  const customQ = $(pre+'#mkCustom') ? $(pre+'#mkCustom').value.trim() : market.customQ;
 
-  let q = l.name, scopeName = '本社區';
+  if(scope === 'community' && !l){ toast('「本社區」要先選一個對照的委託案', true); return; }
+
+  let q = l ? l.name : '', scopeName = '本社區';
   if(scope === 'qingpu'){ q = '青埔'; scopeName = '青埔全區'; }
   else if(scope === 'custom'){
     if(!customQ){ toast('請輸入自訂關鍵字', true); return; }
@@ -1119,8 +1182,8 @@ async function loadMarket(){
   const label = scopeName + '｜' + bandLabel;
 
   market = { ...market, loading:true, error:null, rows:null, changes:null,
-             forId:l.id, scope, band, customQ, label };
-  renderMarket();
+             forId: l ? l.id : null, scope, band, customQ, label };
+  o.render ? o.render() : renderMarket();
 
   try{
     if(apiBase === null && !(await findLocalHelper())) throw new Error('__helper__');
@@ -1158,17 +1221,19 @@ async function loadMarket(){
     /* 撈到頁數上限就代表後面還有，這次拿到的只是一個窗口 */
     const pages = scope === 'community' ? 1 : 4;
     const complete = (data.fetched || 0) < pages * 30;
+    /* 一定要先比對再記錄，不然會拿這次跟自己比，永遠是「沒有異動」 */
     const changes = diffMarket(all, lastSnapshot(l, label), complete);
+    pushSnapshot(label, all, complete);
 
     market = { ...market, loading:false, error:null,
-               rows: all, fetched: data.fetched || 0, complete, changes, forId:l.id };
+               rows: all, fetched: data.fetched || 0, complete, changes, forId: l ? l.id : null };
   }catch(e){
     apiBase = null;
     market = { ...market, loading:false,
                error: e.message === '__helper__' ? '__helper__' : e.message,
-               rows:null, changes:null, forId:l.id };
+               rows:null, changes:null, forId: l ? l.id : null };
   }
-  renderMarket();
+  o.render ? o.render() : renderMarket();
 }
 
 function changeChips(c){
@@ -1190,8 +1255,8 @@ function renderMarket(){
   const l = activeListing();
   if(market.loading){ box.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text-faint);font-size:.85rem">查詢中…</div>'; return; }
   if(market.error === '__helper__'){
-    box.innerHTML = '<div class="helper-off"><div class="t">591 小幫手沒有在跑</div>' +
-      '<p>桌面上的 <b>啟動591小幫手</b> 點兩下，黑色視窗出現後回來再按一次查詢。</p>' +
+    box.innerHTML = '<div class="helper-off"><div class="t">591 查詢還沒連上</div>' +
+      '<p>把 <b>RITA 中控台</b> 打開就好（桌面捷徑，平常本來就會開），再回來按一次查詢。</p>' +
       '<button class="btn btn-primary btn-sm" id="btnMarketRetry">重試</button></div>';
     return;
   }
@@ -1233,6 +1298,152 @@ function renderMarket(){
         '<div class="p">'+fmtPrice(r.price)+' 萬'+mv+'</div></div>';
     }).join('') +
     (market.rows.length > show.length ? '<div class="mk-more">另外還有 '+(market.rows.length-show.length)+' 件，統計已含在上面的區間裡</div>' : '');
+}
+
+/* ============ 競品分析（獨立頁） ============ */
+let rivalSort = 'price';
+
+function renderRivals(){
+  const v = $('#view-rivals');
+  const cmpId = market.forId && state.listings.some(x=>x.id===market.forId) ? market.forId : '';
+  v.innerHTML =
+    '<div class="card" style="margin-bottom:18px">' +
+      '<div class="card-head"><div><h2>查什麼</h2>' +
+        '<div class="hint">不用綁委託案也能查；選了對照案，表上會標出你的位置</div></div></div>' +
+      '<div class="card-body">' +
+        '<div class="rv-form">' +
+          '<div class="field" style="margin-bottom:0"><label>範圍</label>' +
+            '<select class="control" id="mkScope">' +
+              MARKET_SCOPES.map(x=>'<option value="'+x.id+'"'+(market.scope===x.id?' selected':'')+'>'+esc(x.label)+'</option>').join('') +
+            '</select></div>' +
+          '<div class="field" style="margin-bottom:0"><label>總價帶</label>' +
+            '<select class="control" id="mkBand">' +
+              PRICE_BANDS.map(x=>'<option value="'+x.id+'"'+(market.band===x.id?' selected':'')+'>'+esc(x.label)+'</option>').join('') +
+            '</select></div>' +
+          '<div class="field" style="margin-bottom:0"><label>對照委託案<span style="font-weight:500;color:var(--text-faint)">（可不選）</span></label>' +
+            '<select class="control" id="rvCompare">' +
+              '<option value="">不對照</option>' +
+              state.listings.map(x=>'<option value="'+x.id+'"'+(cmpId===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('') +
+            '</select></div>' +
+          '<button class="btn btn-primary" id="rvRun">查詢</button>' +
+        '</div>' +
+        '<input class="control" id="mkCustom" placeholder="自訂關鍵字，例：領航北路、A19" value="'+esc(market.customQ)+'"'+(market.scope==='custom'?'':' hidden')+' style="margin-top:10px">' +
+      '</div>' +
+    '</div>' +
+    '<div id="rivalBox"></div>';
+  renderRivalResults();
+}
+
+function renderRivalResults(){
+  const box = $('#rivalBox');
+  if(!box) return;
+
+  if(market.loading){ box.innerHTML = '<div class="empty"><p>查詢中…</p></div>'; return; }
+  if(market.error === '__helper__'){
+    box.innerHTML = '<div class="card"><div class="card-body"><div class="helper-off">' +
+      '<div class="t">591 查詢還沒連上</div>' +
+      '<p>把 <b>RITA 中控台</b> 打開就好（桌面捷徑，平常本來就會開），再回來按一次查詢。</p>' +
+      '<button class="btn btn-primary btn-sm" id="rvRetry">重試</button></div></div></div>';
+    return;
+  }
+  if(market.error){ box.innerHTML = '<div class="card"><div class="card-body" style="color:var(--accent)">查詢失敗：'+esc(market.error)+'</div></div>'; return; }
+  if(!market.rows){
+    box.innerHTML = '<div class="empty"><div class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg></div>' +
+      '<h3>還沒查</h3><p>選好範圍與總價帶按「查詢」。同一個範圍查第二次以後，就會比出誰調了價。</p></div>';
+    return;
+  }
+  if(!market.rows.length){
+    box.innerHTML = '<div class="empty"><h3>這個範圍查不到在售物件</h3><p>把總價帶放寬，或換個關鍵字試試。</p></div>';
+    return;
+  }
+
+  const cmp = state.listings.find(x=>x.id===market.forId) || null;
+  const ps = market.rows.map(r=>r.price);
+  const sorted = ps.slice().sort((a,b)=>a-b);
+  const lo = sorted[0], hi = sorted[sorted.length-1], mid = sorted[Math.floor(sorted.length/2)];
+  const c = market.changes;
+
+  const chgMap = new Map();
+  if(c) [...c.down, ...c.up].forEach(r=>chgMap.set(unitKey(r), r));
+
+  const rows = market.rows.slice().sort((a,b)=>{
+    if(rivalSort==='priceDesc') return b.price-a.price;
+    if(rivalSort==='size') return (b.size||0)-(a.size||0);
+    if(rivalSort==='moved'){
+      const am=chgMap.has(unitKey(a))?0:1, bm=chgMap.has(unitKey(b))?0:1;
+      if(am!==bm) return am-bm;
+      return a.price-b.price;
+    }
+    return a.price-b.price;
+  });
+
+  /* 對照案落在這個價格帶的哪個位置——談價時最好用的一句話 */
+  let rank = null;
+  if(cmp){
+    const below = ps.filter(x=>x<cmp.price).length;
+    rank = { below, total: ps.length, pct: Math.round(below/ps.length*100) };
+  }
+
+  box.innerHTML =
+    '<div class="card" style="margin-bottom:16px"><div class="card-body">' +
+      '<div class="rv-head">' +
+        '<div class="rv-label">'+esc(market.label)+'　<b>'+market.rows.length+'</b> 件在售' +
+          (market.complete ? '' : '<span class="rv-partial">清單未完整</span>') + '</div>' +
+        '<div class="rv-sort">' +
+          '<label>排序</label><select class="control" id="rvSort">' +
+            ['price:開價低→高','priceDesc:開價高→低','size:坪數大→小','moved:有調價的優先']
+              .map(o=>{const k=o.split(':')[0], t=o.split(':')[1];return '<option value="'+k+'"'+(rivalSort===k?' selected':'')+'>'+t+'</option>';}).join('') +
+          '</select></div>' +
+      '</div>' +
+      '<div class="mk-sum" style="margin-bottom:12px">' +
+        '<div><div class="n">'+fmtPrice(lo)+'</div><div class="k">最低開價</div></div>' +
+        '<div><div class="n">'+fmtPrice(mid)+'</div><div class="k">中位開價</div></div>' +
+        '<div><div class="n">'+fmtPrice(hi)+'</div><div class="k">最高開價</div></div>' +
+      '</div>' +
+      changeChips(c) +
+      (rank ? '<div class="rv-rank">你的 <b>'+esc(cmp.name)+'</b> 開 '+fmtPrice(cmp.price)+' 萬，' +
+        '這個範圍有 <b>'+rank.below+'</b> 件比你便宜（'+rank.pct+'%）、<b>'+(rank.total-rank.below)+'</b> 件比你貴。</div>' : '') +
+      '<div class="rv-acts">' +
+        '<button class="btn btn-ghost btn-sm" id="rvToReport">把這次查詢帶進本期回報</button>' +
+        '<button class="btn btn-ghost btn-sm" id="rvCopy">複製成文字</button>' +
+      '</div>' +
+    '</div></div>' +
+
+    '<div class="card"><div class="card-body" style="padding:0">' +
+      '<div class="rv-table-wrap"><table class="rv-tbl">' +
+        '<thead><tr><th>社區／物件</th><th class="r">坪數</th><th class="r">格局</th><th class="r">樓層</th>' +
+          '<th class="r">開價</th><th class="r">單價</th><th class="r">跟上次比</th></tr></thead><tbody>' +
+        (cmp ? '<tr class="mine"><td>'+esc(cmp.name)+'（你的委託）</td><td class="r">'+(cmp.size??'—')+'</td>' +
+          '<td class="r">'+(cmp.rooms??0)+'房</td><td class="r">'+(cmp.floor?cmp.floor+(cmp.totalFloor?'/'+cmp.totalFloor:''):'—')+'</td>' +
+          '<td class="r price">'+fmtPrice(cmp.price)+'</td><td class="r">'+(cmp.price&&cmp.size?(Math.round(cmp.price/cmp.size*10)/10):'—')+'</td><td class="r">—</td></tr>' : '') +
+        rows.map(r=>{
+          const m = chgMap.get(unitKey(r));
+          const mv = m ? '<span class="mv '+(m.diff<0?'dn':'up')+'">'+(m.diff<0?'▼':'▲')+' '+fmtPrice(Math.abs(m.diff))+'</span>' : '—';
+          return '<tr><td>'+esc(r.name)+(r.agencies>1?'<span class="ag">'+r.agencies+' 家</span>':'')+'</td>' +
+            '<td class="r">'+(r.size??'—')+'</td><td class="r">'+esc(r.room||'—')+'</td>' +
+            '<td class="r">'+esc(r.floor||'—')+'</td><td class="r price">'+fmtPrice(r.price)+'</td>' +
+            '<td class="r">'+esc(r.unit||'—')+'</td><td class="r">'+mv+'</td></tr>';
+        }).join('') +
+      '</tbody></table></div>' +
+    '</div></div>';
+}
+
+function rivalText(){
+  if(!market.rows || !market.rows.length) return '';
+  const ps = market.rows.map(r=>r.price).sort((a,b)=>a-b);
+  const L = [];
+  L.push('【'+market.label+'】'+today().replace(/-/g,'/'));
+  L.push('在售 '+market.rows.length+' 件｜'+fmtPrice(ps[0])+'～'+fmtPrice(ps[ps.length-1])+' 萬｜中位 '+fmtPrice(ps[Math.floor(ps.length/2)])+' 萬');
+  const c = market.changes;
+  if(c && (c.down.length || c.up.length)){
+    L.push('');
+    L.push('跟上次查比：降價 '+c.down.length+' 件、漲價 '+c.up.length+' 件');
+    c.down.slice(0,5).forEach(x=>L.push('　▼ '+x.name+'　'+fmtPrice(x.from)+' → '+fmtPrice(x.price)+' 萬'));
+    c.up.slice(0,5).forEach(x=>L.push('　▲ '+x.name+'　'+fmtPrice(x.from)+' → '+fmtPrice(x.price)+' 萬'));
+  }
+  L.push('');
+  market.rows.slice(0,15).forEach(r=>L.push('・'+r.name+'　'+(r.size??'—')+' 坪　'+(r.room||'')+'　'+fmtPrice(r.price)+' 萬'));
+  return L.join('\n');
 }
 
 /* ============ 回報單 ============ */
@@ -1566,12 +1777,13 @@ function closeShare(){ $('#shareBg').classList.remove('show'); }
 let currentView = 'listings';
 const META = {
   listings:{t:'委託物件', s:'你手上的委託案，以及每一案的回報次數與委託剩餘天數'},
-  write:{t:'撰寫回報', s:'填本期數字與買方回饋，可帶入 591 同社區行情'},
+  rivals:{t:'競品分析', s:'看某個範圍現在誰在賣、開多少，以及跟上次查比起來誰調了價'},
+  write:{t:'撰寫回報', s:'填本期數字與買方回饋，可帶入競品行情'},
   doc:{t:'回報單', s:'可列印、存 PDF、複製 LINE 文字，或產生屋主專屬連結'}
 };
 function switchView(v){
   currentView = v;
-  ['listings','write','doc'].forEach(k=>{ $('#view-'+k).hidden = (k!==v); });
+  ['listings','rivals','write','doc'].forEach(k=>{ $('#view-'+k).hidden = (k!==v); });
   $$('.sb-item').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
   $('#pageTitle').textContent = META[v].t;
   $('#pageSub').textContent = META[v].s;
@@ -1582,7 +1794,9 @@ function switchView(v){
     renderListings();
   }else{
     acts.innerHTML = '';
-    if(v==='write') renderWrite(); else renderDoc();
+    if(v==='rivals') renderRivals();
+    else if(v==='write') renderWrite();
+    else renderDoc();
   }
   $('#navCount').textContent = state.listings.length;
   window.scrollTo({top:0, behavior:'instant'});
@@ -1638,6 +1852,47 @@ function bind(){
 
   $('#topActions').addEventListener('click', e=>{
     if(e.target.closest('[data-act="add"]')) openModal();
+  });
+
+  /* 競品分析頁 */
+  $('#view-rivals').addEventListener('click', async e=>{
+    const b = e.target.closest('#rvRun, #rvRetry, #rvToReport, #rvCopy');
+    if(!b) return;
+    if(b.id === 'rvRetry'){ apiBase = null; }
+    if(b.id === 'rvRun' || b.id === 'rvRetry'){
+      const id = $('#rvCompare') ? $('#rvCompare').value : '';
+      const l = id ? state.listings.find(x=>x.id===id) : null;
+      await loadMarket({ listing:l, render:renderRivalResults });
+      return;
+    }
+    if(b.id === 'rvToReport'){
+      if(!market.rows || !market.rows.length){ toast('先查一次再帶入', true); return; }
+      const id = $('#rvCompare') ? $('#rvCompare').value : '';
+      if(!id){ toast('要帶進回報，請先選對照的委託案', true); return; }
+      state.activeId = id;
+      market = { ...market, forId:id };
+      save();
+      switchView('write');
+      toast('已帶入，直接填本期數字就好');
+      return;
+    }
+    if(b.id === 'rvCopy'){
+      const t = rivalText();
+      if(!t){ toast('先查一次', true); return; }
+      if(navigator.clipboard?.writeText){
+        navigator.clipboard.writeText(t).then(()=>toast('已複製')).catch(()=>fallbackCopy(t));
+      }else fallbackCopy(t);
+      return;
+    }
+  });
+
+  $('#view-rivals').addEventListener('change', e=>{
+    if(e.target.id === 'mkScope'){
+      const el = $('#mkCustom');
+      if(el) el.hidden = e.target.value !== 'custom';
+      return;
+    }
+    if(e.target.id === 'rvSort'){ rivalSort = e.target.value; renderRivalResults(); return; }
   });
 
   $('#view-write').addEventListener('click', e=>{

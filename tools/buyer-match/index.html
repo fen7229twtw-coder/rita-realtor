@@ -209,6 +209,7 @@ select.control{
 }
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:0 14px}
 .inline-row{display:flex;align-items:center;gap:9px}
 .inline-row .control{flex:1}
 .inline-row .sep{color:var(--text-faint);font-size:.85rem;flex:0 0 auto}
@@ -229,6 +230,47 @@ select.control{
   background:var(--primary);border-color:var(--primary);color:#fff;
   box-shadow:0 3px 10px rgba(0,83,53,.2);
 }
+
+/* 條件標籤：分組排，一組一小標 */
+/* 摺疊區：條件多了之後，側欄不能一路長到 1900px */
+.fold{border:1px solid var(--border);border-radius:11px;margin-bottom:14px;background:#fff}
+.fold > summary{
+  list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;
+  padding:11px 13px;font-size:.82rem;font-weight:700;color:var(--text-muted);
+}
+.fold > summary::-webkit-details-marker{display:none}
+.fold > summary::before{
+  content:'';width:6px;height:6px;flex:0 0 auto;margin-left:2px;
+  border-right:2px solid var(--text-faint);border-bottom:2px solid var(--text-faint);
+  transform:rotate(-45deg);transition:transform .16s;
+}
+.fold[open] > summary::before{transform:rotate(45deg)}
+.fold > summary:hover{color:var(--primary)}
+.fold-n{margin-left:auto;font-size:.76rem;font-weight:600;color:var(--text-faint);text-align:right}
+.fold-n[data-on="1"]{color:var(--primary)}
+.fold-body{padding:2px 13px 14px}
+
+.must-groups{display:flex;flex-direction:column;gap:12px}
+.must-g-t{
+  font-size:.74rem;font-weight:700;color:var(--text-faint);
+  letter-spacing:.04em;margin-bottom:6px;
+}
+.chip-sm{padding:5px 11px;font-size:.79rem}
+.chip-x{
+  margin-left:5px;border:0;background:transparent;color:inherit;
+  font-size:.95rem;line-height:1;cursor:pointer;opacity:.5;padding:0;
+}
+.chip-x:hover{opacity:1}
+.must-add{display:flex;gap:7px;margin-top:11px}
+.must-add .control{flex:1}
+.must-hint{font-size:.76rem;color:var(--text-faint);margin-top:10px;line-height:1.65}
+.sure-row{
+  display:flex;align-items:flex-start;gap:9px;margin-top:13px;
+  padding:11px 13px;border-radius:10px;background:#F4F7F5;
+  font-size:.82rem;color:var(--text-muted);line-height:1.6;cursor:pointer;
+  font-weight:500;
+}
+.sure-row input{margin-top:3px;flex:0 0 auto}
 
 /* ============ 買方配案版面 ============ */
 .match-layout{display:grid;grid-template-columns:392px 1fr;gap:22px;align-items:start}
@@ -860,7 +902,7 @@ body.client-mode .report-wrap{max-width:900px}
   .mc-score{grid-column:2;display:flex;align-items:center;gap:10px;padding-left:0;margin-top:4px}
   .ring{width:46px;height:46px;margin-bottom:0}
   .ring .val{font-size:.84rem}
-  .grid3{grid-template-columns:1fr 1fr}
+  .grid3,.grid4{grid-template-columns:1fr 1fr}
   .rp-head,.rp-need,.rp-body,.rp-foot{padding-left:22px;padding-right:22px}
   .rp-date{position:static;text-align:left;margin-bottom:14px}
   .rp-title h2{font-size:1.4rem}
@@ -869,7 +911,7 @@ body.client-mode .report-wrap{max-width:900px}
   .inv-grid{grid-template-columns:1fr}
 }
 @media (max-width:520px){
-  .grid2,.grid3{grid-template-columns:1fr}
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
 }
 
 /* ============ 列印 ============ */
@@ -1028,6 +1070,11 @@ body.client-mode .report-wrap{max-width:900px}
                 <input class="control" id="cSizeMax" type="number" min="0" placeholder="最大">
                 <span class="suffix">坪</span>
               </div>
+              <div class="inline-row" style="margin-top:8px">
+                <span class="sep">主建物至少</span>
+                <input class="control" id="cMainMin" type="number" min="0" step="0.01" placeholder="不限">
+                <span class="suffix">坪</span>
+              </div>
             </div>
 
             <div class="grid2">
@@ -1074,6 +1121,35 @@ body.client-mode .report-wrap{max-width:900px}
               <label>產品類型</label>
               <div class="chips" id="cTypes"></div>
             </div>
+
+            <details class="fold" id="foldSpot">
+              <summary>通勤條件<span class="fold-n" id="foldSpotN">未設定</span></summary>
+              <div class="fold-body">
+                <div class="chips" id="cSpots"></div>
+                <div class="inline-row" style="margin-top:10px">
+                  <span class="sep">走路</span>
+                  <input class="control" id="cWalk" type="number" min="0" placeholder="不限">
+                  <span class="suffix">分鐘內</span>
+                </div>
+                <div class="inline-row" style="margin-top:7px">
+                  <span class="sep">開車上交流道</span>
+                  <input class="control" id="cRamp" type="number" min="0" placeholder="不限">
+                  <span class="suffix">分鐘內</span>
+                </div>
+              </div>
+            </details>
+
+            <details class="fold" id="foldMust">
+              <summary>必備條件<span class="fold-n" id="foldMustN">未設定</span></summary>
+              <div class="fold-body">
+                <div class="must-groups" id="cMusts"></div>
+                <div class="must-add">
+                  <input class="control" id="cMustNew" placeholder="自己加一條，例：要有神明廳" maxlength="24">
+                  <button type="button" class="btn btn-ghost btn-sm" id="cMustAdd">加進去</button>
+                </div>
+                <div class="must-hint">自己加的條件會一直留著，下次配案跟物件表單都選得到。</div>
+              </div>
+            </details>
 
             <div class="field" style="margin-bottom:0">
               <label>其他需求備註<span style="font-weight:500;color:var(--text-faint)">（會印在報告上）</span></label>
@@ -1196,15 +1272,15 @@ body.client-mode .report-wrap{max-width:900px}
           <div class="inline-row"><input class="control" id="pSize" type="number" min="0" step="0.01" placeholder="42.5"><span class="suffix">坪</span></div>
         </div>
         <div class="field">
+          <label>主建物坪數</label>
+          <div class="inline-row"><input class="control" id="pMainOnly" type="number" min="0" step="0.01" placeholder="26.4"><span class="suffix">坪</span></div>
+        </div>
+        <div class="field">
           <label>主+陽坪數</label>
           <div class="inline-row"><input class="control" id="pMainSize" type="number" min="0" step="0.01" placeholder="28.6"><span class="suffix">坪</span></div>
         </div>
-        <div class="field">
-          <label>屋齡</label>
-          <div class="inline-row"><input class="control" id="pAge" type="number" min="0" step="0.1" placeholder="3"><span class="suffix">年</span></div>
-        </div>
       </div>
-      <div class="grid3">
+      <div class="grid4">
         <div class="field">
           <label>房</label>
           <input class="control" id="pRooms" type="number" min="0" placeholder="3">
@@ -1216,6 +1292,10 @@ body.client-mode .report-wrap{max-width:900px}
         <div class="field">
           <label>衛</label>
           <input class="control" id="pBaths" type="number" min="0" placeholder="2">
+        </div>
+        <div class="field">
+          <label>屋齡</label>
+          <div class="inline-row"><input class="control" id="pAge" type="number" min="0" step="0.1" placeholder="3"><span class="suffix">年</span></div>
         </div>
       </div>
       <div class="grid3">
@@ -1237,6 +1317,34 @@ body.client-mode .report-wrap{max-width:900px}
             <option value="機械">機械</option>
           </select>
         </div>
+      </div>
+
+      <div class="form-section">生活機能</div>
+      <div class="grid3">
+        <div class="field">
+          <label>最近的車站</label>
+          <select class="control" id="pSpot"></select>
+        </div>
+        <div class="field">
+          <label>走路到車站</label>
+          <div class="inline-row"><input class="control" id="pWalk" type="number" min="0" placeholder="8"><span class="suffix">分</span></div>
+        </div>
+        <div class="field">
+          <label>開車上交流道</label>
+          <div class="inline-row"><input class="control" id="pRamp" type="number" min="0" placeholder="5"><span class="suffix">分</span></div>
+        </div>
+      </div>
+
+      <div class="form-section">條件標籤</div>
+      <div class="field">
+        <label>這間有的條件<span style="font-weight:500;color:var(--text-faint)">（勾起來，買方配案才對得上）</span></label>
+        <div class="must-groups" id="pMusts"></div>
+        <label class="sure-row">
+          <input type="checkbox" id="pMustsSure">
+          <span>上面沒勾的，我確定這間就是沒有。<br>
+            <span style="color:var(--text-faint)">不打勾的話，沒勾到的條件在配案時只標「未確認」，不會算成不符合。</span></span>
+        </label>
+        <div class="must-hint">電梯、平面車位、雙衛浴、四樓、公設比這幾條不用勾 —— 系統直接從上面填的樓層、車位、坪數算出來。</div>
       </div>
 
       <div class="form-section">行銷資訊</div>
@@ -1363,6 +1471,7 @@ body.client-mode .report-wrap{max-width:900px}
 
 <div class="toast" id="toast"></div>
 
+<script src="../_shared/identity.js"></script>
 <script>
 (function(){
 'use strict';
@@ -1370,7 +1479,7 @@ body.client-mode .report-wrap{max-width:900px}
 /* ================= 常數 ================= */
 const KEY = 'rita-buyer-match-v1';
 
-const AGENT = {
+const AGENT = Object.assign({
   name: '蕭沛縈 Rita',
   nickname: '青埔花媽',
   title: '桃園房產顧問',
@@ -1384,8 +1493,15 @@ const AGENT = {
   /* 相對路徑：官網與本機檔案都指得到同一張形象照 */
   photo: '../../assets/photo.jpg',
   services: '資產配置｜稅務諮詢｜簡易裝潢　深耕桃園．服務全省',
-  serviceTags: ['資產配置','稅務諮詢','簡易裝潢','買房','賣房']
-};
+  serviceTags: ['資產配置','稅務諮詢','簡易裝潢','買房','賣房'],
+  /* 招牌店名＋法定經紀業名稱。經紀業管理條例第 21 條：
+     廣告要與事實相符並註明經紀業名稱，罰則 6~30 萬（罰經紀業）。
+     這份是拿委託物件給客戶看的，屬於廣告，一定要有。
+     共用設定在 tools/_shared/identity.js，那個檔沒載到就用這裡的值。 */
+  firm: '有巢氏房屋　青埔IKEA店',
+  company: '熊理想有限公司',
+  firmLine: '有巢氏房屋　青埔IKEA店　熊理想有限公司',
+}, window.RITA_ID || {});
 
 /* 形象照載不出來時（離線、路徑被搬走）就退回原本的「蕭」字方塊，
    報告版面不會因為一張圖破掉。 */
@@ -1401,6 +1517,54 @@ const AREAS = ['青埔／高鐵特區','中壢區','桃園區','蘆竹南崁','�
    買方配案與屋主回報連結顯示成別的類型。 */
 const TYPES = ['電梯大樓','華廈','公寓','透天','別墅','店面','土地','辦公室','一般事務所'];
 
+/* ── 買方常講的條件（採光、格局、社區規約）──
+   跟 AREAS／TYPES 一樣是「用索引存進分享連結」的陣列：
+   新增一律往後接，不可插中間、不可重排，
+   否則已經寄出去的配案連結會顯示成別條條件。
+
+   有 auto 的那幾條，物件表單不會出現：能從物件資料直接算出來的
+   就不要再叫人勾一次 —— 勾了只會跟坪數、樓層、車位對不起來。
+   auto 回傳 null 代表「資料不足，算不出來」，計分時當未確認處理。 */
+const MUSTS = [
+  { g:'採光通風', t:'全室對外窗（無暗房）' },
+  { g:'採光通風', t:'客廳有對外窗' },
+  { g:'採光通風', t:'衛浴有對外窗' },
+  { g:'採光通風', t:'廚房有對外窗' },
+  { g:'採光通風', t:'邊間／雙面採光' },
+  { g:'格局',     t:'方正格局' },
+  { g:'格局',     t:'主臥有衛浴' },
+  { g:'格局',     t:'雙衛浴以上', auto: p => (p.baths || 0) >= 2 },
+  { g:'格局',     t:'有前陽台' },
+  { g:'格局',     t:'有後陽台／工作陽台' },
+  { g:'格局',     t:'公設比低（主+陽 7 成以上）',
+      auto: p => (p.size && p.mainSize) ? (p.mainSize / p.size) >= 0.7 : null },
+  { g:'社區管理', t:'有電梯', auto: p =>
+      ['電梯大樓','華廈','辦公室','一般事務所'].indexOf(p.type) > -1 ? true :
+      ['公寓','透天','別墅'].indexOf(p.type) > -1 ? false : null },
+  { g:'社區管理', t:'有管理員／保全' },
+  { g:'社區管理', t:'平面車位', auto: p => (p.parking || '').indexOf('平面') > -1 },
+  { g:'社區管理', t:'可養寵物' },
+  { g:'社區管理', t:'可開伙' },
+  { g:'其他',     t:'避開四樓', auto: p => p.floor == null ? null : p.floor !== 4 },
+  { g:'其他',     t:'附近無嫌惡設施' },
+  { g:'其他',     t:'全新未住過' },
+];
+const MUST_GROUPS = ['採光通風','格局','社區管理','其他'];
+const MUST_LABELS = MUSTS.map(m => m.t);
+const MUST_BY_LABEL = {};
+MUSTS.forEach(m => { MUST_BY_LABEL[m.t] = m; });
+/* 物件表單只列「要人自己勾的」那些 */
+const MUSTS_MANUAL = MUSTS.filter(m => !m.auto);
+
+/* 通勤地標。一樣是索引，往後接。 */
+const SPOTS = ['機捷 A17','機捷 A18','機捷 A19','機捷 A20','機捷 A21',
+  '高鐵桃園站','中壢車站','內壢車站','桃園車站'];
+
+/* 自訂條件（她自己加的）併進內建清單，買方端與物件端看到的是同一份 */
+function allMusts(){
+  return MUST_LABELS.concat(state.customMusts || []);
+}
+
 /* 客戶連結一律指向這個公開網址，
    即使她是在本機開工具，產出來的連結客戶也點得開。 */
 const PUBLIC_BASE = 'https://fen7229twtw-coder.github.io/rita-realtor/tools/buyer-match/';
@@ -1409,7 +1573,9 @@ const PUBLIC_BASE = 'https://fen7229twtw-coder.github.io/rita-realtor/tools/buye
    本機小幫手（.claude/serve-dev.mjs）就是代打的那個。
    瀏覽器把 http://localhost 視為可信來源，所以就算這頁是 https，
    也能直接打本機的 API，不會被混合內容擋掉。 */
-const LOCAL_PORTS = [8899, 9100, 8900];
+/* 9000 是中控台，排第一個：她本來就天天開著，開了就有 591 查詢。
+   後面幾個是舊的獨立小幫手，留著相容。 */
+const LOCAL_PORTS = [9000, 8899, 9100, 8900];
 let apiBase = null;          /* 探測到的小幫手網址，null = 還沒找到 */
 
 async function findLocalHelper(){
@@ -1433,14 +1599,16 @@ async function findLocalHelper(){
 }
 
 /* 配對權重（只計算買方有填的條件，分母自動正規化） */
-const W = { budget:30, area:20, size:15, rooms:18, age:10, parking:10, floor:8, type:12 };
+const W = { budget:30, area:20, size:15, mainSize:14, rooms:18, age:10, parking:10, floor:8, type:12,
+            must:22, spot:16, ramp:8 };
 
 /* ================= 狀態 ================= */
 let state = {
   properties: [],
   criteria: {},
   picked: [],
-  report: null
+  report: null,
+  customMusts: []      /* 她自己加的條件標籤，買方端與物件端共用 */
 };
 let editingId = null;
 let sortBy = 'score';
@@ -1572,9 +1740,30 @@ function mapParking(h){
 
 /* 591 物件 → 物件庫欄位。
    來源資訊（houseid、刊登房仲）只留給她自己看，客戶報告一律不出現。 */
+/* 591 的標題常常自己寫了「步行 5 分鐘到 A19」，寫得明確就抓下來。
+   只認寫死站號（A17～A21）與寫明步行分鐘的兩種寫法 ——
+   抓錯會讓配對算錯，寧可留空讓她自己填。 */
+function guessTransit(text){
+  const t = String(text || '');
+  const out = { spot:'', walk:null };
+  const m = t.match(/A(1[7-9]|2[01])(?![0-9])/);
+  if(m) out.spot = '機捷 A' + m[1];
+  else if(/高鐵(?:桃園)?站/.test(t)) out.spot = '高鐵桃園站';
+  else if(/中壢(?:火)?車站/.test(t)) out.spot = '中壢車站';
+  else if(/內壢(?:火)?車站/.test(t)) out.spot = '內壢車站';
+  else if(/桃園(?:火)?車站/.test(t)) out.spot = '桃園車站';
+  /* 認不出車站就不要記步行分鐘 ——
+     「步行 10 分到市場」不是通勤時間，記下去只會讓配對算錯。 */
+  if(!out.spot) return out;
+  const w = t.match(/(?:步行|走路|徒步)\s*約?\s*([0-9]{1,2})\s*分/);
+  if(w) out.walk = parseInt(w[1], 10);
+  return out;
+}
+
 function houseToProperty(h){
   const rm = parseRoom(h.room);
   const fl = parseFloor(h.floor);
+  const tr = guessTransit((h.title || '') + ' ' + (h.community || ''));
   return {
     id: uid(),
     name: h.community || h.title || '591 物件',
@@ -1584,7 +1773,9 @@ function houseToProperty(h){
     status: '銷售中',
     price: num(h.price),
     size: num(h.area),
-    mainSize: num(h.mainarea),
+    /* 591 的 mainarea 是主建物，不是主+陽 */
+    mainOnly: num(h.mainarea),
+    mainSize: null,
     age: num(h.age),
     rooms: rm.rooms, halls: rm.halls, baths: rm.baths,
     floor: fl.floor, totalFloor: fl.totalFloor,
@@ -1593,6 +1784,8 @@ function houseToProperty(h){
     link: h.url,
     photos: h.photo ? [h.photo] : [],
     selling: (h.title || '').trim(),
+    spot: tr.spot, walk: tr.walk, ramp: null,
+    musts: [], mustsSure: false,
     source: '591',
     sourceId: h.houseid,
     sourceAgent: h.linkman || ''
@@ -1604,11 +1797,11 @@ let lastSearchMeta = { fetched:0, priceFiltered:false };
 
 function helperOfflineHTML(){
   return '<div class="sq-offline">' +
-    '<div class="sq-offline-t">591 小幫手沒有在跑</div>' +
+    '<div class="sq-offline-t">591 查詢還沒連上</div>' +
     '<p>591 不允許網頁直接跟它要資料，所以要靠你電腦上的小幫手代打。' +
        '它只在你自己的電腦上跑，資料不會經過任何別人的伺服器。</p>' +
-    '<p class="sq-offline-how">桌面上的 <b>啟動591小幫手</b> 點兩下，' +
-       '看到黑色視窗出現就好（不用關，讓它在旁邊開著），再回來按一次搜尋。</p>' +
+    '<p class="sq-offline-how">把 <b>RITA 中控台</b> 打開就好（桌面捷徑，平常本來就會開），' +
+       '再回來按一次搜尋。</p>' +
     '<button class="btn btn-primary btn-sm" id="sqRetry">我啟動好了，重試</button>' +
   '</div>';
 }
@@ -1723,6 +1916,7 @@ function packReport(r){
   if(c.budgetMax != null) pc.bh = c.budgetMax;
   if(c.sizeMin != null) pc.sl = c.sizeMin;
   if(c.sizeMax != null) pc.sh = c.sizeMax;
+  if(c.mainMin != null) pc.mnn = c.mainMin;
   if(c.rooms) pc.r = c.rooms;
   if(c.age != null) pc.g = c.age;
   if(c.parking) pc.pk = c.parking;
@@ -1730,6 +1924,19 @@ function packReport(r){
   if(c.note) pc.nt = c.note;
   if(c.areas && c.areas.length) pc.a = c.areas.map(x=>AREAS.indexOf(x)).filter(i=>i>-1);
   if(c.types && c.types.length) pc.t = c.types.map(x=>TYPES.indexOf(x)).filter(i=>i>-1);
+  if(c.spots && c.spots.length) pc.sp = c.spots.map(x=>SPOTS.indexOf(x)).filter(i=>i>-1);
+  if(c.walk != null) pc.wk = c.walk;
+  if(c.ramp != null) pc.rp = c.ramp;
+  if(c.musts && c.musts.length){
+    /* 內建的存索引省字元；她自己加的客戶端沒有那份清單，只能整串存文字 */
+    const bi = [], cx = [];
+    c.musts.forEach(t => {
+      const i = MUST_LABELS.indexOf(t);
+      if(i > -1) bi.push(i); else cx.push(t);
+    });
+    if(bi.length) pc.mu = bi;
+    if(cx.length) pc.mx = cx;
+  }
 
   const items = r.items.map(it => {
     const p = it.p, o = {};
@@ -1738,6 +1945,7 @@ function packReport(r){
     const ti = TYPES.indexOf(p.type); if(ti > -1) o.t = ti; else if(p.type) o.tn = p.type;
     if(p.addr) o.ad = p.addr;
     if(p.mainSize != null) o.ms = p.mainSize;
+    if(p.mainOnly != null) o.mo = p.mainOnly;
     if(p.age != null) o.g = p.age;
     if(p.rooms) o.rm = p.rooms;
     if(p.halls) o.hl = p.halls;
@@ -1746,6 +1954,9 @@ function packReport(r){
     if(p.totalFloor != null) o.tf = p.totalFloor;
     if(p.parking && p.parking !== '無') o.pk = p.parking;
     if(p.fee) o.fe = p.fee;
+    const si = SPOTS.indexOf(p.spot); if(si > -1) o.st = si; else if(p.spot) o.stn = p.spot;
+    if(p.walk != null) o.wk = p.walk;
+    if(p.ramp != null) o.rp = p.ramp;
     if(p.selling) o.sl = p.selling;
     /* 照片只帶網址型的，最多 3 張：
        上傳的照片是 data URL，一張就好幾十 KB，塞進網址會長到 LINE 傳不出去。 */
@@ -1757,7 +1968,8 @@ function packReport(r){
     const out = { p:o };
     if(it.score != null) out.s = it.score;
     if(it.hits && it.hits.length) out.h = it.hits;
-    if(it.misses && it.misses.length) out.m = it.misses.map(x=>[x.t, x.lv==='miss'?1:0]);
+    const ms = (it.misses || []).filter(x => !x.soft);
+    if(ms.length) out.m = ms.map(x=>[x.t, x.lv==='miss'?1:0]);
     return out;
   });
   return { d:r.date, c:pc, i:items };
@@ -1767,10 +1979,13 @@ function unpackReport(z){
   const c = z.c || {};
   const criteria = {
     name: c.n || '', budgetMin: c.bl ?? null, budgetMax: c.bh ?? null,
-    sizeMin: c.sl ?? null, sizeMax: c.sh ?? null, rooms: c.r || '',
+    sizeMin: c.sl ?? null, sizeMax: c.sh ?? null, mainMin: c.mnn ?? null, rooms: c.r || '',
     age: c.g ?? null, parking: c.pk || '', floorPref: c.fp || '', note: c.nt || '',
     areas: (c.a || []).map(i=>AREAS[i]).filter(Boolean),
-    types: (c.t || []).map(i=>TYPES[i]).filter(Boolean)
+    types: (c.t || []).map(i=>TYPES[i]).filter(Boolean),
+    spots: (c.sp || []).map(i=>SPOTS[i]).filter(Boolean),
+    walk: c.wk ?? null, ramp: c.rp ?? null,
+    musts: (c.mu || []).map(i=>MUST_LABELS[i]).filter(Boolean).concat(c.mx || [])
   };
   const items = (z.i || []).map(it => {
     const o = it.p || {};
@@ -1783,10 +1998,12 @@ function unpackReport(z){
         name:o.n, price:o.pr, size:o.sz,
         area: o.a != null ? AREAS[o.a] : (o.an || ''),
         type: o.t != null ? TYPES[o.t] : (o.tn || ''),
-        addr:o.ad || '', mainSize:o.ms ?? null, age:o.g ?? null,
+        addr:o.ad || '', mainSize:o.ms ?? null, mainOnly:o.mo ?? null, age:o.g ?? null,
         rooms:o.rm ?? 0, halls:o.hl ?? 0, baths:o.bt ?? 0,
         floor:o.fl ?? null, totalFloor:o.tf ?? null,
         parking:o.pk || '無', fee:o.fe ?? null, link:o.lk || '', selling:o.sl || '',
+        spot: o.st != null ? SPOTS[o.st] : (o.stn || ''),
+        walk: o.wk ?? null, ramp: o.rp ?? null,
         photos: Array.isArray(o.ph) ? o.ph : []
       }
     };
@@ -1821,15 +2038,29 @@ function migratePhotos(list){
   return list || [];
 }
 
+/* 591 給的 mainarea 是「主建物」，舊版把它填進「主+陽」那一欄。
+   只搬 591 抓進來的（她自己手打的那欄就是主+陽，不要動）。 */
+function migrateMainSize(list){
+  (list || []).forEach(p => {
+    if(p.source === '591' && p.mainOnly == null && p.mainSize != null){
+      p.mainOnly = p.mainSize;
+      p.mainSize = null;
+    }
+  });
+  return list || [];
+}
+
 function load(){
   try{
     const raw = localStorage.getItem(KEY);
     if(raw){
       const d = JSON.parse(raw);
-      state.properties = migratePhotos(Array.isArray(d.properties) ? d.properties : []);
+      state.properties = migrateMainSize(
+        migratePhotos(Array.isArray(d.properties) ? d.properties : []));
       state.criteria = d.criteria || {};
       state.picked = Array.isArray(d.picked) ? d.picked : [];
       state.report = d.report || null;
+      state.customMusts = Array.isArray(d.customMusts) ? d.customMusts : [];
       return true;
     }
   }catch(e){ /* 壞掉的資料就當作空的重來 */ }
@@ -1841,43 +2072,58 @@ function seed(){
   state.properties = [
     {
       id: uid(), name:'高鐵特區．景觀三房', area:'青埔／高鐵特區', addr:'領航北路二段',
-      type:'電梯大樓', status:'銷售中', price:1380, size:44.2, mainSize:29.5, age:4,
+      type:'電梯大樓', status:'銷售中', price:1380, size:44.2, mainOnly:26.4, mainSize:29.5, age:4,
       rooms:3, halls:2, baths:2, floor:12, totalFloor:18, parking:'坡道平面', fee:3400,
+      spot:'機捷 A18', walk:8, ramp:6, mustsSure:true,
+      musts:['全室對外窗（無暗房）','客廳有對外窗','衛浴有對外窗','邊間／雙面採光',
+        '方正格局','主臥有衛浴','有前陽台','有後陽台／工作陽台','有管理員／保全','全新未住過'],
       link:'', photos:[],
       selling:'步行 8 分鐘到高鐵桃園站，機捷 A18 生活圈\n高樓層南向採光，客廳面寬 4 米整片落地窗\n全新裝潢未入住，含全室系統櫃與冷氣'
     },
     {
       id: uid(), name:'青塘園旁．兩房首購', area:'青埔／高鐵特區', addr:'高鐵南路三段',
-      type:'電梯大樓', status:'銷售中', price:898, size:29.8, mainSize:19.2, age:6,
+      type:'電梯大樓', status:'銷售中', price:898, size:29.8, mainOnly:16.9, mainSize:19.2, age:6,
       rooms:2, halls:2, baths:1, floor:7, totalFloor:14, parking:'坡道機械', fee:2100,
+      spot:'機捷 A19', walk:12, ramp:8, mustsSure:false,
+      musts:['客廳有對外窗','方正格局','有前陽台','有管理員／保全','可開伙'],
       link:'', photos:[],
       selling:'正對青塘園綠地，散步 3 分鐘到公園\n總價帶輕鬆，適合首購與小家庭\n屋況乾淨可直接入住，附機械車位'
     },
     {
       id: uid(), name:'中壢．學區四房電梯', area:'中壢區', addr:'中央西路二段',
-      type:'電梯大樓', status:'銷售中', price:1188, size:48.6, mainSize:33.1, age:12,
+      type:'電梯大樓', status:'銷售中', price:1188, size:48.6, mainOnly:29.4, mainSize:33.1, age:12,
       rooms:4, halls:2, baths:2, floor:6, totalFloor:12, parking:'平面', fee:2800,
+      spot:'中壢車站', walk:15, ramp:5, mustsSure:true,
+      musts:['全室對外窗（無暗房）','客廳有對外窗','衛浴有對外窗','廚房有對外窗',
+        '方正格局','有前陽台','有後陽台／工作陽台','有管理員／保全','可開伙','附近無嫌惡設施'],
       link:'', photos:[],
       selling:'雙學區，走路到小學 5 分鐘\n四房格局方正，長輩房在一樓層採光面\n生活機能成熟，超市、市場、公車站都在旁邊'
     },
     {
       id: uid(), name:'南崁．透天三代宅', area:'蘆竹南崁', addr:'南崁路一段',
-      type:'透天', status:'斡旋中', price:2280, size:76.4, mainSize:68.0, age:18,
+      type:'透天', status:'斡旋中', price:2280, size:76.4, mainOnly:62.5, mainSize:68.0, age:18,
       rooms:5, halls:2, baths:4, floor:1, totalFloor:4, parking:'平面', fee:0,
+      spot:'', walk:null, ramp:3, mustsSure:true,
+      musts:['全室對外窗（無暗房）','客廳有對外窗','衛浴有對外窗','廚房有對外窗',
+        '邊間／雙面採光','方正格局','主臥有衛浴','有前陽台','有後陽台／工作陽台',
+        '可養寵物','可開伙'],
       link:'', photos:[],
       selling:'四層透天含前後院，可停兩台車\n適合三代同堂，每層都有衛浴\n近南崁交流道，上高速公路 3 分鐘'
     },
     {
       id: uid(), name:'桃園藝文．小資兩房', area:'桃園區', addr:'中正路',
-      type:'華廈', status:'銷售中', price:748, size:26.5, mainSize:18.8, age:22,
+      type:'華廈', status:'銷售中', price:748, size:26.5, mainOnly:16.2, mainSize:18.8, age:22,
       rooms:2, halls:1, baths:1, floor:4, totalFloor:7, parking:'無', fee:1200,
+      spot:'桃園車站', walk:18, ramp:7, mustsSure:false,
+      musts:['客廳有對外窗','可開伙'],
       link:'', photos:[],
       selling:'藝文特區生活圈，餐廳咖啡廳林立\n總價 700 萬出頭，租金投報率佳\n屋主自住保養良好，管線已更新'
     }
   ];
   state.criteria = {
     name:'', budgetMin:null, budgetMax:null, areas:[], sizeMin:null, sizeMax:null,
-    rooms:'', age:null, parking:'', floorPref:'', types:[], note:''
+    mainMin:null, rooms:'', age:null, parking:'', floorPref:'', types:[],
+    spots:[], walk:null, ramp:null, musts:[], note:''
   };
   save();
 }
@@ -1941,6 +2187,23 @@ function scoreOne(p, c){
     }
   }
 
+  /* 主建物坪數：很多買方真正在意的是這個，不是權狀 */
+  if(c.mainMin != null){
+    total += W.mainSize;
+    if(p.mainOnly == null){
+      got += W.mainSize*0.5;
+      misses.push({t:'主建物坪數未填', lv:'warn', soft:true});
+    }else if(p.mainOnly >= c.mainMin){
+      got += W.mainSize;
+      hits.push('主建物 ' + p.mainOnly + ' 坪');
+    }else if(p.mainOnly >= c.mainMin*0.92){
+      got += W.mainSize*0.5;
+      misses.push({t:'主建物 ' + p.mainOnly + ' 坪，略小', lv:'warn'});
+    }else{
+      misses.push({t:'主建物只有 ' + p.mainOnly + ' 坪', lv:'miss'});
+    }
+  }
+
   /* 房數 */
   if(c.rooms){
     total += W.rooms;
@@ -1999,6 +2262,69 @@ function scoreOne(p, c){
     else misses.push({t:'非指定類型', lv:'miss'});
   }
 
+  /* 通勤：走路到車站 */
+  if((c.spots && c.spots.length) || c.walk != null){
+    total += W.spot;
+    const want = c.spots || [];
+    const near = p.spot || '';
+    if(want.length && !near){
+      /* 買方指定了車站，物件那欄是空的 —— 不能算符合，也不該當硬傷 */
+      got += W.spot*0.4;
+      misses.push({t:'最近車站未填', lv:'warn', soft:true});
+    }else if(want.length && want.indexOf(near) === -1){
+      misses.push({t:'最近是' + near + '，非指定車站', lv:'miss'});
+    }else if(c.walk == null){
+      got += W.spot;
+      hits.push('近' + near);
+    }else if(p.walk == null){
+      got += W.spot*0.5;
+      misses.push({t:'步行分鐘未填', lv:'warn', soft:true});
+    }else if(p.walk <= c.walk){
+      got += W.spot;
+      hits.push('步行 ' + p.walk + ' 分到' + (near || '車站'));
+    }else if(p.walk <= c.walk + 3){
+      got += W.spot*0.5;
+      misses.push({t:'步行 ' + p.walk + ' 分，多 ' + (p.walk - c.walk) + ' 分', lv:'warn'});
+    }else{
+      misses.push({t:'步行 ' + p.walk + ' 分超過要求', lv:'miss'});
+    }
+  }
+
+  /* 交流道車程 */
+  if(c.ramp != null){
+    total += W.ramp;
+    if(p.ramp == null){ got += W.ramp*0.5; misses.push({t:'交流道車程未填', lv:'warn', soft:true}); }
+    else if(p.ramp <= c.ramp){ got += W.ramp; hits.push('開車 ' + p.ramp + ' 分上交流道'); }
+    else if(p.ramp <= c.ramp + 3){ got += W.ramp*0.5; misses.push({t:'到交流道 ' + p.ramp + ' 分', lv:'warn'}); }
+    else misses.push({t:'離交流道 ' + p.ramp + ' 分鐘', lv:'miss'});
+  }
+
+  /* 必備條件：W.must 由勾選的條數平分，
+     勾 10 條不會整片蓋掉預算與坪數的比重。
+     物件沒勾又沒打「我確定就是沒有」→ 一律算「未確認」給半分，
+     不能當成不符合：房仲還沒去看過，不等於那間沒有。 */
+  if(c.musts && c.musts.length){
+    const per = W.must / c.musts.length;
+    const have = p.musts || [];
+    const sure = !!p.mustsSure;
+    c.musts.forEach(label => {
+      total += per;
+      const def = MUST_BY_LABEL[label];
+      let ok = null;
+      if(def && def.auto) ok = def.auto(p);
+      else if(have.indexOf(label) > -1) ok = true;
+      else if(sure) ok = false;
+      if(ok === true){ got += per; hits.push(label); }
+      else if(ok === false){ misses.push({t:'不符合：' + label, lv:'miss'}); }
+      else{
+        got += per*0.5;
+        /* soft = 只有她自己看得到：「還沒去確認」是她的待辦，
+           不是買方要讀的資訊，印在報告上只會讓物件看起來有問題。 */
+        misses.push({t:'未確認：' + label, lv:'warn', soft:true});
+      }
+    });
+  }
+
   const score = total === 0 ? null : Math.round(got/total*100);
   const hardMiss = misses.some(m => m.lv === 'miss');
   return { score, hits, misses, hardMiss };
@@ -2012,11 +2338,16 @@ function readCriteria(){
     areas: $$('#cAreas input:checked').map(i=>i.value),
     sizeMin: num($('#cSizeMin').value),
     sizeMax: num($('#cSizeMax').value),
+    mainMin: num($('#cMainMin').value),
     rooms: $('#cRooms').value,
     age: num($('#cAge').value),
     parking: $('#cParking').value,
     floorPref: $('#cFloorPref').value,
     types: $$('#cTypes input:checked').map(i=>i.value),
+    spots: $$('#cSpots input:checked').map(i=>i.value),
+    walk: num($('#cWalk').value),
+    ramp: num($('#cRamp').value),
+    musts: $$('#cMusts input:checked').map(i=>i.value),
     note: $('#cNote').value.trim()
   };
 }
@@ -2028,6 +2359,7 @@ function writeCriteria(c){
   $('#cBudgetMax').value = c.budgetMax ?? '';
   $('#cSizeMin').value = c.sizeMin ?? '';
   $('#cSizeMax').value = c.sizeMax ?? '';
+  $('#cMainMin').value = c.mainMin ?? '';
   $('#cRooms').value = c.rooms || '';
   $('#cAge').value = c.age ?? '';
   $('#cParking').value = c.parking || '';
@@ -2035,6 +2367,15 @@ function writeCriteria(c){
   $('#cNote').value = c.note || '';
   $$('#cAreas input').forEach(i => i.checked = (c.areas||[]).includes(i.value));
   $$('#cTypes input').forEach(i => i.checked = (c.types||[]).includes(i.value));
+  $('#cWalk').value = c.walk ?? '';
+  $('#cRamp').value = c.ramp ?? '';
+  $$('#cSpots input').forEach(i => i.checked = (c.spots||[]).includes(i.value));
+  $$('#cMusts input').forEach(i => i.checked = (c.musts||[]).includes(i.value));
+  /* 有設過條件的區塊一開始就展開，沒設的收起來 */
+  const openSpot = (c.spots && c.spots.length) || c.walk != null || c.ramp != null;
+  if($('#foldSpot')) $('#foldSpot').open = !!openSpot;
+  if($('#foldMust')) $('#foldMust').open = !!(c.musts && c.musts.length);
+  updateFolds(c);
 }
 
 /* ================= 渲染：配對結果 ================= */
@@ -2048,6 +2389,7 @@ function ringStyle(score){
 
 function renderMatch(){
   const c = state.criteria;
+  updateFolds(c);
   const list = $('#matchList');
   updateNavCount();
   const pool = state.properties.filter(p => p.status !== '已成交');
@@ -2130,6 +2472,7 @@ function renderMatch(){
           '<div class="mc-meta">' +
             '<span>' + esc(p.area) + (p.addr ? '・' + esc(p.addr) : '') + '</span>' +
             '<span><b>' + (p.size ?? '—') + '</b> 坪</span>' +
+            (p.mainOnly != null ? '<span>主建物 <b>' + p.mainOnly + '</b> 坪</span>' : '') +
             '<span><b>' + (p.rooms ?? 0) + '</b>房<b>' + (p.halls ?? 0) + '</b>廳<b>' + (p.baths ?? 0) + '</b>衛</span>' +
             (p.floor ? '<span>' + p.floor + (p.totalFloor?'/'+p.totalFloor:'') + ' 樓</span>' : '') +
             (p.age != null ? '<span>屋齡 <b>' + p.age + '</b> 年</span>' : '') +
@@ -2205,6 +2548,7 @@ function renderInventory(){
           (up ? '<span class="unit">單價 ' + up + ' 萬/坪</span>' : '') + '</div>' +
         '<div class="pcard-spec">' +
           '<span><b>' + (p.size ?? '—') + '</b> 坪</span>' +
+          (p.mainOnly != null ? '<span>主建物 <b>' + p.mainOnly + '</b> 坪</span>' : '') +
           '<span><b>' + (p.rooms ?? 0) + '</b>房<b>' + (p.halls ?? 0) + '</b>廳<b>' + (p.baths ?? 0) + '</b>衛</span>' +
           (p.floor ? '<span>' + p.floor + (p.totalFloor?'/'+p.totalFloor:'') + ' 樓</span>' : '') +
           (p.age != null ? '<span>屋齡 <b>' + p.age + '</b> 年</span>' : '') +
@@ -2239,11 +2583,16 @@ function needSummary(c){
     else v = c.sizeMin + ' 坪以上';
     out.push(['坪數需求', v]);
   }
+  if(c.mainMin != null) out.push(['主建物', c.mainMin + ' 坪以上']);
   if(c.rooms) out.push(['房數', c.rooms + ' 房以上']);
   if(c.age != null) out.push(['屋齡', c.age + ' 年以內']);
   if(c.parking) out.push(['車位', c.parking === 'need' ? '一定要有' : '不需要']);
   if(c.floorPref) out.push(['樓層', {no1:'避開一樓', no1top:'避開一樓與頂樓', high:'偏好中高樓層'}[c.floorPref]]);
   if(c.types && c.types.length) out.push(['產品類型', c.types.join('、')]);
+  if(c.spots && c.spots.length) out.push(['通勤車站', c.spots.join('、')]);
+  if(c.walk != null) out.push(['步行時間', c.walk + ' 分鐘內']);
+  if(c.ramp != null) out.push(['上交流道', c.ramp + ' 分鐘內']);
+  if(c.musts && c.musts.length) out.push(['必備條件', c.musts.join('、')]);
   return out;
 }
 
@@ -2279,6 +2628,7 @@ function renderReport(){
       : '';
     const specs = [
       ['權狀坪數', (p.size ?? '—') + ' 坪'],
+      ['主建物', p.mainOnly ? p.mainOnly + ' 坪' : '—'],
       ['主+陽', p.mainSize ? p.mainSize + ' 坪' : '—'],
       ['格局', (p.rooms??0) + '房' + (p.halls??0) + '廳' + (p.baths??0) + '衛'],
       ['樓層', p.floor ? p.floor + (p.totalFloor ? '／' + p.totalFloor : '') + ' 樓' : '—'],
@@ -2287,6 +2637,12 @@ function renderReport(){
       ['管理費', p.fee ? p.fee.toLocaleString('zh-TW') + ' 元' : '—'],
       ['單價', up ? up + ' 萬/坪' : '—']
     ];
+    /* 交通只有填了才出現：空欄位印在報告上比不印還糟 */
+    if(p.spot || p.walk != null){
+      specs.push(['最近車站',
+        (p.spot || '車站') + (p.walk != null ? '　步行 ' + p.walk + ' 分' : '')]);
+    }
+    if(p.ramp != null) specs.push(['上交流道', '開車 ' + p.ramp + ' 分']);
 
     return '' +
     '<div class="rp-item">' +
@@ -2308,8 +2664,9 @@ function renderReport(){
       (sells.length ? '<ul class="rp-sell">' + sells.map(s=>'<li>' + esc(s) + '</li>').join('') + '</ul>' : '') +
       '<div class="rp-fit">' +
         (it.score != null ? '<span class="sc">符合度 ' + it.score + '%</span>' : '') +
-        it.hits.map(h => '<span class="mtag">' + esc(h) + '</span>').join('') +
-        it.misses.map(m => '<span class="mtag ' + m.lv + '">' + esc(m.t) + '</span>').join('') +
+        it.hits.slice(0,6).map(h => '<span class="mtag">' + esc(h) + '</span>').join('') +
+        it.misses.filter(m => !m.soft)
+          .map(m => '<span class="mtag ' + m.lv + '">' + esc(m.t) + '</span>').join('') +
       '</div>' +
       /* 來源連結只有她自己看得到；客戶檢視不顯示，避免導去 591 看到別人的名字 */
       (!clientMode && p.link
@@ -2373,6 +2730,7 @@ function renderReport(){
           '<div class="n">' + esc(AGENT.name) +
             '<span class="nk">' + esc(AGENT.nickname) + '</span></div>' +
           '<div class="t">' + esc(AGENT.title) + '</div>' +
+          '<div class="t">' + esc(AGENT.firmLine) + '</div>' +
           '<div class="tags">' +
             AGENT.serviceTags.map(t => '<span>' + esc(t) + '</span>').join('') +
           '</div>' +
@@ -2454,7 +2812,16 @@ function reportText(){
     L.push('　' + (p.size ?? '—') + ' 坪｜' + (p.rooms??0) + '房' + (p.halls??0) + '廳' + (p.baths??0) + '衛' +
       (p.floor ? '｜' + p.floor + (p.totalFloor?'/'+p.totalFloor:'') + '樓' : '') +
       (p.age != null ? '｜屋齡 ' + p.age + ' 年' : '') +
+      (p.mainOnly != null ? '｜主建物 ' + p.mainOnly + ' 坪' : '') +
       '｜' + (p.parking || '無車位'));
+    if(p.spot || p.walk != null || p.ramp != null){
+      const tt = [];
+      if(p.spot || p.walk != null){
+        tt.push('步行' + (p.walk != null ? ' ' + p.walk + ' 分' : '') + '到' + (p.spot || '車站'));
+      }
+      if(p.ramp != null) tt.push('開車 ' + p.ramp + ' 分上交流道');
+      L.push('　' + tt.join('｜'));
+    }
     (p.selling||'').split('\n').map(s=>s.trim()).filter(Boolean).forEach(s => L.push('　- ' + s));
     if(it.score != null) L.push('　符合度 ' + it.score + '%');
     /* 不附 591 連結：這段文字是直接貼給客戶的 */
@@ -2462,6 +2829,7 @@ function reportText(){
   });
   L.push('———');
   L.push(AGENT.name + '（' + AGENT.nickname + '）｜' + AGENT.title);
+  L.push(AGENT.firmLine);
   L.push('電話：' + AGENT.tel);
   L.push('LINE：' + AGENT.lineUrl);
   L.push('Email：' + AGENT.email);
@@ -2601,11 +2969,15 @@ function openModal(id){
   v('#pAddr', p?.addr);
   $('#pType').value = p?.type || TYPES[0];
   $('#pStatus').value = p?.status || '銷售中';
-  v('#pSize', p?.size); v('#pMainSize', p?.mainSize); v('#pAge', p?.age);
+  v('#pSize', p?.size); v('#pMainOnly', p?.mainOnly); v('#pMainSize', p?.mainSize); v('#pAge', p?.age);
   v('#pRooms', p?.rooms); v('#pHalls', p?.halls); v('#pBaths', p?.baths);
   v('#pFloor', p?.floor); v('#pTotalFloor', p?.totalFloor);
   $('#pParking').value = p?.parking || '無';
   v('#pSelling', p?.selling); v('#pFee', p?.fee); v('#pLink', p?.link);
+  $('#pSpot').value = p?.spot || '';
+  v('#pWalk', p?.walk); v('#pRamp', p?.ramp);
+  $('#pMustsSure').checked = !!p?.mustsSure;
+  $$('#pMusts input').forEach(i => i.checked = (p?.musts || []).indexOf(i.value) > -1);
   draftPhotos = photoList(p);
   $('#pPhotoUrl').value = '';
   renderPhotoStrip();
@@ -2630,6 +3002,7 @@ function saveProperty(){
     addr: $('#pAddr').value.trim(),
     type: $('#pType').value,
     status: $('#pStatus').value,
+    mainOnly: num($('#pMainOnly').value),
     mainSize: num($('#pMainSize').value),
     age: num($('#pAge').value),
     rooms: num($('#pRooms').value) ?? 0,
@@ -2641,7 +3014,12 @@ function saveProperty(){
     fee: num($('#pFee').value),
     link: $('#pLink').value.trim(),
     photos: draftPhotos.slice(),
-    selling: $('#pSelling').value.trim()
+    selling: $('#pSelling').value.trim(),
+    spot: $('#pSpot').value,
+    walk: num($('#pWalk').value),
+    ramp: num($('#pRamp').value),
+    musts: $$('#pMusts input:checked').map(i => i.value),
+    mustsSure: $('#pMustsSure').checked
   };
 
   if(editingId){
@@ -2730,6 +3108,65 @@ function importData(file){
 }
 
 /* ================= 初始化 ================= */
+/* 條件標籤分組畫：19 條全部攤平在 392px 的側欄會變成一片字海。
+   自訂的排在最後一組，帶一個 × 可以刪。
+   manualOnly = 物件表單用，能自動算的那幾條不出現。 */
+function mustChipsHTML(opts){
+  opts = opts || {};
+  const src = opts.manualOnly ? MUSTS_MANUAL : MUSTS;
+  const groups = MUST_GROUPS
+    .map(g => ({ g, items: src.filter(m => m.g === g).map(m => m.t) }))
+    .filter(x => x.items.length);
+  const custom = state.customMusts || [];
+  if(custom.length) groups.push({ g:'我自己加的', items: custom.slice(), own:true });
+
+  return groups.map(sec =>
+    '<div class="must-g">' +
+      '<div class="must-g-t">' + esc(sec.g) + '</div>' +
+      '<div class="chips">' +
+        sec.items.map(t =>
+          '<label class="chip chip-sm">' +
+            '<input type="checkbox" value="' + esc(t) + '">' + esc(t) +
+            (sec.own && opts.deletable
+              ? '<button type="button" class="chip-x" data-delmust="' + esc(t) +
+                '" title="刪掉這條" aria-label="刪掉 ' + esc(t) + '">&times;</button>'
+              : '') +
+          '</label>').join('') +
+      '</div>' +
+    '</div>').join('');
+}
+
+/* 加或刪自訂條件之後重畫，勾好的要留著 */
+/* 摺疊區右邊那行小字：不用打開就知道裡面設了什麼。
+   只改字，不改開合 —— 她自己收起來的就讓它收著。 */
+function updateFolds(c){
+  c = c || {};
+  const sp = [];
+  if(c.spots && c.spots.length){
+    sp.push(c.spots.length === 1 ? c.spots[0] : c.spots.length + ' 站');
+  }
+  if(c.walk != null) sp.push('走 ' + c.walk + ' 分');
+  if(c.ramp != null) sp.push('交流道 ' + c.ramp + ' 分');
+  const mu = (c.musts || []).length;
+  const set = (id, txt, on) => {
+    const el = $(id);
+    if(!el) return;
+    el.textContent = txt;
+    el.dataset.on = on ? '1' : '0';
+  };
+  set('#foldSpotN', sp.length ? sp.join('・') : '未設定', sp.length);
+  set('#foldMustN', mu ? '已選 ' + mu + ' 條' : '未設定', mu);
+}
+
+function rebuildMusts(){
+  const cSel = $$('#cMusts input:checked').map(i => i.value);
+  const pSel = $$('#pMusts input:checked').map(i => i.value);
+  $('#cMusts').innerHTML = mustChipsHTML({ deletable:true });
+  $('#pMusts').innerHTML = mustChipsHTML({ manualOnly:true });
+  $$('#cMusts input').forEach(i => i.checked = cSel.indexOf(i.value) > -1);
+  $$('#pMusts input').forEach(i => i.checked = pSel.indexOf(i.value) > -1);
+}
+
 function buildChips(){
   $('#cAreas').innerHTML = AREAS.map(a =>
     '<label class="chip"><input type="checkbox" value="' + esc(a) + '">' + esc(a) + '</label>').join('');
@@ -2737,6 +3174,12 @@ function buildChips(){
     '<label class="chip"><input type="checkbox" value="' + esc(t) + '">' + esc(t) + '</label>').join('');
   $('#pArea').innerHTML = AREAS.map(a => '<option>' + esc(a) + '</option>').join('');
   $('#pType').innerHTML = TYPES.map(t => '<option>' + esc(t) + '</option>').join('');
+  $('#cSpots').innerHTML = SPOTS.map(s =>
+    '<label class="chip chip-sm"><input type="checkbox" value="' + esc(s) + '">' + esc(s) + '</label>').join('');
+  $('#pSpot').innerHTML = '<option value="">未填</option>' +
+    SPOTS.map(s => '<option>' + esc(s) + '</option>').join('');
+  $('#cMusts').innerHTML = mustChipsHTML({ deletable:true });
+  $('#pMusts').innerHTML = mustChipsHTML({ manualOnly:true });
   $('#invArea').innerHTML = '<option value="">全部區域</option>' +
     AREAS.map(a => '<option>' + esc(a) + '</option>').join('');
 }
@@ -2769,6 +3212,38 @@ function bindEvents(){
     save();
     renderMatch();
     toast('已清空買方需求');
+  });
+
+  /* 自己加一條條件。加過的會一直留著，物件表單也選得到。 */
+  function addCustomMust(){
+    const t = $('#cMustNew').value.trim();
+    if(!t) return;
+    if(allMusts().indexOf(t) > -1){ toast('這條已經在清單裡了', true); return; }
+    state.customMusts.push(t);
+    $('#cMustNew').value = '';
+    rebuildMusts();
+    /* 特地打字進去的，就是這次要的，直接幫她勾起來 */
+    $$('#cMusts input').forEach(i => { if(i.value === t) i.checked = true; });
+    state.criteria = readCriteria();
+    save();
+    renderMatch();
+    toast('已加上「' + t + '」');
+  }
+  $('#cMustAdd').addEventListener('click', addCustomMust);
+  $('#cMustNew').addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); addCustomMust(); }
+  });
+  $('#cMusts').addEventListener('click', e => {
+    const x = e.target.closest('[data-delmust]');
+    if(!x) return;
+    e.preventDefault();
+    const t = x.dataset.delmust;
+    state.customMusts = (state.customMusts || []).filter(v => v !== t);
+    rebuildMusts();
+    state.criteria = readCriteria();
+    save();
+    renderMatch();
+    toast('已刪掉「' + t + '」');
   });
 
   $('#sortBy').addEventListener('change', e => { sortBy = e.target.value; renderMatch(); });
@@ -3041,6 +3516,8 @@ function init(){
 
   const had = load();
   if(!had) seed();
+  /* 自訂條件是 load() 才讀進來的，chips 要重畫一次才有那幾顆可以勾 */
+  rebuildMusts();
   writeCriteria(state.criteria);
   bindEvents();
   bindLightbox();
