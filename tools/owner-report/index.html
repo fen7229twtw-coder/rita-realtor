@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
 /* ===================================================================
    屋主回報系統 — 蕭沛縈 Rita
@@ -443,7 +443,7 @@ select.control{
 
 .doc-foot{background:#F5F9F6;border-top:1px solid var(--border);padding:22px 40px}
 .doc-foot-grid{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.doc-foot .who{flex:1;min-width:220px}
+.doc-foot .who{flex:1;min-width:300px}  /* 300 才夠一行放完服務項目，不然「服務全省」會斷成兩行 */
 .doc-foot .who .n{font-size:1.06rem;font-weight:900;color:var(--primary)}
 .doc-foot .who .t{font-size:.82rem;color:var(--text-muted);margin-top:2px}
 .doc-foot .who .sv{font-size:.79rem;color:var(--text-faint);margin-top:6px}
@@ -550,6 +550,254 @@ body.owner-mode .view{padding:26px 20px 60px}
 }
 @media (max-width:520px){ .grid2,.grid3,.grid4,.metric-row,.kpi{grid-template-columns:1fr} }
 
+
+/* ===================================================================
+   回報單版型（三選一）
+   同一份 DOM，只用 data-theme 換皮。這樣三個版型永遠是同樣的內容，
+   不會出現「換個版型就少一段」。
+   classic 就是上面那組基礎樣式，不需要覆寫。
+=================================================================== */
+
+/* --- 版型選擇器（只有她看得到，屋主連結不出現） --- */
+.doc-themes{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-lg);
+  padding:16px 18px;margin-bottom:18px;box-shadow:var(--sh-sm);
+}
+.dt-lab{
+  font-size:.76rem;font-weight:800;letter-spacing:.1em;color:var(--secondary);
+  margin-bottom:12px;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
+}
+.dt-lab em{font-style:normal;font-weight:600;letter-spacing:0;color:var(--text-faint);font-size:.79rem}
+.dt-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.dt{
+  text-align:left;border:1.5px solid var(--border);border-radius:var(--r-md);
+  padding:10px 10px 12px;background:#fff;width:100%;display:block;
+  transition:border-color .16s,box-shadow .16s,transform .16s;
+}
+.dt:hover{border-color:var(--border-strong);transform:translateY(-2px);box-shadow:var(--sh-md)}
+.dt.on{border-color:var(--secondary);box-shadow:0 0 0 3px rgba(79,175,56,.15)}
+.dt-nm{display:flex;align-items:center;gap:7px;font-size:.92rem;font-weight:800;color:var(--text);margin-top:10px}
+.dt.on .dt-nm{color:var(--primary)}
+.dt.on .dt-nm::after{
+  content:'使用中';font-size:.64rem;font-weight:800;color:#fff;
+  background:var(--secondary);padding:1px 8px;border-radius:99px;letter-spacing:.04em;
+}
+.dt-ds{font-size:.75rem;color:var(--text-faint);line-height:1.65;margin-top:4px}
+
+/* 縮圖照著各版型的骨架畫，不是三張一樣的灰塊 */
+.dt-pv{display:block;height:96px;border-radius:9px;overflow:hidden;border:1px solid var(--border);position:relative}
+.dt-pv i{display:block;border-radius:1px}
+.dt-pv .h{display:block;padding:9px 10px}
+.dt-pv .k{display:flex;gap:4px;padding:8px 10px 6px}
+.dt-pv .k i{flex:1;height:19px}
+.dt-pv .l{display:flex;flex-direction:column;gap:3px;padding:0 10px}
+.dt-pv .l i{height:3px}
+
+.pv-classic{background:#fff}
+.pv-classic .h{background:linear-gradient(135deg,#0B2E20,#005335 60%,#00563A);height:38px}
+.pv-classic .h i:nth-child(1){width:26px;height:4px;background:#8FDD79;margin-bottom:5px}
+.pv-classic .h i:nth-child(2){width:60%;height:7px;background:rgba(255,255,255,.9)}
+.pv-classic .k i{background:#FAFCFA;border:1px solid #DFE9E2;border-radius:4px}
+.pv-classic .l i{background:#DFE9E2}
+.pv-classic .l i:nth-child(2){width:70%}
+
+.pv-editorial{background:#FCFAF5}
+.pv-editorial{border-top:3px solid #B08D2E}
+.pv-editorial .h{height:38px;padding-top:8px}
+.pv-editorial .h i:nth-child(1){width:34px;height:3px;background:#B08D2E;margin-bottom:7px}
+.pv-editorial .h i:nth-child(2){width:72%;height:9px;background:#0B2E20;border-radius:2px}
+.pv-editorial .k{gap:0;border-top:1px solid #E3DED1;border-bottom:1px solid #E3DED1;margin:0 10px;padding:7px 0}
+.pv-editorial .k i{background:none;border-right:1px solid #E3DED1;height:17px}
+.pv-editorial .k i:last-child{border-right:none}
+.pv-editorial .k i::after{content:'';display:block;width:16px;height:8px;background:#0B2E20;margin:3px auto 0;border-radius:1px}
+.pv-editorial .l{padding-top:8px}
+.pv-editorial .l i{background:#DED8C8}
+.pv-editorial .l i:nth-child(2){width:60%}
+
+.pv-report{background:#fff;border-top:4px solid #005335}
+.pv-report .h{height:36px;padding-top:7px}
+.pv-report .h i:nth-child(1){width:22px;height:3px;background:#C3D6CA;margin-bottom:6px}
+.pv-report .h i:nth-child(2){width:55%;height:8px;background:#173D30;border-radius:2px}
+.pv-report .k{gap:0;margin:0 10px;padding:0;border:1px solid #E4E7E5;border-radius:4px}
+.pv-report .k i{background:none;border-left:1px solid #E4E7E5;height:22px}
+.pv-report .k i:first-child{border-left:none}
+.pv-report .k i::after{content:'';display:block;width:14px;height:9px;background:#173D30;margin:6px auto 0;border-radius:1px}
+.pv-report .l{padding-top:9px}
+.pv-report .l i{background:#EEF1EF;height:4px}
+.pv-report .l i:nth-child(1){background:#173D30;height:2px}
+.pv-report .l i:nth-child(2){width:78%}
+
+/* 數字對齊：三個版型共用。等寬數字讓上下期的數字排得整齊 */
+.doc .kpi-box .n,.doc .chg-box .n,.doc .mk-tbl .r,.doc .doc-period strong,.doc .mk-band b{
+  font-variant-numeric:tabular-nums;
+}
+
+/* ========== 版型 B：精品雜誌 ========== */
+.doc[data-theme="editorial"]{background:#FCFAF5}
+.doc[data-theme="editorial"] .doc-head{
+  background:#FCFAF5;color:var(--primary-deep);
+  padding:42px 48px 30px;border-bottom:1px solid #E3DED1;
+}
+.doc[data-theme="editorial"] .doc-head::before{display:none}
+.doc[data-theme="editorial"] .doc-head::after{
+  content:'';position:absolute;left:0;right:0;top:0;height:5px;
+  background:linear-gradient(90deg,var(--primary-deep),var(--primary) 45%,#B08D2E);
+}
+.doc[data-theme="editorial"] .doc-brand{margin-bottom:28px}
+.doc[data-theme="editorial"] .doc-brand .mark{
+  background:none;border:1.5px solid var(--primary);color:var(--primary);border-radius:50%;
+  font-family:"Noto Serif TC",serif;font-weight:700;font-size:1.16rem;width:44px;height:44px;
+}
+.doc[data-theme="editorial"] .doc-brand .nm{color:var(--primary-deep);font-size:1rem;letter-spacing:.05em}
+.doc[data-theme="editorial"] .doc-brand .rl{color:#9A9184;letter-spacing:.08em}
+.doc[data-theme="editorial"] .doc-title .kicker{
+  color:#B08D2E;letter-spacing:.34em;font-size:.67rem;font-weight:700;
+  display:flex;align-items:center;gap:14px;margin-bottom:0;
+}
+.doc[data-theme="editorial"] .doc-title .kicker::after{content:'';flex:1;height:1px;background:#E3DED1}
+.doc[data-theme="editorial"] .doc-title h2{
+  font-family:"Noto Serif TC",serif;font-size:2.1rem;font-weight:900;
+  letter-spacing:.07em;color:var(--primary-deep);margin:13px 0 11px;
+}
+.doc[data-theme="editorial"] .doc-title .to{color:#6C6459;font-size:.92rem;letter-spacing:.02em}
+.doc[data-theme="editorial"] .doc-title .to b{color:var(--primary-deep);font-weight:700}
+.doc[data-theme="editorial"] .doc-period{color:#9A9184;top:42px;right:48px;letter-spacing:.1em;font-size:.7rem}
+.doc[data-theme="editorial"] .doc-period strong{
+  color:var(--primary-deep);font-family:"Noto Serif TC",serif;font-size:1.04rem;letter-spacing:.04em;margin-top:3px;
+}
+.doc[data-theme="editorial"] .doc-sub{background:none;padding:26px 48px;border-bottom:1px solid #E3DED1}
+.doc[data-theme="editorial"] .doc-sub .t{
+  font-family:"Noto Serif TC",serif;font-size:1.38rem;font-weight:700;
+  letter-spacing:.06em;color:var(--primary-deep);margin-bottom:8px;
+}
+.doc[data-theme="editorial"] .doc-sub .m{color:#7A7266;line-height:1.9}
+.doc[data-theme="editorial"] .doc-sub .m b{color:var(--primary-deep)}
+.doc[data-theme="editorial"] .doc-body{padding:36px 48px;counter-reset:sec}
+.doc[data-theme="editorial"] .doc-sec{margin-bottom:36px}
+.doc[data-theme="editorial"] .doc-sec-t{
+  font-family:"Noto Serif TC",serif;font-size:1.08rem;font-weight:700;
+  letter-spacing:.08em;color:var(--primary-deep);margin-bottom:18px;gap:12px;
+}
+.doc[data-theme="editorial"] .doc-sec-t::before{
+  counter-increment:sec;content:counter(sec,decimal-leading-zero);
+  font-family:"Noto Serif TC",serif;font-size:.84rem;font-weight:700;
+  color:#B08D2E;letter-spacing:.12em;
+}
+.doc[data-theme="editorial"] .doc-sec-t::after{background:#E3DED1}
+.doc[data-theme="editorial"] .kpi{gap:0;border-top:1px solid #E3DED1;border-bottom:1px solid #E3DED1}
+.doc[data-theme="editorial"] .kpi-box{
+  border:none;border-right:1px solid #E3DED1;border-radius:0;background:none;padding:22px 10px;
+}
+.doc[data-theme="editorial"] .kpi-box:last-child{border-right:none}
+.doc[data-theme="editorial"] .kpi-box .n{
+  font-family:"Noto Serif TC",serif;font-size:2.2rem;font-weight:700;color:var(--primary-deep);
+}
+.doc[data-theme="editorial"] .kpi-box .k{color:#8B8377;font-weight:600;letter-spacing:.08em;font-size:.72rem;margin-top:4px}
+.doc[data-theme="editorial"] .fb-doc li{color:#6C6459}
+.doc[data-theme="editorial"] .fb-doc .tag{
+  background:none;border:1px solid #DCD3BE;color:#9C7C24;border-radius:0;letter-spacing:.08em;font-weight:700;
+}
+.doc[data-theme="editorial"] .fb-doc .tag.price{border-color:#E5C8C4;color:var(--accent)}
+.doc[data-theme="editorial"] .act-doc span{
+  background:none;border:1px solid #E3DED1;color:var(--primary-deep);
+  border-radius:0;font-weight:600;letter-spacing:.05em;
+}
+.doc[data-theme="editorial"] .mk-tbl th{
+  background:none;border-bottom:1px solid var(--primary-deep);
+  color:#8B8377;letter-spacing:.12em;font-size:.69rem;
+}
+.doc[data-theme="editorial"] .mk-tbl td{border-bottom:1px solid #EDE8DC}
+.doc[data-theme="editorial"] .mk-tbl tr.mine td{background:#F4EFE2;color:var(--primary-deep)}
+.doc[data-theme="editorial"] .mk-band{
+  background:none;border-radius:0;border-left:2px solid #B08D2E;
+  padding:12px 0 12px 16px;color:#6C6459;
+}
+.doc[data-theme="editorial"] .mk-band b{color:var(--primary-deep)}
+.doc[data-theme="editorial"] .mk-note{color:#9A9184}
+.doc[data-theme="editorial"] .chg-grid{gap:0;border-top:1px solid #E3DED1;border-bottom:1px solid #E3DED1;margin-bottom:18px}
+.doc[data-theme="editorial"] .chg-box{background:none;border:none;border-left:1px solid #E3DED1;border-radius:0;padding:16px 8px}
+.doc[data-theme="editorial"] .chg-box:first-child{border-left:none}
+.doc[data-theme="editorial"] .chg-box .n{font-family:"Noto Serif TC",serif;font-weight:700;font-size:1.7rem}
+.doc[data-theme="editorial"] .chg-box .k{color:#8B8377;letter-spacing:.08em}
+.doc[data-theme="editorial"] .chg-list li{color:#6C6459}
+.doc[data-theme="editorial"] .chg-list .nm{color:var(--primary-deep)}
+.doc[data-theme="editorial"] .advice{
+  background:none;border:none;border-top:1px solid #E3DED1;border-bottom:1px solid #E3DED1;
+  border-radius:0;padding:20px 0;color:#5C554B;
+  font-family:"Noto Serif TC",serif;font-size:.95rem;line-height:2.05;letter-spacing:.02em;
+}
+.doc[data-theme="editorial"] .doc-foot{background:#F7F2E7;border-top:1px solid #E3DED1;padding:28px 48px}
+.doc[data-theme="editorial"] .doc-foot .who .n{
+  font-family:"Noto Serif TC",serif;font-weight:700;color:var(--primary-deep);letter-spacing:.05em;
+}
+.doc[data-theme="editorial"] .doc-foot .who .t{color:#7A7266}
+.doc[data-theme="editorial"] .doc-foot .who .sv{color:#9A9184}
+.doc[data-theme="editorial"] .doc-cta a{border-radius:0;letter-spacing:.04em}
+.doc[data-theme="editorial"] .doc-dis{border-top:1px solid #E3DED1;color:#9A9184}
+
+/* ========== 版型 C：極簡報告 ========== */
+.doc[data-theme="report"]{background:#fff;border:1px solid #E4E7E5}
+.doc[data-theme="report"] .doc-head{
+  background:#fff;color:var(--text);padding:34px 44px 26px;
+  border-top:4px solid var(--primary);border-bottom:1px solid #E4E7E5;
+}
+.doc[data-theme="report"] .doc-head::before{display:none}
+.doc[data-theme="report"] .doc-brand{margin-bottom:22px}
+.doc[data-theme="report"] .doc-brand .mark{
+  background:var(--primary);border-radius:9px;width:40px;height:40px;font-size:1.1rem;color:#fff;
+}
+.doc[data-theme="report"] .doc-brand .nm{color:var(--text);font-size:1rem}
+.doc[data-theme="report"] .doc-brand .rl{color:var(--text-faint)}
+.doc[data-theme="report"] .doc-title .kicker{color:var(--text-faint);letter-spacing:.24em;font-size:.66rem}
+.doc[data-theme="report"] .doc-title h2{color:var(--primary-deep);font-size:1.56rem;letter-spacing:-.01em}
+.doc[data-theme="report"] .doc-title .to{color:var(--text-muted);font-size:.88rem}
+.doc[data-theme="report"] .doc-title .to b{color:var(--text)}
+.doc[data-theme="report"] .doc-period{color:var(--text-faint);top:34px;right:44px}
+.doc[data-theme="report"] .doc-period strong{color:var(--text)}
+.doc[data-theme="report"] .doc-sub{background:#FAFBFA;padding:18px 44px;border-bottom:1px solid #E4E7E5}
+.doc[data-theme="report"] .doc-sub .t{color:var(--text);font-size:1.08rem;letter-spacing:-.01em}
+.doc[data-theme="report"] .doc-body{padding:28px 44px}
+.doc[data-theme="report"] .doc-sec-t{
+  color:var(--text);font-size:.87rem;letter-spacing:.06em;
+  padding-bottom:9px;border-bottom:2px solid var(--primary);margin-bottom:16px;display:block;
+}
+.doc[data-theme="report"] .doc-sec-t::after{display:none}
+.doc[data-theme="report"] .kpi{gap:0;border:1px solid #E4E7E5;border-radius:8px;overflow:hidden}
+.doc[data-theme="report"] .kpi-box{
+  border:none;border-left:1px solid #E4E7E5;border-radius:0;background:#fff;padding:17px 10px;
+}
+.doc[data-theme="report"] .kpi-box:first-child{border-left:none}
+.doc[data-theme="report"] .kpi-box .n{color:var(--text);font-size:1.85rem;letter-spacing:-.02em}
+.doc[data-theme="report"] .kpi-box .k{color:var(--text-faint);font-weight:600}
+.doc[data-theme="report"] .fb-doc .tag{background:#fff;border:1px solid #DDE4DF;color:var(--text-muted);border-radius:4px}
+.doc[data-theme="report"] .fb-doc .tag.price{border-color:#F0C9C6;color:var(--accent);background:#fff}
+.doc[data-theme="report"] .act-doc span{background:#fff;border:1px solid #DDE4DF;color:var(--text-muted);border-radius:5px;font-weight:600}
+.doc[data-theme="report"] .mk-tbl th{background:#fff;border-bottom:1.5px solid var(--text);color:var(--text-faint)}
+.doc[data-theme="report"] .mk-tbl td{border-bottom:1px solid #EEF1EF}
+.doc[data-theme="report"] .mk-tbl tr.mine td{background:#F4F8F5;color:var(--primary)}
+.doc[data-theme="report"] .chg-box{background:#fff;border:1px solid #E4E7E5;border-radius:8px}
+.doc[data-theme="report"] .mk-band{background:#FAFBFA;border:1px solid #EEF1EF;border-radius:8px}
+.doc[data-theme="report"] .advice{background:#FAFBFA;border-left:2px solid var(--primary);border-radius:0 8px 8px 0}
+.doc[data-theme="report"] .doc-foot{background:#fff;border-top:2px solid var(--primary);padding:24px 44px}
+.doc[data-theme="report"] .doc-cta a{border-radius:7px}
+
+/* --- 版型的手機修正 --- */
+@media (max-width:860px){
+  .dt-list{grid-template-columns:1fr}
+  .doc[data-theme] .doc-head,.doc[data-theme] .doc-sub,
+  .doc[data-theme] .doc-body,.doc[data-theme] .doc-foot{padding-left:20px;padding-right:20px}
+  .doc[data-theme="editorial"] .doc-head{padding-top:28px}
+  .doc[data-theme="editorial"] .doc-title h2{font-size:1.5rem}
+  .doc[data-theme="editorial"] .doc-sub .t{font-size:1.14rem}
+  /* 直的分隔線在兩欄以下會斷得很難看，改回卡片 */
+  .doc[data-theme="editorial"] .kpi,.doc[data-theme="report"] .kpi,
+  .doc[data-theme="editorial"] .chg-grid{gap:8px;border:none;border-radius:0}
+  .doc[data-theme="editorial"] .kpi-box,.doc[data-theme="report"] .kpi-box,
+  .doc[data-theme="editorial"] .chg-box{border:1px solid var(--border);border-radius:10px;padding:14px 8px}
+  .doc[data-theme="editorial"] .kpi-box,.doc[data-theme="editorial"] .chg-box{border-color:#E3DED1;background:#F7F2E7}
+  .doc[data-theme="editorial"] .kpi-box .n{font-size:1.75rem}
+}
+
 /* ===== 列印 ===== */
 @media print{
   @page{size:A4;margin:11mm}
@@ -564,6 +812,14 @@ body.owner-mode .view{padding:26px 20px 60px}
   .kpi-box,.act-doc span,.fb-doc .tag,.mk-tbl tr.mine td,.doc-cta a,.advice{
     -webkit-print-color-adjust:exact;print-color-adjust:exact;
   }
+  .doc-themes{display:none!important}
+  /* 這兩個版型的頁首本來就是淺色，不能被上面那條深綠蓋掉 */
+  .doc[data-theme="editorial"] .doc-head{background:#FCFAF5!important;color:#0B2E20!important}
+  .doc[data-theme="report"] .doc-head{background:#fff!important;color:#173D30!important}
+  .doc[data-theme]{border:none}
+  .doc[data-theme] .doc-head,.doc[data-theme] .doc-sub,
+  .doc[data-theme] .doc-body,.doc[data-theme] .doc-foot{padding-left:24px;padding-right:24px}
+  .doc[data-theme="editorial"] .doc-head,.doc[data-theme="report"] .doc-head{padding-top:20px;padding-bottom:18px}
 }
 </style>
 </head>
@@ -745,6 +1001,20 @@ const AGENT = Object.assign({
   firmLine: '有巢氏房屋　青埔IKEA店　熊理想有限公司',
 }, window.RITA_ID || {});
 
+/* 回報單的三個版型。
+   id 存的是字串不是索引 —— 以後再加版型，已經寄出去的屋主連結照樣讀得懂。
+   （AREAS／TYPES 是索引編碼，那兩個才不能動順序。） */
+const DOC_THEMES = [
+  { id:'classic',   nm:'沉穩綠',
+    ds:'品牌深綠主視覺，數據做成卡片。資訊密度最高，一般回報用這個。' },
+  { id:'editorial', nm:'精品雜誌',
+    ds:'米白紙感、襯線字、章節編號。留白最多，總價高的屋主看了最有份量。' },
+  { id:'report',    nm:'極簡報告',
+    ds:'白底細線、數字當主角。像投顧月報，要談調價時語氣最不吵。' }
+];
+const DEF_THEME = 'classic';
+const okTheme = t => DOC_THEMES.some(x=>x.id===t) ? t : DEF_THEME;
+
 const AREAS = ['青埔／高鐵特區','中壢區','桃園區','蘆竹南崁','八德區','平鎮區','龜山區','大園區','觀音／新屋','龍潭區','其他'];
 /* 新增類型一律往後加，不要插在中間或重排：
    分享連結把類型存成這個陣列的索引，動了順序會讓已經寄出去的
@@ -782,7 +1052,7 @@ async function findLocalHelper(){
   catch{ apiBase = null; return false; }
 }
 
-let state = { listings:[], activeId:null, doc:null, marketLog:[] };
+let state = { listings:[], activeId:null, doc:null, marketLog:[], docTheme:DEF_THEME };
 let editingId = null;
 let ownerMode = false;
 let market = { loading:false, error:null, rows:null, forId:null,
@@ -828,6 +1098,7 @@ function load(){
       state.activeId = d.activeId || null;
       state.doc = d.doc || null;
       state.marketLog = Array.isArray(d.marketLog) ? d.marketLog : [];
+      state.docTheme = okTheme(d.docTheme);
       return true;
     }
   }catch{}
@@ -876,6 +1147,12 @@ function b64d(str){
   return new TextDecoder().decode(bytes);
 }
 
+/* 屋主看到的是連結裡帶的版型（她按「產生屋主連結」當下選的那個）；
+   她自己看的是設定裡的版型。兩邊分開，屋主連結才不會因為她之後換版型就變樣。 */
+function docTheme(){
+  return okTheme(ownerMode ? (state.doc && state.doc.theme) : state.docTheme);
+}
+
 /* 屋主拿到的東西刻意不含底價、不含其他委託案 */
 function packDoc(d){
   const l = d.listing, r = d.report;
@@ -902,6 +1179,8 @@ function packDoc(d){
              p:d.changes.partial?1:0, s:d.changes.since||'' };
   }
   if(d.totals) o.tt = d.totals;
+  const th = docTheme();
+  if(th !== DEF_THEME) o.th = th;   /* 預設版型不佔連結長度 */
   return o;
 }
 function unpackDoc(z){
@@ -929,7 +1208,8 @@ function unpackDoc(z){
                added:new Array(z.ch.a||0).fill(0), gone:new Array(z.ch.g||0).fill(0),
                partial:!!z.ch.p, since:z.ch.s||'' };
     })() : null,
-    totals: z.tt || null
+    totals: z.tt || null,
+    theme: okTheme(z.th)            /* 舊連結沒有這欄，自動回到沉穩綠 */
   };
 }
 function buildShareUrl(){
@@ -1490,6 +1770,27 @@ function buildDoc(){
   switchView('doc');
 }
 
+/* 三個縮圖照各自版型的骨架畫，不是三張一樣的灰塊 ——
+   要她「不用切換就看得出差別」，縮圖就得真的長得不一樣。 */
+function themePicker(){
+  if(ownerMode) return '';
+  const cur = docTheme();
+  return '<div class="doc-themes">' +
+    '<div class="dt-lab">回報單版型<em>選一個，下面整份會跟著換。產生屋主連結時，屋主看到的就是你選的這個。</em></div>' +
+    '<div class="dt-list">' +
+      DOC_THEMES.map(t =>
+        '<button class="dt'+(t.id===cur?' on':'')+'" data-act="theme" data-theme="'+t.id+'">' +
+          '<span class="dt-pv pv-'+t.id+'">' +
+            '<span class="h"><i></i><i></i></span>' +
+            '<span class="k"><i></i><i></i><i></i><i></i></span>' +
+            '<span class="l"><i></i><i></i></span>' +
+          '</span>' +
+          '<span class="dt-nm">'+esc(t.nm)+'</span>' +
+          '<span class="dt-ds">'+esc(t.ds)+'</span>' +
+        '</button>').join('') +
+    '</div></div>';
+}
+
 function delta(cur, prev){
   if(prev==null || cur==null) return '';
   const d = cur - prev;
@@ -1525,7 +1826,8 @@ function renderDoc(){
         '<button class="btn btn-ghost btn-sm" data-act="print">列印／存成 PDF</button>' +
         '<button class="btn btn-green btn-sm" data-act="share">產生屋主連結</button>' +
       '</div>') +
-  '<div class="doc" id="docPaper">' +
+  themePicker() +
+  '<div class="doc" data-theme="'+docTheme()+'" id="docPaper">' +
     '<div class="doc-head">' +
       '<div class="doc-period">回報日期<strong>'+fmtDate(r.date)+'</strong></div>' +
       '<div class="doc-brand"><div class="mark">蕭</div>' +
@@ -1958,6 +2260,18 @@ function bind(){
   $('#docWrap').addEventListener('click', e=>{
     const b = e.target.closest('[data-act]'); if(!b) return;
     const a = b.dataset.act;
+    if(a==='theme'){
+      const t = okTheme(b.dataset.theme);
+      if(t !== state.docTheme){
+        state.docTheme = t; save();
+        /* 保住捲動位置：她多半是捲到某一段在比三個版型，跳回頂端等於白比 */
+        const y = window.scrollY;
+        renderDoc();
+        window.scrollTo({top:y, behavior:'instant'});
+        toast('已換成「'+DOC_THEMES.find(x=>x.id===t).nm+'」版型');
+      }
+      return;
+    }
     if(a==='gowrite') switchView('write');
     if(a==='print') window.print();
     if(a==='share') openShare();
