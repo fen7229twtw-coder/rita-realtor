@@ -182,3 +182,77 @@ tools/qingpu-watch/
 #
 # ⚠ 這個資料夾只能放 publish.mjs 產出來的東西，不要手動丟任何檔案進去 ——
 #   repo 是公開的，丟什麼進去全世界都看得到。
+
+# ═══════════ 2026-08-31 補排除：一次把散在外面沒進版控的東西講清楚 ═══════════
+#
+# 判準只有一句：這個 repo 是公開的，而且 netlify.toml 是 publish="."，
+# 所以「進版控」＝「全世界看得到，而且會出現在官網上」。
+# 下面每一項都是「不進版控是對的」，不是忘了加。
+
+# 大竹同濟會的財務報表工具與產出。那是別人社團的錢，不是我的東西，
+# 而且報表裡有會員與收支明細。工具與腳本一起排除。
+# 排除後仍可從 localhost:9000/tools/kiwanis-finance/ 與中控台正常使用。
+tools/kiwanis-finance/
+scripts/make-kiwanis-xlsx.mjs
+大竹同濟會*.xlsx
+
+# 影片自動剪輯：本機 Node 服務（port 9200），沒有中控台就是一頁打不開的東西。
+# inbox/out/work/bgm 上面已經排掉了，但程式本身連同 overlays/ 那 8 支疊加影片
+# 也有 10MB，發佈到公開官網沒有意義，還等於把內部工具結構攤在外面。
+# 排除後仍可從 localhost:9200 與中控台正常使用。
+tools/video-cut/
+
+# 青埔六年趨勢報表：跟 valuation / vip-report 同一個理由 ——
+# 「怎麼把六年的量價與人口對成一張看得懂的圖」是分析方法，同業照抄成本是零。
+# 而且成品是單檔 HTML 用 LINE 傳給客戶的，不靠公開網址。
+# 排除後仍可從 localhost:9000/tools/qingpu-trend/ 與中控台正常使用。
+tools/qingpu-trend/
+
+# 青埔社區資料庫的工具頁：data/ 上面已經排掉了，剩下的 index.html 沒有資料就是空的，
+# 公開等於發佈一頁打不開的工具。build/ 是抓政府檔的腳本，也是內部作業。
+tools/qingpu-communities/
+
+# 格局圖繪製與立體格局圖：她自己畫圖用的內部工具，跟 interior-studio 同一個理由
+# （floorplan-3d 還附了一份 850KB 的 three.js，推上公開站等於白白多傳一份）。
+# 客戶拿到的是畫好的圖，不是這兩頁。
+tools/floor-plan/
+tools/floorplan-3d/
+
+# 物件展示（真實影片＋提案圖／3D 環繞影片／照片虛擬佈置）：
+# 這是她操作用的後台，成品才是給客戶的。跟 photo-studio 同一個理由。
+tools/staging/
+
+# 專案給 Claude Code 看的工作規則。.claude/ 已經整包排除了，這個檔是同一件事，
+# 只是放在根目錄。公開等於把「她怎麼用 AI、記憶怎麼運作」攤開，對官網也沒有用。
+CLAUDE.md
+
+# 桌面捷徑用的批次檔。這些點的工具（591-watch、lvr-watch、valuation、news-post、
+# qingpu-watch、qingpu-trend、dev-letter）全部都已經排除了，捷徑進版控只會指向
+# 公開站上不存在的資料夾。
+591新案監看.cmd
+回補實價登錄歷史.cmd
+更新估價資料.cmd
+更新實價登錄.cmd
+更新時事貼文.cmd
+更新青埔監看.cmd
+更新青埔趨勢報表.cmd
+測試LINE通知.cmd
+謄本轉開發表.cmd
+
+# 產檔時的暫存資料夾。**特別注意 .tmp-vip-preview/**：裡面那份 preview.html 的
+# <title> 是「王先生的專屬市場報告｜潤隆國家大院」—— 屋主稱謂與社區名的明文，
+# 正好違反上面 vip/ 那條紅線。這幾個資料夾隨時可以重產，永遠不要進版控。
+.tmp-preview/
+.tmp-vip-preview/
+tools/_preview-tmp/
+
+# vip/ 底下的測試用假資料夾（內容只有一個字元 x）。真正要發佈的屋主報告
+# 是 report.mjs 產出來的，那些照舊要進版控。
+vip/testslug/
+
+# 改程式前手動留的備份、以及一次性的輸出測試檔。
+# 版控本身就是備份，.bak 進版控只會讓人搞不清楚哪份是現行的。
+*.bak
+*.bak-*
+_pdftest.pdf
+_zonetest.pdf
