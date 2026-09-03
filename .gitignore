@@ -256,3 +256,12 @@ vip/testslug/
 *.bak-*
 _pdftest.pdf
 _zonetest.pdf
+
+# 物件情報分析：三個理由。
+# ① 它讀 tools/valuation/ 的實價登錄資料與 tools/qingpu-trend/ 的趨勢檔，
+#    那兩包本來就整包排除了，這頁放到公開官網只會是一頁載不到資料的空殼。
+# ② 「附近怎麼定義、哪幾圈、預售要不要另計、開價與成交為什麼不能相減」
+#    是估價方法本身，跟 valuation / vip-report 同一個道理，同業照抄成本是零。
+# ③ 產出的報告會印出社區與標的坪數樓層，是給特定屋主看的東西。
+# 排除後仍可從 localhost:9000/tools/property-intel/ 與中控台正常使用。
+tools/property-intel/
