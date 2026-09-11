@@ -29,6 +29,9 @@
   --text:#173D30;
   --text-muted:#6A7D74;
   --text-faint:#95A69C;
+  /* 出價與實登那兩塊的小字專用。--text-muted 踩在那幾種淺底上對比只有
+     3.8~4.4（五個版型都量過），沒到 4.5，所以那兩塊用深一階的。 */
+  --note-fg:#55685E;
 
   --sh-sm:0 2px 8px rgba(0,83,53,.06);
   --sh-md:0 6px 20px rgba(0,83,53,.09);
@@ -186,6 +189,42 @@ select.control{
 .lcard-owner{font-size:.78rem;color:var(--text-muted);margin-bottom:9px}
 .lcard-spec{display:flex;flex-wrap:wrap;gap:3px 11px;font-size:.8rem;color:var(--text-muted);margin-bottom:10px}
 .lcard-spec b{color:var(--text);font-weight:700}
+/* 上一期買方說過的話（寫回報時的提醒） */
+.last-fb{
+  background:#FDF8EE;border:1px solid #E9DFC4;border-radius:10px;
+  padding:12px 15px;margin:16px 0 4px;
+}
+.last-fb .lf-t{font-size:.78rem;font-weight:800;color:#8A5A12;margin-bottom:8px}
+.last-fb .lf-t em{font-style:normal;font-weight:600;color:#A08350;font-size:.74rem}
+.last-fb ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.last-fb li{display:flex;gap:8px;align-items:flex-start;font-size:.8rem;line-height:1.75;color:var(--text)}
+.last-fb .tag{
+  flex:0 0 auto;font-size:.68rem;font-weight:700;padding:1px 8px;border-radius:99px;
+  background:#fff;border:1px solid #E9DFC4;color:#8A5A12;
+}
+.last-fb .tag.price{background:#FBEDE9;border-color:#F0C9C6;color:var(--accent)}
+
+/* 「該回報了」與「同社區有動靜」—— 兌現回報單結尾承諾的兩件事 */
+.lcard-due{
+  font-size:.72rem;font-weight:700;color:var(--text-faint);
+  padding:5px 9px;border-radius:7px;background:#F6F8F6;margin-bottom:7px;
+}
+.lcard-due.soon{background:#FDF6E6;color:#8A5A12}
+.lcard-due.due{background:#FBEDE9;color:var(--accent);font-weight:800}
+.lcard-due.due::before{content:'●　'}
+.lcard-watch{
+  font-size:.72rem;color:var(--text-faint);padding:5px 9px;border-radius:7px;
+  background:#F6F8F6;margin-bottom:11px;line-height:1.6;
+}
+.lcard-watch.load{color:var(--text-faint);font-style:italic}
+.lcard-watch.hit{background:#E7F0EA;color:var(--primary);font-weight:600}
+.lcard-watch.hit b{color:var(--accent);font-weight:800}
+.lcard-watch .w-go{
+  display:inline-block;margin-left:7px;padding:1px 8px;border-radius:99px;
+  background:var(--primary);color:#fff;font-weight:700;cursor:pointer;
+}
+.lcard-watch .w-go:hover{background:var(--primary-deep)}
+
 .lcard-stats{
   display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);
   border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:11px;
@@ -233,6 +272,12 @@ select.control{
   background:#FAFCFA;border:1px solid var(--border);border-radius:10px;padding:10px 12px;
 }
 .fb-item select{width:104px;flex:0 0 104px;padding:6px 26px 6px 9px;font-size:.82rem}
+.fb-item .fb-st{width:106px;flex:0 0 106px;margin-left:0;
+  /* ⚠ .fb-st 在回報單上是個標籤（圓角膠囊），在表單裡是下拉選單。
+     這裡要把標籤那套樣式蓋回去，不然選單會變成圓角膠囊還縮起來。 */
+  display:block;padding:6px 24px 6px 9px;border-radius:var(--r-sm);
+  background:#fff;border:1px solid var(--border-strong);color:var(--text);
+  font-size:.8rem;font-weight:600;vertical-align:baseline}
 .fb-item input{flex:1;border:none;background:transparent;font-size:.87rem;padding:6px 0}
 .fb-item input:focus{outline:none}
 .fb-item .rm{
@@ -240,6 +285,50 @@ select.control{
   display:grid;place-items:center;transition:background .16s,color .16s;
 }
 .fb-item .rm:hover{background:#FDF1F0;color:var(--accent)}
+/* ⚠ 加了「後來？」那一格之後，一列有四個東西（類別 104 ＋ 後來 106 ＋
+   刪除 26 ＋ 間距 27 = 263px），手機上只剩三十幾 px 給輸入框，整頁會橫向捲動。
+   窄螢幕改成兩列：上面放兩個下拉與刪除鈕，下面放整行的輸入框。 */
+@media (max-width:520px){
+  .fb-item{flex-wrap:wrap}
+  .fb-item select{flex:1 1 0;width:auto;min-width:0}
+  .fb-item .fb-st{flex:1 1 0;width:auto;min-width:0;order:2}
+  .fb-item .rm{order:3}
+  .fb-item input{flex:1 1 100%;order:4;border-top:1px solid var(--border);padding-top:9px}
+}
+
+/* 車位那三格的自動查詢提示 */
+.pk-hint{
+  margin:-4px 0 14px;padding:10px 13px;border-radius:var(--r-sm);
+  background:#EEF6F0;border:1px solid #C6DCCE;
+  font-size:.8rem;line-height:1.85;color:#215140;
+}
+.pk-hint b{font-weight:800}
+.pk-hint.miss{background:#FDF2E2;border-color:#EDD5AC;color:#8A5A12}
+
+/* 出價（撰寫回報的表單） */
+.of-list{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
+.of-item{
+  display:flex;gap:9px;align-items:center;
+  background:#FBF7F1;border:1px solid #EADDCB;border-radius:10px;padding:10px 12px;
+}
+.of-item .inline-row{flex:0 0 128px;width:128px}
+.of-item input{width:100%;border:none;background:transparent;font-size:.95rem;
+  font-weight:800;color:var(--amber);padding:4px 0;font-variant-numeric:tabular-nums}
+.of-item input:focus{outline:none}
+.of-item .suffix{font-size:.76rem;color:var(--text-faint);font-weight:700}
+.of-item select{width:100px;flex:0 0 100px;padding:6px 24px 6px 9px;font-size:.82rem}
+.of-item .of-gap{flex:1;font-size:.8rem;font-weight:700;color:var(--text-muted);
+  font-variant-numeric:tabular-nums}
+.of-item .of-gap.dn{color:var(--accent)}
+.of-item .rm{
+  flex:0 0 26px;width:26px;height:26px;border-radius:7px;color:var(--text-faint);
+  display:grid;place-items:center;transition:background .16s,color .16s;
+}
+.of-item .rm:hover{background:#FDF1F0;color:var(--accent)}
+@media (max-width:520px){
+  .of-item{flex-wrap:wrap}
+  .of-item .of-gap{flex:1 1 100%;order:5}
+}
 
 .act-chips{display:flex;flex-wrap:wrap;gap:7px}
 .act-chip{
@@ -414,7 +503,17 @@ select.control{
 .mk-tbl tr.mine td{background:#EEF6F0;font-weight:700;color:var(--primary)}
 .mk-tbl .r{text-align:right;white-space:nowrap}
 .mk-tbl .price{font-weight:800;color:var(--accent)}
-.mk-note{font-size:.76rem;color:var(--text-faint);margin-top:9px;line-height:1.7}
+/* ⚠ 原本用 --text-faint，對比只有 2.4~3.0 —— 在紙上幾乎看不見。
+   這一格裝的是「每坪已扣車位，不能跟 591 的開價單價相減」「為賣方開價非成交價」
+   這種**會影響屋主怎麼解讀數字**的字，不是裝飾，不可以淡到看不見。 */
+.mk-note{font-size:.76rem;color:var(--note-fg);margin-top:9px;line-height:1.7}
+/* 只有 Rita 看得到的操作提示。列印時隱藏（見 @media print），
+   屋主連結裡本來就不會產生這些節點。 */
+.mk-note.only-me{
+  background:#FDF2E2;border:1px dashed #E0B95C;border-radius:8px;
+  padding:9px 12px;color:#8A5A12;font-weight:600;
+}
+.plus-note{font-size:.86rem;line-height:1.75;margin-top:9px;color:inherit;opacity:.92}
 
 .chg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:14px}
 .chg-box{border:1.5px solid var(--border);border-radius:var(--r-md);padding:12px 8px;text-align:center;background:#FAFCFA}
@@ -435,6 +534,132 @@ select.control{
 @media (max-width:640px){ .chg-grid{grid-template-columns:1fr 1fr} .chg-list .mv{margin-left:0;width:100%} }
 .mk-band{font-size:.82rem;color:var(--text-muted);line-height:1.75;margin-top:10px;padding:10px 13px;background:#F5F9F6;border-radius:9px}
 .mk-band b{color:var(--primary);font-weight:800}
+
+/* ── 結論卡 ──────────────────────────────────────────────
+   排在所有數字之前。三種語氣：hot（有出價）／warm（有動靜）／cool（沒動靜）。
+   ⚠ cool 不用紅色 —— 沒動靜不是壞消息，是「我知道，我要做什麼」。 */
+.verdict{
+  margin:0 0 22px;padding:17px 20px;border-radius:var(--r-md);
+  background:var(--vd-bg,#F2F8F3);border-left:4px solid var(--vd-line,var(--primary));
+}
+.verdict.hot{--vd-bg:var(--vd-hot-bg,#FDF8EF);--vd-line:var(--vd-hot-line,#C8811A)}
+.verdict.cool{--vd-bg:var(--vd-cool-bg,#F5F7F8);--vd-line:var(--vd-cool-line,#8FA3A9)}
+.vd-k{
+  font-size:.68rem;font-weight:900;letter-spacing:.16em;
+  color:var(--note-fg);margin-bottom:5px;
+}
+.vd-h{
+  font-size:1.2rem;font-weight:900;line-height:1.5;
+  color:var(--vd-fg,var(--primary-deep));
+}
+.verdict.hot .vd-h{color:var(--vd-hot-fg,#8A5A12)}
+.vd-w{margin-top:7px;font-size:.87rem;line-height:1.9;color:var(--text)}
+.vd-p{
+  margin-top:9px;padding-top:9px;border-top:1px dashed var(--border-strong);
+  font-size:.85rem;line-height:1.85;color:var(--text);
+}
+.vd-p b{color:var(--vd-line,var(--primary));font-weight:900}
+
+/* ── 買方回饋的「後來呢」──────────────────────────────── */
+.fb-st{
+  display:inline-block;margin-left:8px;padding:1px 8px;border-radius:99px;
+  font-size:.7rem;font-weight:800;white-space:nowrap;vertical-align:1px;
+  background:#EEF2F0;color:var(--note-fg);border:1px solid var(--border);
+}
+.fb-st.good{background:#E7F0EA;color:#215140;border-color:#C6DCCE}
+.fb-st.warm{background:#FDF2E2;color:#8A5A12;border-color:#EDD5AC}
+.fb-st.warn{background:#F1F0FA;color:#4A4790;border-color:#D6D3EC}
+/* ⚠ 原本 #6E7574 對比只有 4.24，沒到 4.5。「沒下文」是最容易被略過的
+   那一格，字更不能淡。 */
+.fb-st.cold{background:#F2F3F3;color:#565C5B;border-color:#DEE1E0}
+.fb-tally{
+  margin-top:11px;padding-top:10px;border-top:1px solid var(--border);
+  font-size:.8rem;color:var(--note-fg);line-height:2.1;
+}
+.fb-tally .fb-st{margin-left:6px}
+.fb-tally span b{color:var(--primary);font-weight:900}
+
+/* ── 委託到期 ──────────────────────────────────────────── */
+.ent{
+  margin-top:22px;padding:15px 18px;border-radius:var(--r-md);
+  background:var(--ent-bg,#F5F7F8);border:1px solid var(--ent-line,#DCE4E6);
+}
+.ent.over{background:var(--ent-over-bg,#FBF1EF);border-color:var(--ent-over-line,#EFD0CB)}
+.ent-t{font-size:.92rem;font-weight:900;color:var(--ent-fg,var(--primary-deep))}
+.ent.over .ent-t{color:var(--accent)}
+.ent-b{margin-top:6px;font-size:.83rem;line-height:1.9;color:var(--note-fg)}
+
+/* ── 區域定位（地圖底下）────────────────────────────────── */
+/* ⚠ 沿用 .mk-band 的外觀，但字色要用 --note-fg 不是 --text-muted ——
+   --text-muted 踩在這幾種底色上對比只有 3.8~4.2。 */
+.area-line{margin-top:12px;color:var(--note-fg)}
+.area-line b{color:var(--primary);font-weight:900}
+
+/* ── 本期出價 ────────────────────────────────────────────
+   刻意用琥珀色系而不是主綠 —— 這一塊要跟上面的 KPI 分開，
+   屋主的眼睛要先停在這裡。 */
+.ofr{
+  margin:0 0 22px;padding:16px 18px;border-radius:var(--r-md);
+  background:var(--ofr-bg,#FDF8EF);border:1px solid var(--ofr-line,#EBDCBE);
+}
+.ofr.none{padding:14px 18px}
+.ofr-t{
+  font-size:.74rem;font-weight:900;letter-spacing:.1em;
+  color:var(--ofr-fg,#8A5A12);margin-bottom:12px;
+}
+.ofr.none .ofr-t{margin-bottom:6px;letter-spacing:.02em;font-size:.88rem}
+.ofr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ofr-box{
+  background:var(--ofr-card,#fff);border:1px solid var(--ofr-line,#EBDCBE);
+  border-radius:var(--r-sm);padding:12px 13px;
+}
+.ofr-box .n{
+  font-size:1.55rem;font-weight:900;line-height:1.15;
+  color:var(--ofr-hi,#8A5A12);font-variant-numeric:tabular-nums;
+}
+.ofr-box .n small{font-size:.72rem;font-weight:800;margin-left:2px}
+.ofr-box .n.dn{color:var(--accent)}
+.ofr-box.hi{background:var(--ofr-hi,#8A5A12);border-color:var(--ofr-hi,#8A5A12)}
+.ofr-box.hi .n{color:#fff}
+.ofr-box.hi .k{color:rgba(255,255,255,.82)}
+.ofr-box .k{font-size:.73rem;color:var(--note-fg);font-weight:700;margin-top:3px;line-height:1.5}
+.ofr-st{margin-top:10px;font-size:.8rem;font-weight:700;color:var(--ofr-fg,#8A5A12)}
+.ofr-d{margin-top:9px;font-size:.8rem;line-height:1.75;color:var(--note-fg)}
+.ofr-d b{color:var(--ofr-hi,#8A5A12);font-weight:800}
+@media (max-width:520px){ .ofr-grid{grid-template-columns:1fr} }
+
+/* ── 實價登錄成交 ───────────────────────────────────────── */
+.lvr-band{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.lvr-box{
+  background:var(--lvr-bg,#F1F7F9);border:1px solid var(--lvr-line,#D2E4EA);
+  border-radius:var(--r-sm);padding:12px 13px;
+}
+.lvr-box .n{
+  font-size:1.35rem;font-weight:900;line-height:1.2;
+  color:var(--lvr-hi,#1B5E75);font-variant-numeric:tabular-nums;
+}
+.lvr-box .n small{font-size:.7rem;font-weight:800;margin-left:2px}
+.lvr-box .k{font-size:.73rem;color:var(--note-fg);font-weight:700;margin-top:3px;line-height:1.5}
+.lvr-box.hi{background:var(--lvr-hi,#1B5E75);border-color:var(--lvr-hi,#1B5E75)}
+.lvr-box.hi .n{color:#fff}
+.lvr-box.hi .k{color:rgba(255,255,255,.82)}
+.lvr-mine{
+  margin-bottom:12px;padding:11px 14px;border-radius:9px;
+  background:var(--lvr-mine-bg,#EEF6F0);border-left:3px solid var(--lvr-hi,#1B5E75);
+  font-size:.85rem;line-height:1.85;color:var(--text);
+}
+.lvr-mine b{color:var(--lvr-hi,#1B5E75);font-weight:900}
+.lvr-tbl th em{font-style:normal;font-weight:600;opacity:.7;margin-left:3px;font-size:.9em}
+.lvr-tbl td.r{font-variant-numeric:tabular-nums}
+/* 估算值要跟實際值長得不一樣（虛底線 + ≈），見 feedback_實價登錄要扣車位。
+   ⚠ 用 text-decoration 不要用 border-bottom —— td 本來就有一條實線的
+     border-bottom，改成虛線會讓那一格的表格線斷掉。 */
+.lvr-tbl td.est,.est{
+  text-decoration:underline dashed var(--border-strong);
+  text-underline-offset:3px;
+  color:var(--note-fg);font-weight:600;
+}
+@media (max-width:520px){ .lvr-band{grid-template-columns:1fr} }
 .advice{
   background:#F5F9F6;border-left:3px solid var(--secondary);
   border-radius:0 10px 10px 0;padding:14px 18px;
@@ -568,7 +793,119 @@ body.owner-mode .view{padding:26px 20px 60px}
   margin-bottom:12px;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
 }
 .dt-lab em{font-style:normal;font-weight:600;letter-spacing:0;color:var(--text-faint);font-size:.79rem}
-.dt-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+/* 五個版型：桌機一排五個會太窄，用 auto-fit 讓它自己折 */
+/* ═══ 專題報導的四塊 ═══════════════════════════════════════
+   ⚠ 這幾塊的顏色一律用 CSS 變數，不要寫死色碼 ——
+     五個版型會各自覆寫變數，寫死的話換版型就會有一塊格格不入。 */
+
+/* ② 買方原話的大字引述 */
+.quote{
+  position:relative;margin:22px 0 26px;padding:22px 26px 20px 58px;
+  background:var(--q-bg,#F4FAF4);border-left:3px solid var(--q-line,var(--secondary));
+  border-radius:0 12px 12px 0;
+}
+.quote .q-mark{
+  position:absolute;left:18px;top:8px;font-size:2.6rem;line-height:1;
+  color:var(--q-line,var(--secondary));opacity:.45;font-family:Georgia,serif;
+}
+.quote .q-body{font-size:1.06rem;line-height:1.95;font-weight:600;color:var(--q-fg,var(--primary-deep))}
+.quote .q-src{margin-top:10px;font-size:.76rem;letter-spacing:.04em;color:var(--q-sub,var(--text-faint))}
+
+/* ③ 銷售歷程時間軸 */
+.tl{display:flex;align-items:flex-end;gap:10px;padding:6px 2px 0;min-height:104px}
+.tl-i{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.tl-bar{width:100%;max-width:46px;height:64px;display:flex;align-items:flex-end;
+  background:var(--tl-track,#EDF3EE);border-radius:5px;overflow:hidden}
+.tl-bar span{display:block;width:100%;background:var(--tl-bar,var(--secondary));border-radius:5px}
+.tl-i.now .tl-bar span{background:var(--tl-now,var(--primary))}
+.tl-v{font-size:.9rem;font-weight:800;color:var(--tl-fg,var(--text));font-variant-numeric:tabular-nums}
+.tl-i.now .tl-v{color:var(--tl-now,var(--primary))}
+.tl-d{font-size:.66rem;color:var(--text-faint);white-space:nowrap}
+.tl-note{margin-top:12px;font-size:.8rem;line-height:1.9;color:var(--text-muted)}
+.tl-note b{color:var(--text)}
+
+/* ③b 累計成績 */
+.sum{margin-top:14px;padding:15px 18px;border-radius:12px;
+  background:var(--sum-bg,#F4FAF4);border:1px solid var(--sum-line,#DDE9E0)}
+.sum-lead{font-size:.8rem;color:var(--text-muted);margin-bottom:9px}
+.sum-lead b{color:var(--text);font-weight:800}
+.sum-nums{display:flex;gap:20px;flex-wrap:wrap}
+.sum-nums>div{display:flex;flex-direction:column;gap:1px}
+.sum-nums b{font-size:1.24rem;font-weight:900;color:var(--sum-fg,var(--text));font-variant-numeric:tabular-nums}
+.sum-nums span{font-size:.7rem;color:var(--text-faint)}
+.sum-nums .hi b{color:var(--sum-hi,var(--primary));font-size:1.5rem}
+
+/* ④ 下一步 */
+.next-doc{margin-top:24px;padding:18px 22px;border-radius:12px;
+  background:var(--nx-bg,#FBF8EF);border:1px solid var(--nx-line,#E9DFC4)}
+.next-doc .nd-t{font-size:.94rem;font-weight:800;color:var(--nx-fg,var(--primary-deep));margin-bottom:11px}
+.next-doc ol{margin:0;padding-left:20px}
+.next-doc li{font-size:.87rem;line-height:2;color:var(--text)}
+.next-doc li b{color:var(--nx-fg,var(--primary-deep))}
+.next-doc .nd-f{margin-top:11px;font-size:.8rem;color:var(--text-muted)}
+
+/* 各版型覆寫變數 */
+.doc[data-theme="warm"]{--q-bg:#F3EEE6;--q-line:#2F6B52;--q-fg:#241E19;--q-sub:#8C8076;
+  --tl-track:#EDE6DB;--tl-bar:#9BC5AE;--tl-now:#2F6B52;--tl-fg:#4A4038;
+  --sum-bg:#fff;--sum-line:#E6DED3;--sum-fg:#241E19;--sum-hi:#2F6B52;
+  --nx-bg:#FBF0E0;--nx-line:#EAD3AE;--nx-fg:#9E5C15;
+  --ofr-bg:#FBF0E0;--ofr-line:#EAD3AE;--ofr-fg:#9E5C15;--ofr-hi:#9E5C15;--ofr-card:#fff;
+  --lvr-bg:#F3EEE6;--lvr-line:#E6DED3;--lvr-hi:#2F6B52;--lvr-mine-bg:#E7F0EA;
+  --vd-bg:#F3EEE6;--vd-line:#2F6B52;--vd-fg:#241E19;--vd-cool-bg:#F3EEE6;--vd-cool-line:#A99B89;
+  --vd-hot-bg:#FBF0E0;--vd-hot-line:#9E5C15;--vd-hot-fg:#9E5C15;
+  --ent-bg:#F3EEE6;--ent-line:#E6DED3;--ent-fg:#241E19;--ent-over-bg:#FBF0E0;--ent-over-line:#EAD3AE}
+.doc[data-theme="editorial"]{--q-bg:#F7F2E7;--q-line:#B08D2E;--q-fg:#0B2E20;--q-sub:#9A9184;
+  --tl-track:#EFE9DB;--tl-bar:#C9B27A;--tl-now:#B08D2E;--tl-fg:#6C6459;
+  --sum-bg:#F7F2E7;--sum-line:#E3DED1;--sum-fg:#0B2E20;--sum-hi:#B08D2E;
+  --nx-bg:#F7F2E7;--nx-line:#E3DED1;--nx-fg:#0B2E20;
+  /* ⚠ --ofr-hi 是「深底配白字」的底色，不可以用版型的亮金 #B08D2E ——
+     白字踩在那個金色上對比只有 3.14，印出來一片糊。要用深一階的。 */
+  --ofr-bg:#F7F2E7;--ofr-line:#E3DED1;--ofr-fg:#7D6014;--ofr-hi:#7D6014;--ofr-card:#FCFAF5;
+  --lvr-bg:#F7F2E7;--lvr-line:#E3DED1;--lvr-hi:#0B2E20;--lvr-mine-bg:#FCFAF5;
+  /* ⚠ --vd-line 同時是左邊那條線與 .vd-p 裡粗體字的顏色。
+     版型的亮金 #B08D2E 當粗體字踩在米底上只有 2.81，要用深一階的。 */
+  --vd-bg:#F7F2E7;--vd-line:#7D6014;--vd-fg:#0B2E20;--vd-cool-bg:#F7F2E7;--vd-cool-line:#C3BCA9;
+  --vd-hot-bg:#F7F2E7;--vd-hot-line:#7D6014;--vd-hot-fg:#7D6014;
+  --ent-bg:#F7F2E7;--ent-line:#E3DED1;--ent-fg:#0B2E20;--ent-over-bg:#F7EDE7;--ent-over-line:#E0CBBF}
+.doc[data-theme="navy"]{--q-bg:#0F2436;--q-line:#F0A83A;--q-fg:#fff;--q-sub:#8FD6FF;
+  --tl-track:#EAF0F5;--tl-bar:#5A8FB5;--tl-now:#0C1D2B;--tl-fg:#16324A;
+  --sum-bg:#F4F7FA;--sum-line:#DCE6EE;--sum-fg:#0C1D2B;--sum-hi:#16324A;
+  --nx-bg:#FDF6E6;--nx-line:#E0B95C;--nx-fg:#5A4318;
+  /* 深藍版的橘色只用在標題帶，所以出價這一塊改用深藍當重點色，
+     不然整頁會有兩個橘色在搶（見 reference_報表配色 A 的規則） */
+  --ofr-bg:#FDF6E6;--ofr-line:#E0B95C;--ofr-fg:#5A4318;--ofr-hi:#0C1D2B;--ofr-card:#fff;
+  --lvr-bg:#F4F7FA;--lvr-line:#DCE6EE;--lvr-hi:#16324A;--lvr-mine-bg:#EAF0F5;
+  --vd-bg:#F4F7FA;--vd-line:#0C1D2B;--vd-fg:#0C1D2B;--vd-cool-bg:#F4F7FA;--vd-cool-line:#9BAEBD;
+  --vd-hot-bg:#FDF6E6;--vd-hot-line:#8A5A12;--vd-hot-fg:#5A4318;
+  --ent-bg:#F4F7FA;--ent-line:#DCE6EE;--ent-fg:#0C1D2B;--ent-over-bg:#FBF1EF;--ent-over-line:#EFD0CB}
+.doc[data-theme="report"]{--q-bg:#FAFBFA;--q-line:#173D30;--q-fg:#173D30;--q-sub:var(--text-faint);
+  --tl-track:#EEF1EF;--tl-bar:#A9C4B4;--tl-now:#173D30;
+  --sum-bg:#FAFBFA;--sum-line:#E4E7E5;--sum-hi:#173D30;
+  --nx-bg:#FAFBFA;--nx-line:#E4E7E5;--nx-fg:#173D30;
+  /* 極簡報告的語氣最淡，出價這塊也不要跳色 */
+  --ofr-bg:#FAFBFA;--ofr-line:#E4E7E5;--ofr-fg:#173D30;--ofr-hi:#173D30;--ofr-card:#fff;
+  --lvr-bg:#FAFBFA;--lvr-line:#E4E7E5;--lvr-hi:#173D30;--lvr-mine-bg:#F4F6F5;
+  --vd-bg:#FAFBFA;--vd-line:#173D30;--vd-fg:#173D30;--vd-cool-bg:#FAFBFA;--vd-cool-line:#B9C2BD;
+  --vd-hot-bg:#FAFBFA;--vd-hot-line:#173D30;--vd-hot-fg:#173D30;
+  --ent-bg:#FAFBFA;--ent-line:#E4E7E5;--ent-fg:#173D30;--ent-over-bg:#FAFBFA;--ent-over-line:#E4E7E5}
+
+/* 抬頭那句從數據算出來的開場白。比「致 XXX」那行小一點、行距鬆一點，
+   看起來像在講話而不是標題。 */
+.doc-title .to.lead{margin-top:7px;font-size:.86rem;line-height:1.95;max-width:44em}
+.doc[data-theme="editorial"] .doc-title .to.lead{color:#6C6459}
+.doc[data-theme="report"] .doc-title .to.lead{color:var(--text-muted)}
+.doc[data-theme="warm"] .doc-title .to.lead{color:rgba(250,247,242,.82)}
+.doc[data-theme="navy"] .doc-title .to.lead{color:rgba(255,255,255,.76)}
+.doc[data-theme="navy"] .doc-title .to.lead b{color:#F0A83A}
+.doc[data-theme="warm"] .doc-title .to.lead b{color:#CFE8DA}
+
+.dt-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:12px}
+/* 「最常用」「有溫度」這種標籤 —— 她挑版型時第一眼看的是這個，不是名字 */
+.dt-tag{
+  font-size:.62rem;font-weight:800;letter-spacing:.04em;padding:1.5px 7px;border-radius:99px;
+  background:var(--surface-2,#EFF4F0);color:var(--text-muted);border:1px solid var(--border);
+}
+.dt.on .dt-tag{background:#E7F0EA;border-color:#CFE0D6;color:var(--primary)}
 .dt{
   text-align:left;border:1.5px solid var(--border);border-radius:var(--r-md);
   padding:10px 10px 12px;background:#fff;width:100%;display:block;
@@ -613,6 +950,23 @@ body.owner-mode .view{padding:26px 20px 60px}
 .pv-editorial .l{padding-top:8px}
 .pv-editorial .l i{background:#DED8C8}
 .pv-editorial .l i:nth-child(2){width:60%}
+
+.pv-warm{background:#FAF7F2}
+.pv-warm .h{background:linear-gradient(140deg,#2F6B52,#4A8C6F);height:38px}
+.pv-warm .h i:nth-child(1){width:22px;height:4px;background:#CFE8DA;margin-bottom:5px;border-radius:99px}
+.pv-warm .h i:nth-child(2){width:64%;height:8px;background:rgba(250,247,242,.92);border-radius:2px}
+.pv-warm .k i{background:#fff;border:1px solid #E6DED3;border-radius:7px}
+.pv-warm .l i{background:#E6DED3;border-radius:99px}
+.pv-warm .l i:nth-child(2){width:66%}
+
+.pv-navy{background:#fff}
+.pv-navy .h{background:linear-gradient(135deg,#0C1D2B,#16324A);height:38px}
+.pv-navy .h i:nth-child(1){width:26px;height:4px;background:#F0A83A;margin-bottom:5px}
+.pv-navy .h i:nth-child(2){width:58%;height:8px;background:rgba(255,255,255,.92);border-radius:2px}
+.pv-navy .k i{background:#0F2436;border:none;border-radius:4px}
+.pv-navy .l i{background:#DCE6EE}
+.pv-navy .l i:nth-child(1){background:#F0A83A;width:38%;height:5px;border-radius:2px}
+.pv-navy .l i:nth-child(2){width:72%}
 
 .pv-report{background:#fff;border-top:4px solid #005335}
 .pv-report .h{height:36px;padding-top:7px}
@@ -713,7 +1067,9 @@ body.owner-mode .view{padding:26px 20px 60px}
   padding:12px 0 12px 16px;color:#6C6459;
 }
 .doc[data-theme="editorial"] .mk-band b{color:var(--primary-deep)}
-.doc[data-theme="editorial"] .mk-note{color:#9A9184}
+/* ⚠ 這裡原本寫死 #9A9184（跟頁首那些裝飾字同一個色），在米底上只有 2.98。
+   .mk-note 裝的是口徑警語與免責聲明，不是裝飾字，要用得到的顏色。 */
+.doc[data-theme="editorial"] .mk-note{color:#6B6355}
 .doc[data-theme="editorial"] .chg-grid{gap:0;border-top:1px solid #E3DED1;border-bottom:1px solid #E3DED1;margin-bottom:18px}
 .doc[data-theme="editorial"] .chg-box{background:none;border:none;border-left:1px solid #E3DED1;border-radius:0;padding:16px 8px}
 .doc[data-theme="editorial"] .chg-box:first-child{border-left:none}
@@ -781,6 +1137,97 @@ body.owner-mode .view{padding:26px 20px 60px}
 .doc[data-theme="report"] .doc-foot{background:#fff;border-top:2px solid var(--primary);padding:24px 44px}
 .doc[data-theme="report"] .doc-cta a{border-radius:7px}
 
+/* ═══ 暖心奶茶 ═══════════════════════════════════════════
+   配色照她認可的 B 套（奶茶＋深綠，見記憶 reference_報表配色）。
+   給長期配合的屋主 —— 目標是「看起來像一封信，不像一份報表」。
+   所以：暖白底、襯線標題、圓角大一點、線條淡、綠色只用在數字上。 */
+.doc[data-theme="warm"]{background:#FAF7F2}
+.doc[data-theme="warm"] .doc-head{
+  background:linear-gradient(140deg,#2F6B52,#3E7F63 55%,#4A8C6F);
+  padding:32px 46px 30px;
+}
+.doc[data-theme="warm"] .doc-head::before{
+  background:radial-gradient(circle,rgba(250,247,242,.28),transparent 70%)}
+.doc[data-theme="warm"] .doc-brand .mark{
+  background:#FAF7F2;color:#2F6B52;border-radius:50%;font-weight:800}
+.doc[data-theme="warm"] .doc-brand .nm{font-family:"Noto Serif TC",serif;letter-spacing:.04em}
+.doc[data-theme="warm"] .doc-brand .rl{color:rgba(250,247,242,.72)}
+.doc[data-theme="warm"] .doc-title .kicker{color:#CFE8DA;letter-spacing:.2em}
+.doc[data-theme="warm"] .doc-title h2{font-family:"Noto Serif TC",serif;letter-spacing:.03em;font-weight:700}
+.doc[data-theme="warm"] .doc-title .to{color:rgba(250,247,242,.9);line-height:1.9}
+.doc[data-theme="warm"] .doc-period{color:rgba(250,247,242,.72)}
+.doc[data-theme="warm"] .doc-sub{background:#F3EEE6;border-bottom:1px solid #E6DED3;padding:20px 46px}
+.doc[data-theme="warm"] .doc-sub .t{font-family:"Noto Serif TC",serif;color:#215140;font-size:1.14rem}
+.doc[data-theme="warm"] .doc-sub .m{color:#8C8076}
+.doc[data-theme="warm"] .doc-sub .m b{color:#241E19}
+.doc[data-theme="warm"] .doc-body{padding:30px 46px;background:#FAF7F2}
+.doc[data-theme="warm"] .doc-sec-t{
+  font-family:"Noto Serif TC",serif;color:#215140;font-size:1rem;letter-spacing:.04em}
+.doc[data-theme="warm"] .doc-sec-t::after{background:#E6DED3}
+.doc[data-theme="warm"] .kpi-box{
+  background:#fff;border:1px solid #E6DED3;border-radius:14px;box-shadow:0 1px 2px rgba(36,30,25,.04)}
+.doc[data-theme="warm"] .kpi-box .n{color:#2F6B52}
+.doc[data-theme="warm"] .kpi-box .k{color:#8C8076}
+.doc[data-theme="warm"] .fb-doc .tag{background:#F3EEE6;border:1px solid #E6DED3;color:#4A4038;border-radius:99px}
+.doc[data-theme="warm"] .fb-doc .tag.price{background:#FBF0E0;border-color:#EAD3AE;color:#9E5C15}
+.doc[data-theme="warm"] .act-doc span{background:#E7F0EA;border:1px solid #CFE0D6;color:#215140;border-radius:99px}
+.doc[data-theme="warm"] .mk-tbl th{background:#F3EEE6;color:#8C8076;border-bottom:1px solid #E6DED3}
+.doc[data-theme="warm"] .mk-tbl td{border-bottom:1px solid #EFE9E0}
+.doc[data-theme="warm"] .mk-tbl tr.mine td{background:#E7F0EA;color:#215140;font-weight:700}
+.doc[data-theme="warm"] .chg-box{background:#fff;border:1px solid #E6DED3;border-radius:14px}
+.doc[data-theme="warm"] .mk-band{background:#F3EEE6;border:1px solid #E6DED3;border-radius:14px}
+.doc[data-theme="warm"] .advice{
+  background:#E7F0EA;border-left:3px solid #2F6B52;border-radius:0 14px 14px 0;color:#215140}
+.doc[data-theme="warm"] .doc-foot{background:#F3EEE6;border-top:1px solid #E6DED3;padding:26px 46px}
+
+/* ═══ 質感深藍 ═══════════════════════════════════════════
+   配色照她認可的 A 套（深藍＋橘）—— 那是她自己做的實價登錄長圖的配色，
+   對外給客戶看的就是這一套。目標是「數字最跳」。
+   ⚠ 橘色只用在標題帶與重點數字，其他地方不要再出現，不然會花（她的原則）。 */
+.doc[data-theme="navy"]{background:#fff}
+.doc[data-theme="navy"] .doc-head{
+  background:linear-gradient(135deg,#0C1D2B,#0F2436 60%,#16324A);padding:30px 44px 26px}
+.doc[data-theme="navy"] .doc-head::before{
+  background:radial-gradient(circle,rgba(240,168,58,.22),transparent 70%)}
+.doc[data-theme="navy"] .doc-brand .mark{background:#F0A83A;color:#22303B;border-radius:10px}
+.doc[data-theme="navy"] .doc-brand .rl{color:#8FD6FF}
+.doc[data-theme="navy"] .doc-title .kicker{color:#F0A83A;letter-spacing:.22em}
+.doc[data-theme="navy"] .doc-title h2{font-size:1.72rem;letter-spacing:-.01em}
+.doc[data-theme="navy"] .doc-title .to{color:rgba(255,255,255,.82)}
+.doc[data-theme="navy"] .doc-title .to b{color:#F0A83A}
+.doc[data-theme="navy"] .doc-period{color:rgba(255,255,255,.7)}
+.doc[data-theme="navy"] .doc-period strong{color:#F0A83A}
+.doc[data-theme="navy"] .doc-sub{background:#F4F7FA;border-bottom:1px solid #DCE6EE;padding:18px 44px}
+.doc[data-theme="navy"] .doc-sub .t{color:#0C1D2B;font-size:1.1rem}
+.doc[data-theme="navy"] .doc-sub .m{color:#5A6B78}
+.doc[data-theme="navy"] .doc-sub .m b{color:#0C1D2B}
+.doc[data-theme="navy"] .doc-body{padding:28px 44px}
+.doc[data-theme="navy"] .doc-sec-t{
+  color:#0C1D2B;font-size:.9rem;letter-spacing:.05em;
+  padding:5px 12px;background:#F0A83A;border-radius:5px;display:inline-flex;margin-bottom:15px}
+.doc[data-theme="navy"] .doc-sec-t::after{display:none}
+.doc[data-theme="navy"] .kpi-box{background:#0F2436;border:none;border-radius:10px}
+.doc[data-theme="navy"] .kpi-box .n{color:#fff}
+.doc[data-theme="navy"] .kpi-box .k{color:#8FD6FF;font-weight:700}
+.doc[data-theme="navy"] .kpi-box .d{color:rgba(255,255,255,.62)}
+.doc[data-theme="navy"] .fb-doc .tag{background:#17384F;border:none;color:#8FD6FF;border-radius:5px}
+.doc[data-theme="navy"] .fb-doc .tag.price{background:#3B1F22;color:#FF9D82}
+.doc[data-theme="navy"] .act-doc span{background:#F4F7FA;border:1px solid #DCE6EE;color:#16324A;border-radius:5px;font-weight:700}
+.doc[data-theme="navy"] .mk-tbl th{background:#16324A;color:#8FD6FF;border-bottom:none}
+.doc[data-theme="navy"] .mk-tbl td{border-bottom:1px solid #EAF0F5}
+.doc[data-theme="navy"] .mk-tbl tr.mine td{background:#FDF6E6;color:#0C1D2B;font-weight:800}
+.doc[data-theme="navy"] .chg-box{background:#F4F7FA;border:1px solid #DCE6EE;border-radius:10px}
+.doc[data-theme="navy"] .mk-band{background:#F4F7FA;border:1px solid #DCE6EE;border-radius:10px}
+.doc[data-theme="navy"] .advice{
+  background:#FDF6E6;border-left:4px solid #F0A83A;border-radius:0 10px 10px 0;color:#5A4318}
+.doc[data-theme="navy"] .doc-foot{background:#0C1D2B;border-top:none;padding:26px 44px;color:#fff}
+.doc[data-theme="navy"] .doc-foot .who .n{color:#fff}
+.doc[data-theme="navy"] .doc-foot .who .t,
+.doc[data-theme="navy"] .doc-foot .who .sv{color:rgba(255,255,255,.66)}
+.doc[data-theme="navy"] .doc-cta .tel{background:#F0A83A;color:#22303B}
+.doc[data-theme="navy"] .doc-cta .line{background:rgba(255,255,255,.12);color:#fff}
+.doc[data-theme="navy"] .doc-dis{color:rgba(255,255,255,.5)}
+
 /* --- 版型的手機修正 --- */
 @media (max-width:860px){
   .dt-list{grid-template-columns:1fr}
@@ -802,7 +1249,9 @@ body.owner-mode .view{padding:26px 20px 60px}
 @media print{
   @page{size:A4;margin:11mm}
   body{background:#fff}
-  .sidebar,.topbar,.doc-tools,.toast,.modal-bg,.owner-band{display:none!important}
+  /* ⚠ .only-me 是「只有 Rita 看得到」的操作提示。它不進屋主連結，
+     但她會直接列印／存 PDF 再傳給屋主，所以列印時一定要藏起來。 */
+  .sidebar,.topbar,.doc-tools,.toast,.modal-bg,.owner-band,.only-me{display:none!important}
   .app{display:block} .view{padding:0} .doc-wrap{max-width:none}
   .doc{box-shadow:none;border-radius:0}
   .doc-head{background:#005335!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:22px 24px}
@@ -816,6 +1265,27 @@ body.owner-mode .view{padding:26px 20px 60px}
   /* 這兩個版型的頁首本來就是淺色，不能被上面那條深綠蓋掉 */
   .doc[data-theme="editorial"] .doc-head{background:#FCFAF5!important;color:#0B2E20!important}
   .doc[data-theme="report"] .doc-head{background:#fff!important;color:#173D30!important}
+  /* ⚠ 上面那條 .doc-head 把底色寫死成深綠，深色抬頭的版型要各自寫回來，
+     不然印出來會變成「綠底配自己的字色」。 */
+  /* 新的四塊列印時底色要留著，不然引述與下一步整個變白，看不出是不同的區塊 */
+  .quote,.sum,.next-doc,.tl-bar,.tl-bar span{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .quote,.sum,.next-doc{break-inside:avoid}
+  /* 出價與實登成交：底色一定要印出來，不然這兩塊變白，
+     跟旁邊的段落黏成一片看不出是重點。 */
+  .ofr,.ofr-box,.lvr-box,.lvr-mine,.lvr-band,
+  .verdict,.ent,.fb-st,.fb-tally,.area-line{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ofr,.lvr-band,.lvr-mine,.verdict,.ent{break-inside:avoid}
+  .lvr-tbl tr{break-inside:avoid}
+  .doc[data-theme="navy"] .quote{background:#0F2436!important;color:#fff!important}
+  .doc[data-theme="warm"] .doc-head{background:#2F6B52!important}
+  .doc[data-theme="navy"] .doc-head{background:#0C1D2B!important}
+  .doc[data-theme="navy"] .doc-foot{background:#0C1D2B!important;color:#fff!important}
+  .doc[data-theme="navy"] .doc-sec-t{background:#F0A83A!important;color:#0C1D2B!important}
+  .doc[data-theme="navy"] .kpi-box{background:#0F2436!important}
+  .doc[data-theme="warm"]{background:#FAF7F2!important}
+  .doc[data-theme="warm"] .doc-sub,.doc[data-theme="warm"] .doc-foot{background:#F3EEE6!important}
   .doc[data-theme]{border:none}
   .doc[data-theme] .doc-head,.doc[data-theme] .doc-sub,
   .doc[data-theme] .doc-body,.doc[data-theme] .doc-foot{padding-left:24px;padding-right:24px}
@@ -930,6 +1400,20 @@ body.owner-mode .view{padding:26px 20px 60px}
         <div class="field"><label>衛</label><input class="control" id="fBaths" type="number" min="0" placeholder="2"></div>
         <div class="field"><label>樓層／總樓</label><div class="inline-row"><input class="control" id="fFloor" type="number" min="0" placeholder="12"><span class="sep">/</span><input class="control" id="fTotalFloor" type="number" min="0" placeholder="18"></div></div>
       </div>
+      <!-- 車位。⚠ 這兩欄不是裝飾：實價登錄的每坪單價一律是「扣掉車位」算的，
+           權狀坪含車位。不知道車位幾坪就沒辦法把屋主的開價換成同一個口徑，
+           同社區成交的比較會整個偏掉（竹風青庭實測：用權狀坪比出 50.3 萬/坪、
+           用扣車位坪比出 46.4 萬/坪，差 8%）。 -->
+      <div class="grid3">
+        <div class="field"><label>車位</label><select class="control" id="fPk">
+          <option value="">未設定</option><option value="no">無車位</option>
+          <option value="plane">有．平面式</option><option value="mech">有．機械式</option></select></div>
+        <div class="field"><label>車位坪數<span style="font-weight:500;color:var(--text-faint)">（權狀坪裡的車位部分）</span></label><div class="inline-row"><input class="control" id="fPkSize" type="number" step="0.01" placeholder="8.5"><span class="suffix">坪</span></div></div>
+        <div class="field"><label>車位行情<span style="font-weight:500;color:var(--text-faint)">（一個車位）</span></label><div class="inline-row"><input class="control" id="fPkWan" type="number" step="1" placeholder="180"><span class="suffix">萬</span></div></div>
+      </div>
+      <!-- 社區名打完就去實價登錄查這三格，不用她自己找。
+           ⚠ 只填空白的格子，她自己打過的不覆蓋（見 fillParkingFromLvr）。 -->
+      <div class="pk-hint" id="pkHint" hidden></div>
 
       <div class="form-section">委託資訊</div>
       <div class="grid2">
@@ -997,20 +1481,35 @@ const AGENT = Object.assign({
      這份是拿委託物件給客戶看的，屬於廣告，一定要有。
      共用設定在 tools/_shared/identity.js，那個檔沒載到就用這裡的值。 */
   firm: '有巢氏房屋　青埔IKEA店',
-  company: '熊理想有限公司',
-  firmLine: '有巢氏房屋　青埔IKEA店　熊理想有限公司',
+  company: '熊理想不動產有限公司',
+  firmLine: '有巢氏房屋　青埔IKEA店　熊理想不動產有限公司',
 }, window.RITA_ID || {});
 
 /* 回報單的三個版型。
    id 存的是字串不是索引 —— 以後再加版型，已經寄出去的屋主連結照樣讀得懂。
    （AREAS／TYPES 是索引編碼，那兩個才不能動順序。） */
+/* 回報單的版型。
+   ⚠ 只能往後加，不可以改 id 或刪掉 —— 屋主連結把版型存成這個 id，
+     動了已經寄出去的連結就會變成預設版型。
+
+   ⚠ 說明文字寫「什麼時候用、屋主看了會有什麼感覺」，
+     不要寫「深綠色、卡片式排版」那種 —— 她挑版型的時候，
+     腦子裡想的是「這個屋主是什麼樣的人」，不是配色。
+
+   配色沿用她認可的兩套（見記憶 reference_報表配色）：
+     暖心奶茶 = B 套（奶茶＋深綠，她的品牌調性）
+     質感深藍 = A 套（深藍＋橘，對外給客戶看的那一套） */
 const DOC_THEMES = [
-  { id:'classic',   nm:'沉穩綠',
-    ds:'品牌深綠主視覺，數據做成卡片。資訊密度最高，一般回報用這個。' },
-  { id:'editorial', nm:'精品雜誌',
-    ds:'米白紙感、襯線字、章節編號。留白最多，總價高的屋主看了最有份量。' },
-  { id:'report',    nm:'極簡報告',
-    ds:'白底細線、數字當主角。像投顧月報，要談調價時語氣最不吵。' }
+  { id:'classic',   nm:'沉穩綠',   tag:'最常用',
+    ds:'該講的都講清楚，一頁看完。不知道要選哪個就用這個。' },
+  { id:'warm',      nm:'暖心奶茶', tag:'有溫度',
+    ds:'奶茶色配深綠，字體柔一點。適合長期配合、已經有交情的屋主，看起來像一封信不像一份報表。' },
+  { id:'editorial', nm:'精品雜誌', tag:'有份量',
+    ds:'米白紙感、襯線字、章節編號，留白多。總價高的屋主拿在手上會覺得慎重。' },
+  { id:'navy',      nm:'質感深藍', tag:'重點清楚',
+    ds:'深藍配橘，數字最跳。要屋主一眼抓到重點、或這期有話要講的時候用。' },
+  { id:'report',    nm:'極簡報告', tag:'語氣最淡',
+    ds:'白底細線、只有數字。要談調價又不想顯得在施壓時，這個版型最不吵。' }
 ];
 const DEF_THEME = 'classic';
 const okTheme = t => DOC_THEMES.some(x=>x.id===t) ? t : DEF_THEME;
@@ -1021,7 +1520,72 @@ const AREAS = ['青埔／高鐵特區','中壢區','桃園區','蘆竹南崁','�
    買方配案與屋主回報連結顯示成別的類型。 */
 const TYPES = ['電梯大樓','華廈','公寓','透天','別墅','店面','土地','辦公室','一般事務所'];
 const ACTIONS = ['591 刊登更新','照片重拍','影片上架','社群貼文','LINE 群發','派報／DM','開放參觀','同業聯賣','電話陌開','買方回訪'];
+
+/* 這一戶的加分項。
+   ⚠ 這一欄不是裝飾，是立場：回報單把屋主的開價跟同社區在售價擺在一起，
+   沒有這一段的話，屋主看完只會收到三個字「你比較貴」。
+   Rita 拍板過 ——「每個屋主都想賣市價，只是可以分析一下市價，
+   以及對方可能有裝潢等一些想法上的差異」，中位數是「平均的那一戶」，
+   開得比中位高通常是有理由的，要有地方把那個理由寫出來。
+
+   存在「委託物件」身上不是「這一期」身上：條件是這一戶的屬性，
+   填一次每期都帶出來，不用每期重打。*/
+const PLUS_TAGS = [
+  '近期裝潢','屋況佳','管線已更新','衛浴翻新','附全套家電',
+  '高樓層','景觀視野','邊間','雙面採光','採光佳','無暗房',
+  '格局方正','無暗廳','低公設','一層一戶','有露台',
+  '附平面車位','附機械車位','近捷運','明星學區','生活機能佳',
+];
 const FB_TYPES = ['價格','格局','樓層','採光','屋況','環境','學區','車位','其他'];
+
+/* 每一則回饋的「後來呢」。
+   ⚠ 原本回饋只記「買方說了什麼」，沒記「後來呢」。屋主最想知道的其實是
+     「8 組看過、只有 2 組出價，另外 6 組卡在哪」—— 那比任何話術都有感，
+     而且是事實不是施壓。
+   ⚠ 第一個是空字串 = 不標記。她如果是按「主題」寫回饋（價格／樓層）而不是
+     按「一組買方」寫，留空就好，報告上什麼都不會出現。
+   ⚠ 這個陣列的索引會被編碼進屋主連結，只能往後加。 */
+const FB_ST = ['', '還在考慮', '已出價', '看了別戶', '沒下文'];
+
+/* 出價紀錄的後續狀態。
+   ⚠ 這個陣列的順序會被編碼進屋主連結（存索引不存字串），只能往後加。 */
+const OFFER_ST = ['還在談','已回絕','已成交','沒下文'];
+
+/* ═══ 出價紀錄 ══════════════════════════════════════════════
+   為什麼要獨立一塊，不併在買方回饋裡：
+
+   屋主對點閱數、收藏數其實是半信半疑的 —— 他心裡知道那個可以灌。
+   出價他信，那是唯一有人真的掏錢說話的數字。原本「兩組買方出價落在
+   1800 附近」被寫成一則回饋，跟「裝潢完善」排在一起，等於把全份報告
+   最重的一句話藏起來。
+
+   而且這一塊會替我們講不想自己講的話：不是我們叫屋主降價，
+   是市場出到這裡（見 feedback_不要壓屋主的價）。
+
+   ⚠ 這裡只放「買方出多少」，絕對不放底價（l.floorPrice）。
+     底價是只有她看得到的東西，屋主連結裡不能出現。
+═════════════════════════════════════════════════════════ */
+
+/** 這一期的出價摘要 */
+function offerOf(r, l){
+  const os = (r?.offers || []).filter(o => o && o.wan > 0);
+  if(!os.length) return null;
+  const hi = Math.max(...os.map(o => o.wan));
+  const gap = (l?.price > 0) ? hi - l.price : null;
+  return {
+    n: os.length, hi, gap,
+    pct: (l?.price > 0) ? Math.round(gap / l.price * 1000) / 10 : null,
+    list: os,
+  };
+}
+
+/** 委託至今的累計出價（含本期）。只算到 r 這一期為止，看舊回報時才不會超前。 */
+function offerTotals(reports, upto){
+  const rs = (reports || []).slice(0, (upto ?? reports.length - 1) + 1);
+  const all = rs.flatMap(x => (x.offers || []).filter(o => o && o.wan > 0));
+  if(!all.length) return null;
+  return { n: all.length, hi: Math.max(...all.map(o => o.wan)) };
+}
 
 /* 競品查詢範圍。屋主最在意的不是「同棟有幾件」，是「同價位帶的對手在幹嘛」，
    所以除了本社區，還能掃整個青埔再用總價帶篩。 */
@@ -1052,7 +1616,9 @@ async function findLocalHelper(){
   catch{ apiBase = null; return false; }
 }
 
-let state = { listings:[], activeId:null, doc:null, marketLog:[], docTheme:DEF_THEME };
+let state = { listings:[], activeId:null, doc:null, marketLog:[], docTheme:DEF_THEME,
+  /* 自動盯同社區的結果，key 是委託 id。存進 localStorage 是為了跨天比對。 */
+  watch:{} };
 let editingId = null;
 let ownerMode = false;
 let market = { loading:false, error:null, rows:null, forId:null,
@@ -1085,6 +1651,17 @@ function daysLeft(end){
 }
 function unitPrice(l){ return (l.price && l.size) ? Math.round(l.price/l.size*10)/10 : null; }
 
+/* 扣掉車位的坪數。實價登錄的每坪單價一律是扣車位算的，
+   要跟它比就得先把屋主的權狀坪換成同一個口徑。
+   ⚠ 車位沒設定就回 null —— 不要自己猜一個坪數填進去，
+     猜錯的方向跟猜對的方向差 8%，而這個數字會印在給屋主的報告上。 */
+function pingExPk(l){
+  if(!l || !(l.size > 0)) return null;
+  if(l.pk === 'no') return l.size;                     /* 明確沒有車位：權狀坪就是扣車位坪 */
+  if(l.pk && l.pkSize > 0 && l.pkSize < l.size) return Math.round((l.size - l.pkSize)*10)/10;
+  return null;                                          /* 未設定，或有車位但沒填坪數 */
+}
+
 function save(){
   if(ownerMode) return;
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }
@@ -1099,6 +1676,10 @@ function load(){
       state.doc = d.doc || null;
       state.marketLog = Array.isArray(d.marketLog) ? d.marketLog : [];
       state.docTheme = okTheme(d.docTheme);
+      /* ⚠ load() 是逐欄挑的，新增 state 欄位一定要在這裡也加一行 ——
+         漏了的話「存得進去、讀不回來」，症狀是每次重開都當第一次掃，
+         永遠比不出降價，而且完全不報錯。 */
+      state.watch = (d.watch && typeof d.watch === 'object') ? d.watch : {};
       return true;
     }
   }catch{}
@@ -1164,10 +1745,23 @@ function packDoc(d){
       fl:l.floor, tf:l.totalFloor, g:l.age, ow:l.owner, et:l.entrust,
       st:l.start, en:l.end
     },
+    /* ⚠ fb 的每一筆從 [類別, 內容] 變成 [類別, 內容, 後續索引]。
+       往後加一個元素是安全的 —— 舊連結沒有第三格，解出來是 undefined → 不標記。 */
     r: { d:r.date, v:r.views, f:r.favs, c:r.calls, s:r.visits,
-         fb:(r.feedback||[]).map(x=>[x.t,x.n]), ac:r.actions||[], ad:r.advice||'' }
+         fb:(r.feedback||[]).map(x=>[x.t, x.n, Math.max(0, FB_ST.indexOf(x.st||''))]),
+         ac:r.actions||[], ad:r.advice||'' }
   };
   if(l.origPrice) o.l.op = l.origPrice;
+  /* 車位。⚠ 一定要帶 —— 少了這兩欄，屋主那邊算不出「換成同一個算法是每坪幾萬」，
+     實登那一段就只有別人的成交、沒有他自己的位置。
+     這不是敏感資料（591 的刊登上本來就寫著），底價才是。 */
+  if(l.pk) o.l.pk = l.pk;
+  if(l.pkSize > 0) o.l.ps = l.pkSize;
+  if(l.pkWan > 0) o.l.pw = l.pkWan;
+  /* 加分項。⚠ 只能「新增」欄位，不可以改動已經有的欄位名 ——
+     已經寄出去的屋主連結解不開就是一片空白。舊連結沒有這兩欄，會是空的。*/
+  if((l.plus||[]).length) o.l.pl = l.plus;
+  if((l.plusNote||'').trim()) o.l.pn = l.plusNote.trim();
   if(d.prev) o.pv = { v:d.prev.views, f:d.prev.favs, c:d.prev.calls, s:d.prev.visits };
   if(d.market && d.market.length) o.mk = d.market.map(m=>[m.name, m.price, m.size, m.room, m.floor, m.mine?1:0]);
   if(d.marketLabel) o.ml = d.marketLabel;
@@ -1179,6 +1773,29 @@ function packDoc(d){
              p:d.changes.partial?1:0, s:d.changes.since||'' };
   }
   if(d.totals) o.tt = d.totals;
+  /* 出價。⚠ 狀態存 OFFER_ST 的索引，那個陣列只能往後加。
+     ⚠ 這裡只有買方出的價，沒有底價 —— 底價不可以進屋主連結。 */
+  if(d.offer) o.of = d.offer.list.map(x=>[x.wan, Math.max(0, OFFER_ST.indexOf(x.st))]);
+  if(d.offerTotals) o.ot = [d.offerTotals.n, d.offerTotals.hi];
+  /* 實價登錄成交。⚠ 一定要帶進連結 —— tools/qingpu-communities/ 整包在
+     .gitignore 裡，屋主從官網開連結是抓不到那份資料的。 */
+  if(d.lvr && d.lvr.n) o.lv = {
+    nm:d.lvr.name, n:d.lvr.n, m:d.lvr.months, u:d.lvr.upMedian,
+    tl:d.lvr.totLo, th:d.lvr.totHi, re:d.lvr.restored, nu:d.lvr.noUnit,
+    bd:d.lvr.bandDropped?1:0, bs:d.lvr.basis, pw:d.lvr.parkWan, da:d.lvr.dataAt,
+    /* 車位規格（一顆幾坪、什麼型式）與「有幾筆是推估車位數」。
+       ⚠ 不帶的話屋主那邊的註解會少掉「一個車位 10.39 坪（坡道平面）」，
+         只剩一個沒頭沒尾的「150 萬」。 */
+    sp:d.lvr.spec ? [d.lvr.spec.ping, d.lvr.spec.kind || ''] : null,
+    pgs:d.lvr.pkGuessed || 0,
+    rs:d.lvr.rows.map(x=>[x.ym, x.fl, x.pg, x.tot, x.up, x.est?1:0])
+  };
+  /* 區域定位。同樣要帶進連結 —— 屋主那邊算不了（資料不在官網上）。 */
+  if(d.area) o.ar = [d.area.areaMedian, d.area.areaN, d.area.areaComm,
+                     d.area.areaMonths, d.area.rank, d.area.total, d.area.band || ''];
+  /* 銷售歷程：一期一組 [日期, 帶看, 來電]。只有兩期以上才值得帶（一期沒有歷程可講）。
+     ⚠ 只能往後加欄位，舊連結沒有這一欄就不畫時間軸。 */
+  if((d.history||[]).length > 1) o.hs = d.history.map(x=>[x.d, x.v, x.c]);
   const th = docTheme();
   if(th !== DEF_THEME) o.th = th;   /* 預設版型不佔連結長度 */
   return o;
@@ -1190,11 +1807,14 @@ function unpackDoc(z){
     listing: {
       name:L.n, area:AREAS[L.a] || '', addr:L.ad || '', type:TYPES[L.t] || '',
       price:L.p, origPrice:L.op ?? null, size:L.sz, rooms:L.rm, halls:L.hl, baths:L.bt,
-      floor:L.fl, totalFloor:L.tf, age:L.g, owner:L.ow, entrust:L.et, start:L.st, end:L.en
+      floor:L.fl, totalFloor:L.tf, age:L.g, owner:L.ow, entrust:L.et, start:L.st, end:L.en,
+      plus:L.pl || [], plusNote:L.pn || '',
+      pk:L.pk || '', pkSize:L.ps ?? null, pkWan:L.pw ?? null
     },
     report: {
       date:R.d, views:R.v, favs:R.f, calls:R.c, visits:R.s,
-      feedback:(R.fb||[]).map(x=>({t:x[0], n:x[1]})),
+      /* 舊連結的 fb 只有兩格，x[2] 是 undefined → FB_ST[undefined] → 不標記 */
+      feedback:(R.fb||[]).map(x=>({t:x[0], n:x[1], st:FB_ST[x[2]] || ''})),
       actions:R.ac || [], advice:R.ad || ''
     },
     prev: z.pv ? {views:z.pv.v, favs:z.pv.f, calls:z.pv.c, visits:z.pv.s} : null,
@@ -1209,12 +1829,203 @@ function unpackDoc(z){
                partial:!!z.ch.p, since:z.ch.s||'' };
     })() : null,
     totals: z.tt || null,
+    history: (z.hs||[]).map(x=>({d:x[0], v:x[1], c:x[2], f:0})),
+    /* 出價。舊連結沒有 of 這一欄 → 回 null，那一塊不顯示，不會壞。 */
+    offer: (()=>{
+      const os = (z.of||[]).map(x=>({wan:x[0], st:OFFER_ST[x[1]] || OFFER_ST[0]}))
+        .filter(x=>x.wan>0);
+      if(!os.length) return null;
+      const hi = Math.max(...os.map(x=>x.wan));
+      const ask = z.l?.p;
+      const gap = ask>0 ? hi-ask : null;
+      return { n:os.length, hi, gap,
+        pct: ask>0 ? Math.round(gap/ask*1000)/10 : null, list:os };
+    })(),
+    offerTotals: z.ot ? {n:z.ot[0], hi:z.ot[1]} : null,
+    lvr: z.lv ? {
+      name:z.lv.nm, n:z.lv.n, months:z.lv.m, upMedian:z.lv.u ?? null,
+      totLo:z.lv.tl, totHi:z.lv.th, restored:z.lv.re||0, noUnit:z.lv.nu||0,
+      bandDropped:!!z.lv.bd, basis:z.lv.bs||'none', parkWan:z.lv.pw ?? null,
+      spec:z.lv.sp ? {ping:z.lv.sp[0], kind:z.lv.sp[1]||null} : null,
+      pkGuessed:z.lv.pgs||0,
+      dataAt:z.lv.da||'', windowText: winT(z.lv.m),
+      rows:(z.lv.rs||[]).map(x=>({ym:x[0], fl:x[1], pg:x[2], tot:x[3], up:x[4], est:!!x[5]}))
+    } : null,
+    area: z.ar ? { areaMedian:z.ar[0], areaN:z.ar[1], areaComm:z.ar[2],
+                   areaMonths:z.ar[3], rank:z.ar[4], total:z.ar[5], band:z.ar[6] } : null,
     theme: okTheme(z.th)            /* 舊連結沒有這欄，自動回到沉穩綠 */
   };
+}
+
+/** 窗口的中文說法。⚠ 要跟 lvr.mjs 的 windowText 一致。 */
+function winT(m){
+  if(!(m>0)) return '近期';
+  if(m<=6) return '近半年';
+  if(m<=12) return '近一年';
+  if(m<=24) return '近兩年';
+  return '近三年';
 }
 function buildShareUrl(){
   if(!state.doc) return null;
   return PUBLIC_BASE + '#o=' + b64e(JSON.stringify(packDoc(state.doc)));
+}
+
+/* ═══ 把「這兩週我會做什麼」變成系統真的會做的事 ═══════════
+   Rita 2026-09-07：「這兩週你會做的，你其實有時間現在就可以開始做了。」
+   回報單結尾承諾了三件事，其中兩件系統可以自己兌現：
+     ①「下一期回報約兩週後給您」→ 距上次回報幾天，超過就提醒（dueBadge）
+     ②「同社區有新的成交或降價我第一時間告訴您」→ 自動掃，不用她手動按查詢（autoScan）
+   第三件「買方一組一組跟回去」是她的工作，系統能做的是把上一期的回饋
+   在寫新回報時擺出來（見 renderWrite 的「上一期買方說過的話」）。 */
+
+const REPORT_CYCLE = 14;      /* 承諾的回報週期：兩週 */
+
+/**
+ * 上一期買方說過的話，擺在「買方回饋」上面當提醒。
+ * 回報單結尾承諾「看過的買方我會一組一組跟回去」——
+ * 她寫新回報時要看得到上次誰說了什麼，才知道哪幾組還沒追。
+ * ⚠ 只顯示不編輯。那是上一期的紀錄，改了就對不上已經寄出去的回報單。
+ */
+function lastFeedbackBox(){
+  const l = activeListing();
+  const rs = (l && l.reports) || [];
+  if(rs.length < 1) return '';
+  const prev = rs[rs.length-1];
+  const fb = (prev.feedback || []).filter(x => (x.n || '').trim());
+  /* 上一期還在談的出價也要擺出來 —— 那幾組才是最該追的。
+     ⚠ 只列「還在談」與「沒下文」；已回絕、已成交的追了沒有意義。 */
+  const op = (prev.offers || []).filter(o => o && o.wan > 0 &&
+    (o.st === '還在談' || o.st === '沒下文'));
+  if(!fb.length && !op.length) return '';
+  const days = prev.date ? Math.floor((new Date(today()) - new Date(prev.date)) / 864e5) : null;
+  return '<div class="last-fb">' +
+    '<div class="lf-t">上一期（' + esc(fmtDate(prev.date)) + (days != null ? '，' + days + ' 天前' : '') +
+      '）的進度　<em>追過了嗎？追到結果就寫進這一期</em></div>' +
+    (op.length ? '<ul>' + op.map(o =>
+      '<li><span class="tag price">出價</span>' +
+      '<span>' + fmtPrice(o.wan) + ' 萬（上期記錄為「' + esc(o.st) + '」）</span></li>').join('') + '</ul>' : '') +
+    (fb.length ? '<ul>' + fb.map(f =>
+      '<li><span class="tag' + (f.t === '價格' ? ' price' : '') + '">' + esc(f.t) + '</span>' +
+      '<span>' + esc(f.n) + '</span></li>').join('') + '</ul>' : '') +
+  '</div>';
+}
+
+/** 距上次回報幾天。⚠ 沒有回報過的不提醒 —— 那是「還沒開始」不是「遲到」。 */
+function dueInfo(l){
+  const rs = l.reports || [];
+  if(!rs.length) return null;
+  const last = rs[rs.length-1].date;
+  if(!last) return null;
+  const days = Math.floor((new Date(today()) - new Date(last)) / 864e5);
+  return { days, last, due: days >= REPORT_CYCLE, soon: days >= REPORT_CYCLE - 3 };
+}
+
+function dueBadge(l){
+  const d = dueInfo(l);
+  if(!d) return '';
+  const cls = d.due ? ' due' : d.soon ? ' soon' : '';
+  const txt = d.due ? '距上次回報 ' + d.days + ' 天　該回報了'
+    : d.soon ? '距上次回報 ' + d.days + ' 天　快到兩週了'
+      : '距上次回報 ' + d.days + ' 天';
+  return '<div class="lcard-due' + cls + '">' + txt + '</div>';
+}
+
+/** 自動掃的結果。⚠ 沒掃過就什麼都不顯示，不要放一個空殼在那裡。 */
+function watchBadge(l){
+  const w = (state.watch || {})[l.id];
+  if(!w) return '';
+  if(w.loading) return '<div class="lcard-watch load">正在看同社區有沒有動靜…</div>';
+  if(w.error) return '';
+  /* ⚠ 第一次掃只是把基準記下來，還沒有東西可以比。
+     這時候寫「沒有異動」是騙人的 —— 要講清楚是「開始盯了」。 */
+  if(w.first) return '<div class="lcard-watch">同社區 ' + w.n + ' 件在售，已開始盯，有異動會標出來</div>';
+  const bits = [];
+  if(w.down) bits.push('<b>' + w.down + ' 件降價</b>');
+  if(w.added) bits.push(w.added + ' 件新上架');
+  if(w.gone) bits.push(w.gone + ' 件下架');
+  if(!bits.length){
+    return '<div class="lcard-watch">同社區 ' + w.n + ' 件在售，上次看過之後沒有價格異動</div>';
+  }
+  return '<div class="lcard-watch hit">同社區有動靜：' + bits.join('、') +
+    '<span class="w-go" data-act="gomarket">看競品</span></div>';
+}
+
+/**
+ * 自動盯同社區。
+ *
+ * ⚠ 591 的存取規矩（她拍板過的）：只讀公開在售、不提高頁數上限、
+ *   不移除請求間隔、不做大量爬取。所以這裡：
+ *     · 本社區查詢本來就只翻 1 頁 —— 一件委託 = 1 次請求
+ *     · 同一件 12 小時內不重掃（存 state.watch[id].at）
+ *     · 一件一件依序掃，中間隔 1.2 秒
+ *     · 中控台沒開就整個不做（不是錯誤，是「現在查不了」）
+ *
+ * ⚠ 只掃「有回報過」的委託 —— 還沒開始賣的不用盯。
+ */
+async function autoScan(){
+  if(!state.listings.length) return;
+  state.watch = state.watch || {};
+  const now = Date.now();
+  const todo = state.listings.filter(l => {
+    if(!(l.reports || []).length) return false;
+    const w = state.watch[l.id];
+    if(!w || !w.at || (now - w.at) > 12 * 3600e3) return true;
+    /* ⚠ 舊版的快照沒有 room 欄位。這份快照現在會被當成回報單行情表的備援，
+       少了格局整欄會印成「—」。缺就補掃一次，只會發生一次。 */
+    return (w.rows || []).length > 0 && w.rows.every(r => r.room === undefined);
+  });
+  if(!todo.length) return;
+  if(apiBase === null && !(await findLocalHelper())) return;   /* 中控台沒開就算了 */
+
+  for(const l of todo){
+    const prev = state.watch[l.id];
+    state.watch[l.id] = { ...(prev || {}), loading:true };
+    if(currentView === 'listings') renderListings();
+    try{
+      const res = await fetch(apiBase + '/api/591-search?' +
+        new URLSearchParams({ q: l.name, pages: '1' }));
+      const j = await res.json();
+      if(!j.ok) throw new Error(j.error || '查詢失敗');
+
+      /* 跟 loadMarket 同一套：同一戶被多家房仲刊登要先合併，
+         用「不含價格」的指紋，同戶取最低價，跨期才比得出異動。 */
+      const seen = new Map();
+      (j.houses || []).forEach(h => {
+        if(!h.price) return;
+        const row = { name: h.community || h.title, price: Number(h.price),
+          size: h.area, floor: String(h.floor || ''),
+          /* ⚠ 格局要一起留。這份快照現在會被當成回報單行情表的備援
+             （她這一期忘記按查詢時），少了這欄格局整欄印成「—」。 */
+          room: (String(h.room||'').match(/^\d+房/)||[''])[0] };
+        const k = unitKey(row);
+        const old = seen.get(k);
+        if(old){ if(row.price < old.price) old.price = row.price; return; }
+        seen.set(k, row);
+      });
+      const rows = [...seen.values()];
+      /* 一頁 30 筆，撈滿就代表後面還有，這次只是一個窗口 */
+      const complete = (j.fetched || 0) < 30;
+      /* ⚠ 參數順序是 (curRows, snap, complete)，snap 要是 {rows, complete} 的形狀 */
+      const ch = (prev && prev.rows)
+        ? diffMarket(rows, { rows: prev.rows, complete: prev.complete }, complete)
+        : null;
+      state.watch[l.id] = {
+        at: now, n: rows.length, complete,
+        /* 只留比對要用的欄位 —— 這份會存進 localStorage，不要塞整包 591 回應 */
+        rows: rows.map(r => ({ name:r.name, price:r.price, size:r.size, floor:r.floor, room:r.room })),
+        down: ch ? ch.down.length : 0,
+        added: ch ? ch.added.length : 0,
+        gone: ch ? ch.gone.length : 0,
+        first: !ch,                       /* 第一次掃：只有基準，還講不出異動 */
+        loading: false, error: null,
+      };
+    }catch(e){
+      state.watch[l.id] = { ...(prev || {}), at: now, loading:false, error: e.message };
+    }
+    save();
+    if(currentView === 'listings') renderListings();
+    await new Promise(r => setTimeout(r, 1200));   /* 別把 591 打爆 */
+  }
 }
 
 /* ============ 委託物件 ============ */
@@ -1261,8 +2072,16 @@ function renderListings(){
           '<div><div class="n">'+tot.s+'</div><div class="k">累計帶看</div></div>' +
           '<div><div class="n">'+tot.c+'</div><div class="k">累計來電</div></div>' +
         '</div>' +
+        /* 回報單結尾承諾「下一期回報約兩週後給您」—— 那句話要有東西撐著，
+           不然就只是一句話。這裡把「距上次回報幾天」放在她每天看得到的地方。 */
+        dueBadge(l) +
+        /* 競品異動：自動掃的結果（見 autoScan） */
+        watchBadge(l) +
         '<div class="lcard-acts">' +
           '<button class="go" data-act="write">寫回報</button>' +
+          /* ⚠ 沒有這一顆的話，上一期的回報單就再也打不開了 —— 屋主說
+             「你上次傳的連結我找不到」，只能把整期的數字重打一次。 */
+          (rs.length ? '<button data-act="lastdoc">看上期</button>' : '') +
           '<button data-act="edit">編輯</button>' +
           '<button class="del" data-act="del">刪除</button>' +
         '</div>' +
@@ -1306,14 +2125,35 @@ function renderWrite(){
             '<div class="metric"><label>實際帶看</label><input id="rVisits" type="number" min="0" placeholder="0"><div class="u">組</div></div>' +
           '</div>' +
 
+          /* 上一期買方說過的話。回報單結尾承諾「看過的買方我會一組一組跟回去」——
+             那句話要有東西撐著。她寫新回報時看得到上次誰說了什麼，
+             才知道哪幾組還沒追。⚠ 只顯示，不可以編輯（那是上一期的紀錄）。 */
+          lastFeedbackBox() +
           '<div class="form-section">買方回饋</div>' +
           '<div class="fb-list" id="fbList"></div>' +
           '<button class="btn btn-ghost btn-sm" id="btnAddFb">+ 新增一則回饋</button>' +
+
+          /* 出價要跟回饋分開。混在一起的話，全份報告最重的那個數字
+             會被排在「裝潢完善」旁邊，屋主根本看不到。 */
+          '<div class="form-section">本期出價' +
+            '<em style="font-weight:400;color:var(--text-faint);font-size:.8rem;margin-left:8px">' +
+            '會單獨排在回報單的市場反應下面，是屋主最想看的一段</em></div>' +
+          '<div class="of-list" id="ofList"></div>' +
+          '<button class="btn btn-ghost btn-sm" id="btnAddOf">+ 新增一筆出價</button>' +
 
           '<div class="form-section">本期行銷動作</div>' +
           '<div class="act-chips" id="actChips">' +
             ACTIONS.map(a=>'<label class="act-chip"><input type="checkbox" value="'+esc(a)+'">'+esc(a)+'</label>').join('') +
           '</div>' +
+
+          '<div class="form-section">這一戶的加分項' +
+            '<em style="font-weight:400;color:var(--text-faint);font-size:.8rem;margin-left:8px">' +
+            '會印在同社區行情表的正上方。填一次每期都帶出來</em></div>' +
+          '<div class="act-chips" id="plusChips">' +
+            PLUS_TAGS.map(a=>'<label class="act-chip"><input type="checkbox" value="'+esc(a)+'"'+
+              ((l.plus||[]).includes(a)?' checked':'')+'>'+esc(a)+'</label>').join('') +
+          '</div>' +
+          '<input class="control" id="rPlusNote" style="margin-top:9px" placeholder="還有什麼上面沒有的？例：客廳面中庭安靜、頂樓加蓋合法" value="'+esc(l.plusNote||'')+'">' +
 
           '<div class="form-section">給屋主的建議</div>' +
           '<textarea class="control" id="rAdvice" rows="4" placeholder="例：這兩週帶看轉化率提升，出價開始靠近底價。若您可接受 1320 上下，本月內成交機會很高。"></textarea>' +
@@ -1345,6 +2185,7 @@ function renderWrite(){
     '</div>';
 
   renderFb([]);
+  renderOf([], l);
   renderHist(l);
   renderMarket();
 }
@@ -1356,17 +2197,51 @@ function renderFb(list){
   if(!box) return;
   box.innerHTML = fbDraft.length ? fbDraft.map((f,i)=>
     '<div class="fb-item" data-i="'+i+'">' +
-      '<select class="control">' + FB_TYPES.map(t=>'<option'+(t===f.t?' selected':'')+'>'+t+'</option>').join('') + '</select>' +
+      '<select class="control fb-t">' + FB_TYPES.map(t=>'<option'+(t===f.t?' selected':'')+'>'+t+'</option>').join('') + '</select>' +
       '<input value="'+esc(f.n)+'" placeholder="買方說了什麼">' +
+      /* 後來呢。留空的話報告上不顯示 —— 她如果是按主題寫回饋就不用填。 */
+      '<select class="control fb-st" title="這一組後來呢？">' +
+        FB_ST.map(t=>'<option value="'+esc(t)+'"'+(t===(f.st||'')?' selected':'')+'>'+(t||'後來？')+'</option>').join('') +
+      '</select>' +
       '<button class="rm" aria-label="刪除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
     '</div>').join('')
-    : '<div style="font-size:.83rem;color:var(--text-faint);padding:4px 2px">還沒有回饋。買方看完說的話寫在這裡，屋主最在意這一段。</div>';
+    : '<div style="font-size:.83rem;color:var(--text-faint);padding:4px 2px">還沒有回饋。買方看完說的話寫在這裡，屋主最在意這一段。' +
+      '右邊那格是「這一組後來呢」，按一組買方寫的時候才填，按主題寫就留空。</div>';
 }
 function readFb(){
   return $$('#fbList .fb-item').map(el=>({
-    t: el.querySelector('select').value,
-    n: el.querySelector('input').value.trim()
+    t: el.querySelector('.fb-t').value,
+    n: el.querySelector('input').value.trim(),
+    st: el.querySelector('.fb-st').value
   })).filter(f=>f.n);
+}
+
+let ofDraft = [];
+function renderOf(list, l){
+  ofDraft = list;
+  const box = $('#ofList');
+  if(!box) return;
+  const ask = l?.price > 0 ? l.price : null;
+  box.innerHTML = ofDraft.length ? ofDraft.map((o,i)=>{
+    /* 即時算出「距開價多少」—— 她一邊填就看得到，不用自己減 */
+    const gap = (ask && o.wan > 0) ? o.wan - ask : null;
+    const tip = gap==null ? '' : (gap===0 ? '＝開價'
+      : (gap>0 ? '高於開價 ' : '低於開價 ') + fmtPrice(Math.abs(gap)) + ' 萬');
+    return '<div class="of-item" data-i="'+i+'">' +
+      '<div class="inline-row"><input type="number" min="0" step="1" value="'+(o.wan??'')+'" placeholder="1800"><span class="suffix">萬</span></div>' +
+      '<select class="control">' + OFFER_ST.map(t=>'<option'+(t===o.st?' selected':'')+'>'+t+'</option>').join('') + '</select>' +
+      '<span class="of-gap'+(gap!=null&&gap<0?' dn':'')+'">'+esc(tip)+'</span>' +
+      '<button class="rm" aria-label="刪除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
+    '</div>';
+  }).join('')
+    : '<div style="font-size:.83rem;color:var(--text-faint);padding:4px 2px">' +
+      '這一期有人出價就記在這裡。屋主對點閱數半信半疑，對出價不會 —— 這是全份回報單他最想看的數字。</div>';
+}
+function readOf(){
+  return $$('#ofList .of-item').map(el=>({
+    wan: num(el.querySelector('input').value),
+    st: el.querySelector('select').value
+  })).filter(o=>o.wan > 0);
 }
 
 function renderHist(l){
@@ -1483,7 +2358,10 @@ async function loadMarket(opts){
       const row = {
         name: h.community || h.title,
         price: Number(h.price), size: h.area,
-        room: (String(h.room).match(/^d+房/)||[''])[0],
+        /* ⚠ 這裡原本寫 /^d+房/ —— 少了反斜線，變成「開頭有幾個字母 d」，
+           591 回的是「2房2廳2衛」所以永遠不match，格局欄一路印成「—」。
+           不報錯，只是整欄空白。 */
+        room: (String(h.room||'').match(/^\d+房/)||[''])[0],
         floor: String(h.floor||''), unit: h.unitPrice,
         cut: !!h.isDownPrice, agencies: 1, mine:false
       };
@@ -1727,21 +2605,46 @@ function rivalText(){
 }
 
 /* ============ 回報單 ============ */
-function buildDoc(){
+/**
+ * 產生回報單。
+ * @param {number} [idx] 要打開第幾期（0 起算）。不給就是最後一期。
+ *
+ * ⚠ 打開「舊的一期」時，這次查到的競品不可以掛上去 ——
+ *   那是今天的行情，不是那一期的。舊期只能用它自己存的 r.market。
+ */
+function buildDoc(idx){
   const l = activeListing();
   if(!l) return;
   const rs = l.reports || [];
-  const r = rs[rs.length-1];
+  const i = (idx == null || !(idx >= 0 && idx < rs.length)) ? rs.length - 1 : idx;
+  const r = rs[i];
   if(!r){ toast('請先儲存一期回報', true); return; }
-  const prev = rs.length > 1 ? rs[rs.length-2] : null;
-  const totals = rs.reduce((a,x)=>({
+  const isLast = i === rs.length - 1;
+  const prev = i > 0 ? rs[i-1] : null;
+  /* 累計只算到這一期為止 —— 看舊回報時不可以把後面幾期的數字加進去 */
+  const totals = rs.slice(0, i+1).reduce((a,x)=>({
     views:a.views+(x.views||0), favs:a.favs+(x.favs||0),
     calls:a.calls+(x.calls||0), visits:a.visits+(x.visits||0)
   }), {views:0,favs:0,calls:0,visits:0});
 
-  /* 競品：統計看全部，表格只印最可比的幾筆 */
-  const fresh = !!(market.rows && market.forId === l.id);
-  const all = fresh ? market.rows : [];
+  /* 競品：統計看全部，表格只印最可比的幾筆。
+     三個來源，照可信度排：
+       ① 這次手動查的（最新）—— 只有看最後一期時才算
+       ② 系統自動掃到的（state.watch）—— 她這一期忘記按查詢時的備援
+       ③ 那一期自己存下來的快照 —— 看舊回報時唯一正確的來源
+     ⚠ ② 是後來補的：原本她沒按「查詢」，整張行情表跟「您這一戶的條件」
+       兩段就一起消失，而自動掃描明明已經抓到同社區在售的資料放在那裡沒人用。 */
+  let mkSrc = 'none', mkAt = '';
+  let fresh = false, all = [];
+  const w = (state.watch || {})[l.id];
+  if(isLast && market.rows && market.forId === l.id){
+    fresh = true; all = market.rows; mkSrc = 'live';
+  }else if(isLast && w && (w.rows || []).length){
+    all = w.rows; mkSrc = 'auto';
+    mkAt = w.at ? new Date(w.at).toISOString().slice(0,10) : '';
+  }else if((r.market?.rows || []).length){
+    all = r.market.rows; mkSrc = 'snap'; mkAt = r.market.at || '';
+  }
   let mkStats = null, mkPick = [];
   if(all.length){
     const ps = all.map(x=>x.price).sort((a,b)=>a-b);
@@ -1756,18 +2659,43 @@ function buildDoc(){
     mkPick = [...movedRows, ...rest].slice(0, 10).sort((a,b)=>a.price-b.price);
   }
 
+  /* 每一期的日期與帶看數 —— 做「銷售歷程」那條時間軸用的。
+     ⚠ 只帶會印出來的四個數字，不要把整份 reports 複製進 doc：
+       doc 會存進屋主連結，帶太多等於把買方回饋原文與內部備註也送出去。 */
+  const history = rs.slice(0, i+1).map(x => ({
+    d: x.date, v: x.visits ?? 0, c: x.calls ?? 0, f: (x.feedback || []).length,
+  }));
+
+  /* 競品那一段的標題。自動掃來的沒有「總價帶」的概念，就是本社區。 */
+  const mkLabel = mkSrc === 'live' ? market.label
+    : mkSrc === 'auto' ? '本社區'
+      : mkSrc === 'snap' ? (r.market.label || '本社區') : '';
+
   state.doc = {
     date: today(),
+    idx: i,
     listing: JSON.parse(JSON.stringify(l)),
     report: r, prev,
-    totals,
+    totals, history,
+    offer: offerOf(r, l),
+    offerTotals: offerTotals(rs, i),
     market: mkPick,
     marketStats: mkStats,
-    marketLabel: fresh ? market.label : '',
-    changes: fresh ? market.changes : (r.market ? r.market.changes : null)
+    marketLabel: mkLabel,
+    marketSrc: mkSrc,
+    marketAt: mkAt,
+    changes: fresh ? market.changes
+      : (mkSrc === 'auto' && w.down != null && !w.first)
+        /* 自動掃只記了「幾件降價」的計數，沒有留逐筆，所以只給數字不給清單 */
+        ? { down:new Array(w.down).fill(0), up:[], added:new Array(w.added||0).fill(0),
+            gone:new Array(w.gone||0).fill(0), partial:!w.complete, since:'', countOnly:true }
+        : (r.market ? r.market.changes : null)
   };
   save();
   switchView('doc');
+  /* 實價登錄成交是另外一份資料（1 MB），非同步載，載好再補上那一段。
+     載不到不能拖垮整張回報單 —— 那一段整塊不顯示就好。 */
+  loadDocLvr(l);
 }
 
 /* 三個縮圖照各自版型的骨架畫，不是三張一樣的灰塊 ——
@@ -1776,7 +2704,9 @@ function themePicker(){
   if(ownerMode) return '';
   const cur = docTheme();
   return '<div class="doc-themes">' +
-    '<div class="dt-lab">回報單版型<em>選一個，下面整份會跟著換。產生屋主連結時，屋主看到的就是你選的這個。</em></div>' +
+    '<div class="dt-lab">這一份要長什麼樣子' +
+      '<em>同樣的內容、五種不同的口氣。想一下「這個屋主是什麼樣的人」再選，' +
+      '產生屋主連結時他看到的就是你挑的這一個。</em></div>' +
     '<div class="dt-list">' +
       DOC_THEMES.map(t =>
         '<button class="dt'+(t.id===cur?' on':'')+'" data-act="theme" data-theme="'+t.id+'">' +
@@ -1785,10 +2715,147 @@ function themePicker(){
             '<span class="k"><i></i><i></i><i></i><i></i></span>' +
             '<span class="l"><i></i><i></i></span>' +
           '</span>' +
-          '<span class="dt-nm">'+esc(t.nm)+'</span>' +
+          '<span class="dt-nm">'+esc(t.nm)+
+            (t.tag?'<span class="dt-tag">'+esc(t.tag)+'</span>':'')+'</span>' +
           '<span class="dt-ds">'+esc(t.ds)+'</span>' +
         '</button>').join('') +
     '</div></div>';
+}
+
+/**
+ * 回報單抬頭那一句話。
+ *
+ * ⚠ 原本寫死「這段期間您的物件市場反應如下」—— 那是公文，不是講給人聽的。
+ *   屋主打開回報單，第一句話應該讓他知道「這半個月到底發生了什麼」。
+ *   所以這句從數據算出來：帶看多／帶看少／完全沒動靜／有降價，講法都不一樣。
+ *
+ * ⚠ 立場照 feedback_不要壓屋主的價：沒動靜的時候也**不要暗示他該降價**，
+ *   只講事實＋我下一步要做什麼。
+ */
+function docLead(l, r, p){
+  const v = r.visits ?? 0, c = r.calls ?? 0;
+  const pv = p?.visits ?? null;
+  const nm = l.owner ? esc(l.owner) : '屋主';
+  const fbN = (r.feedback || []).length;
+
+  if (v === 0 && c === 0) {
+    return '這一期<b>沒有新的帶看</b>。我把這半個月做的事、以及市場上同類型物件的動靜整理在下面，' +
+      '接下來我會先從曝光的管道下手。';
+  }
+  if (v === 0 && c > 0) {
+    return '這一期有 <b>'+c+' 通</b>來電詢問，但還沒有約成帶看。' +
+      '通常卡在照片或說明沒有讓人想進一步看，這一塊我來調整。';
+  }
+  let s = '這一期有 <b>'+v+' 組</b>客人實際來看過您的房子';
+  if (c) s += '、<b>'+c+' 通</b>詢問電話';
+  s += '。';
+  if (pv != null && v > pv) s += '比上一期多了 <b>'+(v-pv)+' 組</b>，關注度在往上走。';
+  else if (pv != null && v < pv) s += '比上一期少了 '+(pv-v)+' 組。';
+  if (fbN) s += '買方看完說了什麼，我一句一句記在下面 —— <b>那是最真實的市場反應</b>。';
+  return s;
+}
+
+/* ═══ 有溫度的那幾塊 ══════════════════════════════════════
+   Rita 2026-09-06：「不要只提供行情那些沒有溫度的東西，
+   用專業專題報導的形式。」
+   專題報導跟數據報表的差別不在版面，在**有沒有敘事**：
+     ① 有開場（docLead 已經做了）
+     ② 有引述 —— 把最有份量的一句話放大，那是別人說的，不是我們說的
+     ③ 有時間線 —— 讀者要看見「這段時間發生了什麼」，不是一張快照
+     ④ 有結語與下一步
+   ⚠ 每一塊都要有存在的理由，不然只是把報告拉長。所以都有出現條件。 */
+
+/**
+ * ② 買方原話做成大字引述。
+ * 屋主最想知道的不是「幾組帶看」，是「他們看完說了什麼」。
+ * 挑最長的那一則 —— 講得多的通常是真的有想法，一兩個字的多半是客套。
+ */
+function pullQuote(r){
+  const fb = (r.feedback || []).filter(x => (x.n || '').trim().length >= 6);
+  if(!fb.length) return '';
+  const best = fb.slice().sort((a,b) => (b.n||'').length - (a.n||'').length)[0];
+  return '<div class="quote">' +
+    '<div class="q-mark">&ldquo;</div>' +
+    '<div class="q-body">' + esc(best.n) + '</div>' +
+    '<div class="q-src">一位實際看過的買方・關於' + esc(best.t) + '</div>' +
+  '</div>';
+}
+
+/**
+ * ③ 銷售歷程。每一期一個節點，帶看數用長條高度表示。
+ * ⚠ 只有兩期以上才畫 —— 一期沒有「歷程」可言，畫出來只有一根柱子很怪。
+ * 這一塊的用意不是統計，是讓屋主看見**你每一期都有在動**。
+ */
+function timeline(hist, l){
+  const h = (hist || []).filter(x => x && x.d);
+  if(h.length < 2) return '';
+  const max = Math.max(1, ...h.map(x => x.v || 0));
+  const bars = h.map((x, i) => {
+    const pct = Math.round((x.v || 0) / max * 100);
+    const last = i === h.length - 1;
+    return '<div class="tl-i' + (last ? ' now' : '') + '">' +
+      '<div class="tl-bar"><span style="height:' + Math.max(pct, 6) + '%"></span></div>' +
+      '<div class="tl-v">' + (x.v || 0) + '</div>' +
+      '<div class="tl-d">' + esc(fmtDate(x.d).slice(5)) + '</div>' +
+    '</div>';
+  }).join('');
+  const first = h[0], last = h[h.length - 1];
+  const trend = (last.v || 0) > (first.v || 0)
+    ? '帶看組數是往上走的。'
+    : (last.v || 0) < (first.v || 0)
+      ? '最近一期比第一期少，我會把曝光的管道再拉開。'
+      : '每一期的帶看維持得很穩定。';
+  return '<div class="doc-sec"><div class="doc-sec-t">銷售歷程</div>' +
+    '<div class="tl">' + bars + '</div>' +
+    '<div class="tl-note">柱子的高度是每一期的<b>實際帶看組數</b>，' +
+      '從 ' + esc(fmtDate(l.start || first.d)) + ' 委託到現在，我一共向您回報 <b>' + h.length + '</b> 次。' +
+      trend + '</div>' +
+  '</div>';
+}
+
+/**
+ * ③b 累計成績。一期一期看是散的，加起來才看得出份量。
+ */
+function totalsBand(t, l, hist){
+  if(!t || (hist || []).length < 2) return '';
+  const days = l.start ? Math.max(1, Math.round((new Date() - new Date(l.start)) / 864e5)) : null;
+  return '<div class="sum">' +
+    (days ? '<div class="sum-lead">委託至今 <b>' + days + '</b> 天，累計成績：</div>' : '') +
+    '<div class="sum-nums">' +
+      '<div><b>' + (t.views || 0).toLocaleString() + '</b><span>次瀏覽</span></div>' +
+      '<div><b>' + (t.favs || 0) + '</b><span>人收藏</span></div>' +
+      '<div><b>' + (t.calls || 0) + '</b><span>通詢問</span></div>' +
+      '<div class="hi"><b>' + (t.visits || 0) + '</b><span>組實際看過</span></div>' +
+    '</div></div>';
+}
+
+/**
+ * ④ 下一期我會做什麼。
+ * ⚠ 報告停在數字，屋主看完不知道下一步 —— 而下一步本來就該由我們提出。
+ *   內容依這一期的表現換，而且**不暗示他該降價**（見 feedback_不要壓屋主的價）。
+ */
+function nextSteps(r, l, mkStats){
+  const v = r.visits ?? 0, c = r.calls ?? 0;
+  const steps = [];
+  if(v === 0 && c === 0){
+    steps.push('把 591 的<b>照片與標題重做一輪</b> —— 沒有點閱就沒有帶看，這是第一關。');
+    steps.push('物件轉發給同業聯賣，多一組人幫忙找買方。');
+    steps.push('主動回訪手上看過同類型物件的買方名單。');
+  } else if(v === 0){
+    steps.push('有人問代表價格帶是對的，卡在<b>照片與說明</b>沒讓人想約看 —— 我先重拍。');
+    steps.push('把詢問過的買方一個一個追回來，問清楚沒約看的原因。');
+  } else {
+    steps.push('看過的買方我會<b>一組一組跟回去</b>，確認還在考慮的有幾組。');
+    steps.push('持續更新 591 曝光與社群貼文，維持這個帶看量。');
+    if(mkStats) steps.push('盯著同社區的競品動態，有新的成交或降價我第一時間告訴您。');
+  }
+  steps.push('下一期回報我會在<b>約兩週後</b>整理給您。');
+  return '<div class="next-doc">' +
+    '<div class="nd-t">接下來這兩週我會做什麼</div>' +
+    '<ol>' + steps.map(x => '<li>' + x + '</li>').join('') + '</ol>' +
+    '<div class="nd-f">' + esc(l.owner || '') + (l.owner ? '，有' : '有') +
+      '任何想法，隨時打給我或 LINE 我都可以。</div>' +
+  '</div>';
 }
 
 function delta(cur, prev){
@@ -1798,10 +2865,172 @@ function delta(cur, prev){
   return '<div class="d '+(d>0?'up':'dn')+'">'+(d>0?'▲ +':'▼ ')+d+' 較上期</div>';
 }
 
+/* ═══ ⑤ 買方的「後來呢」═══════════════════════════════════
+   屋主最想知道的其實不是「幾組看過」，是「那幾組後來怎麼了」。
+   ⚠ 只統計「有標記」的那幾則 —— 她按主題寫回饋時整欄留空，
+     這一段就整塊不出現，不要硬湊一個「0 組」出來。
+═════════════════════════════════════════════════════════ */
+const stCls = (s) => s === '已出價' ? 'good' : s === '沒下文' ? 'cold'
+  : s === '看了別戶' ? 'warn' : 'warm';
+
+function fbTally(r){
+  const marked = (r.feedback || []).filter(f => f.st);
+  if(!marked.length) return '';
+  const tally = {};
+  marked.forEach(f => { tally[f.st] = (tally[f.st] || 0) + 1; });
+  const bits = FB_ST.filter(k => k && tally[k])
+    .map(k => '<b class="fb-st ' + stCls(k) + '">' + esc(k) + ' ' + tally[k] + '</b>');
+  const still = (tally['還在考慮'] || 0) + (tally['已出價'] || 0);
+  return '<div class="fb-tally">' +
+    '追到目前為止：' + bits.join('') +
+    (still ? '　<span>還有 <b>' + still + '</b> 組沒有離開。</span>' : '') +
+  '</div>';
+}
+
+/* ═══ ⑥ 結論卡 ═══════════════════════════════════════════
+   屋主打開報告的第一個問題不是「幾組帶看」，是
+   **「所以我的房子現在到底什麼狀況？」**
+   原本第一句話講的是本期數字 —— 那是資料，不是答案。
+
+   ⚠ 措辭一律不暗示「你該降價」（見 feedback_不要壓屋主的價）。
+     定價高於中位時，講的是「差距的理由寫在您這一戶的條件那一段」，
+     不是「所以要降」。
+═════════════════════════════════════════════════════════ */
+function verdict(d){
+  const l = d.listing, r = d.report, p = d.prev;
+  const v = r.visits ?? 0, c = r.calls ?? 0;
+  const o = d.offer, ot = d.offerTotals;
+
+  let tone = 'warm', head = '', why = '';
+
+  if(o && o.pct != null && o.pct >= -5){
+    tone = 'hot';
+    head = '已經進到談的階段了';
+    why = '本期最高出價 ' + fmtPrice(o.hi) + ' 萬，距離您的開價只差 ' +
+      Math.abs(o.pct) + '%。這個距離通常是最後的拉鋸，我會把那幾組追緊。';
+  }else if(o){
+    tone = 'hot';
+    head = '市場上有人要，價格還在拉鋸';
+    why = '本期有 ' + o.n + ' 組出價，最高 ' + fmtPrice(o.hi) + ' 萬' +
+      (o.pct != null ? '（低於開價 ' + Math.abs(o.pct) + '%）' : '') + '。' +
+      '有人出價代表產品是對的，接下來是把差距談掉。';
+  }else if(ot){
+    head = '這一期沒有新的出價，但先前有人出過';
+    why = '委託至今累計 ' + ot.n + ' 組出過價，最高 ' + fmtPrice(ot.hi) + ' 萬。' +
+      '我會把那幾組再追一次，同時繼續找新的買方。';
+  }else if(v > 0){
+    head = '看的人有，還沒有人下決定';
+    why = '這一期 ' + v + ' 組實際看過' + (c ? '、' + c + ' 通詢問' : '') +
+      '，但還沒有人出價。買方卡在哪裡，我記在下面的回饋裡。';
+  }else if(c > 0){
+    tone = 'cool';
+    head = '有人在問，卡在約看這一關';
+    why = '這一期 ' + c + ' 通詢問、0 組帶看。會問代表價格帶是對的，' +
+      '卡的多半是照片與說明沒讓人想進一步看 —— 這一塊我來調整。';
+  }else{
+    tone = 'cool';
+    head = '這一期還沒有動靜';
+    why = '沒有新的帶看與詢問。我會先從曝光的管道下手，把露出量拉回來。';
+  }
+
+  /* 帶看趨勢只補在「沒有出價」的那幾種情況。
+     ⚠ 有出價的時候，頭條是出價，再接一句「帶看多了 2 組」會把重點稀釋掉；
+       而且 KPI 那一排本來就已經標了 ▲ +2。 */
+  const pv = p?.visits ?? null;
+  if(!o && pv != null && v > pv) why += '帶看比上一期多了 ' + (v - pv) + ' 組。';
+
+  /* 定價位置。⚠ 要等實登載進來才有，所以這張卡也放在會被重畫的插槽裡。
+     ⚠ 這裡只給一句結論。算式（1,700 萬扣掉車位 160 萬 ÷ 24 坪）與
+       「您這一戶的條件」的指路，都留在下面實登那一段講 ——
+       同一件事在一頁上講兩次，第二次就變成廢話。 */
+  let price = '';
+  const s = d.lvr;
+  if(s && s.upMedian){
+    const mine = ownerUnitExPk(l, s.parkWan);
+    if(mine){
+      const gap = Math.round((mine.up - s.upMedian) * 10) / 10;
+      price = gap < 0
+        ? '定價方面：<b>站在同社區的成交行情之內</b>，比' + esc(s.windowText) +
+          '的成交中位低 ' + Math.abs(gap) + ' 萬/坪。'
+        : gap > 0
+          ? '定價方面：<b>高於同社區' + esc(s.windowText) + '的成交中位 ' + gap + ' 萬/坪</b>。'
+          : '定價方面：<b>剛好落在同社區' + esc(s.windowText) + '的成交中位上</b>。';
+    }
+  }
+
+  /* ⚠ 委託剩幾天不在這張卡上講 —— entrustBand() 已經有一整塊在講，
+     而且那裡還帶了「到期前我會做什麼」。兩個地方各寫一次就是重複。 */
+  return '<div class="verdict ' + tone + '">' +
+    '<div class="vd-k">目前狀況</div>' +
+    '<div class="vd-h">' + head + '</div>' +
+    '<div class="vd-w">' + why + '</div>' +
+    (price ? '<div class="vd-p">' + price + '</div>' : '') +
+  '</div>';
+}
+
+/* ═══ ⑦ 委託到期 ═════════════════════════════════════════
+   專任委託到期是屋主與我們共同的節點，也是續約的談判時機。
+   ⚠ 措辭不可以變成施壓。講的是「到期前我會做什麼」，
+     不是「再不降價就賣不掉了」。
+   ⚠ 只在剩 21 天內才出現。平常每期都提，等於每兩週催他一次。
+═════════════════════════════════════════════════════════ */
+function entrustBand(l){
+  const dl = daysLeft(l.end);
+  if(dl == null || dl > 21) return '';
+  if(dl < 0){
+    return '<div class="ent over"><div class="ent-t">委託已經到期</div>' +
+      '<div class="ent-b">委託期間到 ' + esc(fmtDate(l.end)) + ' 為止，已經過了 ' + (-dl) + ' 天。' +
+      '這段時間的完整銷售紀錄都整理在這份回報裡，我們找個時間談一下要怎麼走下一步。</div></div>';
+  }
+  const plan = dl <= 7
+    ? '這最後一週我會把手上所有看過、問過的買方再過一輪，把還有機會的那幾組追到底。'
+    : '剩下的這段時間我會維持曝光、把回訪名單再跑一次，不會因為接近到期就放慢。';
+  return '<div class="ent"><div class="ent-t">委託期間還剩 ' + dl + ' 天</div>' +
+    '<div class="ent-b">委託到 ' + esc(fmtDate(l.end)) + ' 為止。' + plan +
+    '到期前我會把整個委託期間的銷售紀錄整理成一份總結給您，' +
+    '我們再一起看要怎麼走下一步。</div></div>';
+}
+
+/* ═══ ⑧ 區域定位（地圖底下那一行）═══════════════════════
+   地圖標了高鐵、IKEA、華泰 —— 屋主住那裡，他知道。
+   有價值的是「我這個社區在青埔是什麼水位」。
+   ⚠ 這裡刻意**不印本社區的每坪中位** —— 它跟上面實登表的算法不一樣
+     （那邊是「跟您這一戶坪數相近的」），兩個數字擺在同一頁屋主會看不懂。
+     所以只給位置，不給第二個數字。
+═════════════════════════════════════════════════════════ */
+function areaLine(d){
+  const a = d.area;
+  if(!a) return '';
+  const win = a.areaMonths <= 12 ? '近一年' : '近兩年';
+  let s = '青埔' + win + '的住家成交，每坪中位是 <b>' + a.areaMedian + ' 萬</b>' +
+    '（' + a.areaComm + ' 個社區、' + a.areaN + ' 筆，已扣車位）。';
+  if(a.rank){
+    s += '本社區的成交單價在有成交紀錄的 <b>' + a.total + '</b> 個青埔社區裡排第 <b>' +
+      a.rank + ' 高</b>，屬於<b>' + esc(a.band) + '</b>。';
+  }else{
+    /* 排不進榜也是結果，要說得出原因（見 learning_沉默要說得出原因）*/
+    s += '本社區近兩年的成交不滿 3 筆，樣本太少排不出位置。';
+  }
+  return '<div class="mk-band area-line">' + s + '</div>';
+}
+
 function renderDoc(){
   const w = $('#docWrap');
   const d = state.doc;
   if(!d){
+    /* ⚠ 有回報紀錄卻寫「還沒有回報單」是騙人的 ——
+       原本只有「剛儲存完」那一刻才有回報單，重開之後上一期就再也打不開，
+       屋主說「你上次傳的連結我找不到了」就只能把數字重打一次。 */
+    const al = activeListing();
+    const arn = (al?.reports || []).length;
+    if(arn){
+      const last = al.reports[arn-1];
+      w.innerHTML = '<div class="empty"><h3>要打開哪一期？</h3>' +
+        '<p>「'+esc(al.name)+'」已經回報 '+arn+' 期，最近一期是 '+fmtDate(last.date)+'。</p>' +
+        '<button class="btn btn-primary" data-act="opendoc">打開最近一期回報單</button>' +
+        '<button class="btn btn-ghost" data-act="gowrite" style="margin-left:8px">寫新的一期</button></div>';
+      return;
+    }
     w.innerHTML = '<div class="empty"><h3>還沒有回報單</h3><p>到「撰寫回報」填好本期數據並儲存，回報單就會出現在這裡。</p>' +
       '<button class="btn btn-primary" data-act="gowrite">前往撰寫回報</button></div>';
     return;
@@ -1811,7 +3040,11 @@ function renderDoc(){
   const conv = r.visits && r.calls ? Math.round(r.visits/r.calls*100) : null;
 
   const fb = (r.feedback||[]).map(f =>
-    '<li><span class="tag'+(f.t==='價格'?' price':'')+'">'+esc(f.t)+'</span><span>'+esc(f.n)+'</span></li>').join('');
+    '<li><span class="tag'+(f.t==='價格'?' price':'')+'">'+esc(f.t)+'</span>' +
+    '<span>'+esc(f.n)+
+      /* 「後來呢」跟在那句話後面，不另起一欄 —— 它是那句話的下文。 */
+      (f.st ? '<b class="fb-st '+stCls(f.st)+'">'+esc(f.st)+'</b>' : '') +
+    '</span></li>').join('');
 
   const mkRows = (d.market||[]).map(m =>
     '<tr><td>'+esc(m.name)+'</td><td class="r">'+(m.size??'—')+' 坪</td><td class="r">'+esc(m.room||'—')+'</td>' +
@@ -1835,7 +3068,8 @@ function renderDoc(){
       '<div class="doc-title">' +
         '<div class="kicker">PROPERTY OWNER REPORT</div>' +
         '<h2>委託物件銷售回報</h2>' +
-        '<div class="to">致 <b>'+esc(l.owner||'屋主')+'</b>　這段期間您的物件市場反應如下</div>' +
+        '<div class="to"><b>'+esc(l.owner||'屋主')+'</b>　您好</div>' +
+        '<div class="to lead">'+docLead(l, r, p)+'</div>' +
       '</div>' +
     '</div>' +
 
@@ -1852,6 +3086,12 @@ function renderDoc(){
     '</div>' +
 
     '<div class="doc-body">' +
+      /* ⚠ 結論排在所有數字前面。屋主打開的第一個問題是「所以我的房子現在
+         到底什麼狀況」，不是「幾組帶看」。
+         ⚠ 這張卡的第二行要等實登載進來才有，所以放在會被重畫的插槽裡
+           （loadDocLvr 算完會把 #docVerdictSlot 重填一次）。 */
+      '<div id="docVerdictSlot">' + verdict(d) + '</div>' +
+
       '<div class="doc-sec">' +
         '<div class="doc-sec-t">本期市場反應</div>' +
         '<div class="kpi">' +
@@ -1860,11 +3100,25 @@ function renderDoc(){
           '<div class="kpi-box"><div class="n">'+(r.calls??0)+'</div><div class="k">來電洽詢（組）</div>'+delta(r.calls, p&&p.calls)+'</div>' +
           '<div class="kpi-box"><div class="n">'+(r.visits??0)+'</div><div class="k">實際帶看（組）</div>'+delta(r.visits, p&&p.visits)+'</div>' +
         '</div>' +
-        (d.totals ? '<div class="mk-note">委託期間累計：點閱 '+d.totals.views+' 次、來電 '+d.totals.calls+' 組、帶看 '+d.totals.visits+' 組' +
-          (conv!=null ? '。本期來電轉帶看率 '+conv+'%' : '') + '。</div>' : '') +
+        (conv!=null ? '<div class="mk-note">本期來電轉帶看率 '+conv+'%。</div>' : '') +
+        /* 累計成績：一期一期看是散的，加起來才看得出份量。
+           原本那行「委託期間累計：點閱 X 次、來電 Y 組」擠在小字註記裡，
+           屋主根本不會停下來看 —— 那是他最想知道的「到底有沒有在動」。 */
+        totalsBand(d.totals, l, d.history) +
       '</div>' +
 
-      (fb ? '<div class="doc-sec"><div class="doc-sec-t">買方看過後的回饋</div><ul class="fb-doc">'+fb+'</ul></div>' : '') +
+      /* ⚠ 出價要排在這裡 —— 市場反應的正下方、買方回饋的前面。
+         原本它被寫成一則「價格」回饋，跟「裝潢完善」排在一起，
+         等於把全份報告最重的那個數字藏起來。 */
+      offerBand(d) +
+
+      /* 引述排在回饋清單前面：先讓屋主被那一句話打到，再看細節 */
+      pullQuote(r) +
+
+      (fb ? '<div class="doc-sec"><div class="doc-sec-t">買方看過後的回饋</div><ul class="fb-doc">'+fb+'</ul>' +
+        fbTally(r) + '</div>' : '') +
+
+      timeline(d.history, l) +
 
       ((r.actions||[]).length ? '<div class="doc-sec"><div class="doc-sec-t">本期我為您做的行銷</div>' +
         '<div class="act-doc">'+r.actions.map(a=>'<span>'+esc(a)+'</span>').join('')+'</div></div>' : '') +
@@ -1876,7 +3130,9 @@ function renderDoc(){
         if(!n) return '';
         const partialNote = c.partial
           ? '<div class="mk-note">此範圍在售量較大，僅比對得到價格調整；新上架與已下架不列入統計。</div>' : '';
-        const li = (arr, dir) => arr.slice(0,6).map(x =>
+        /* ⚠ 自動掃描只記了「幾件降價」的數字，沒有留逐筆。
+           那些陣列是用 fill(0) 湊長度的，拿去印 x.name 會變 undefined。 */
+        const li = (arr, dir) => c.countOnly ? '' : arr.slice(0,6).map(x =>
           '<li><span class="nm">'+esc(x.name)+'</span>' +
           '<span class="sp">'+(x.size??'—')+' 坪　'+esc(x.floor||'')+'</span>' +
           '<span class="mv '+dir+'">' + (x.from!=null?'<s>'+fmtPrice(x.from)+' 萬</s> → ':'') +
@@ -1890,11 +3146,38 @@ function renderDoc(){
               '<div class="chg-box new"><div class="n">'+(c.added||[]).length+'</div><div class="k">新上架</div></div>' +
               '<div class="chg-box gone"><div class="n">'+(c.gone||[]).length+'</div><div class="k">已下架</div></div>') +
           '</div>' +
-          (c.down.length ? '<ul class="chg-list">'+li(c.down,'dn')+'</ul>' : '') +
-          (c.up.length ? '<ul class="chg-list" style="margin-top:9px">'+li(c.up,'up')+'</ul>' : '') +
+          (c.down.length && !c.countOnly ? '<ul class="chg-list">'+li(c.down,'dn')+'</ul>' : '') +
+          (c.up.length && !c.countOnly ? '<ul class="chg-list" style="margin-top:9px">'+li(c.up,'up')+'</ul>' : '') +
+          /* ⚠ 這句是給她看的操作提示，不可以出現在屋主的報告上，
+             也不可以被印進 PDF（only-me 在列印時隱藏）。 */
+          (c.countOnly && !ownerMode ? '<div class="mk-note only-me">這是系統自動盯到的件數。' +
+            '要看是哪幾件調了價，到「競品分析」按一次查詢就會列出來，' +
+            '列出來之後再存這一期，屋主的報告上就會有逐筆。</div>' : '') +
           partialNote +
         '</div>';
       })() +
+
+      /* ⚠ 這一節一定要排在「同社區在售行情」的前面。
+         先看到條件、再看到價格，跟先看到價格、再看到條件，是兩件不同的事。*/
+      (function(){
+        const tags = (l.plus||[]).map(x=>'<span>'+esc(x)+'</span>').join('');
+        const note = (l.plusNote||'').trim();
+        if(!tags && !note) return '';
+        return '<div class="doc-sec"><div class="doc-sec-t">您這一戶的條件</div>' +
+          (tags ? '<div class="act-doc">'+tags+'</div>' : '') +
+          (note ? '<div class="plus-note"'+(tags?'':' style="margin-top:0"')+'>'+esc(note)+'</div>' : '') +
+          /* ⚠ 這一期沒查競品的話，下面根本沒有那張表 ——
+             寫「下面那張行情表」會變成指著一個不存在的東西。*/
+          '<div class="mk-note">' + (mkRows
+            ? '這些是下面那張行情表看不到的東西。表上比的是坪數、樓層與開價，'
+            : '這些是行情表看不到的東西。表上比的是坪數、樓層與開價，') +
+          '同一個社區、同樣的坪數，條件不一樣，價格本來就不會一樣。</div></div>';
+      })() +
+
+      /* 實際成交排在「在售開價」的前面：成交是市場真的付出去的錢，
+         開價只是喊的。⚠ 這一段是非同步載進來的（資料 1 MB），
+         所以留一個插槽，loadDocLvr 算完再填。 */
+      '<div id="docLvrSlot">' + lvrSection(d) + '</div>' +
 
       (mkRows ? '<div class="doc-sec"><div class="doc-sec-t">'+esc(d.marketLabel||'同社區')+' 目前在售行情</div>' +
         '<table class="mk-tbl"><thead><tr><th>物件</th><th class="r">坪數</th><th class="r">格局</th><th class="r">樓層</th><th class="r">開價</th></tr></thead>' +
@@ -1905,17 +3188,33 @@ function renderDoc(){
           '開價從 <b>'+fmtPrice(d.marketStats.lo)+'</b> 萬到 <b>'+fmtPrice(d.marketStats.hi)+'</b> 萬，' +
           '中位數 <b>'+fmtPrice(d.marketStats.mid)+'</b> 萬。上表列出與您價位最接近及本期有價格異動的 '+
           (d.market||[]).length+' 件。</div>' : '') +
-        '<div class="mk-note">資料取自 591 公開在售資訊，整理於 '+fmtDate(d.date)+'，為賣方開價非成交價，僅供比較參考。' +
-        (d.changes ? '價格異動為與上一期回報的同範圍查詢結果比對而得。' : '') + '</div></div>' : '') +
+        /* ⚠ 整理日期要照實際來源寫。自動掃來的是掃的那一天、
+           舊回報的快照是那一期的日期 —— 一律寫「今天」會變成假的。 */
+        '<div class="mk-note">資料取自 591 公開在售資訊，整理於 ' +
+        fmtDate(d.marketAt || d.date) + '，為賣方開價非成交價，僅供比較參考。' +
+        (d.changes ? '價格異動為與上一次同範圍查詢結果比對而得。' : '') +
+        /* ⚠ 措辭是 Rita 拍板的：只把市價攤開，不把屋主往中位數推。
+           「我不是要您降價」那種否定句還是把降價放進對話裡，所以不用。*/
+        '這是現在的市場行情，供您參考 —— 要不要站在中位之上，是您的條件決定的。' +
+        '</div></div>' : '') +
 
       /* 社區位置與區域行情。591 是「在售開價」，這張圖是「實價成交」，
          兩個併在一起，談調價才有依據。社區名對不到就整塊不顯示。 */
       '<div class="doc-sec" id="docMap" hidden>' +
         '<div class="doc-sec-t">社區位置與區域成交行情</div>' +
         '<div id="docMapBox"></div>' +
+        /* ⚠ 地圖標了高鐵、IKEA、華泰 —— 屋主住那裡，他知道。
+           真正有價值的是「我這個社區在青埔是什麼水位」，補在圖底下。 */
+        '<div id="docAreaSlot">' + areaLine(d) + '</div>' +
       '</div>' +
 
       (r.advice ? '<div class="doc-sec"><div class="doc-sec-t">我的建議</div><div class="advice">'+esc(r.advice)+'</div></div>' : '') +
+
+      /* 委託到期。只在剩 21 天內才出現 —— 平常每期都提等於每兩週催他一次。 */
+      entrustBand(l) +
+
+      /* 結語。⚠ 報告停在數字，屋主看完不知道下一步 —— 而下一步本來就該由我們提出。 */
+      nextSteps(r, l, d.marketStats) +
     '</div>' +
 
     '<div class="doc-foot">' +
@@ -1940,6 +3239,212 @@ function renderDoc(){
 /* 回報單的社區位置圖，帶周邊實價成交色階。
    跟屋主談調價時，「你的社區在區域裡是什麼水位」用圖講比用嘴講有力。
    買方配案那邊刻意關掉色階，這裡刻意打開 —— 兩邊利害相反，不要對調。 */
+/* ═══ 同社區實際成交（實價登錄）════════════════════════════
+   為什麼一定要有這一塊：
+   回報單原本整張表都是 591 的「在售開價」—— 那是賣方喊的價。
+   屋主心裡的錨點是成交價，而且成交價是政府登錄的、不是我們說的，
+   所以講起來立場最乾淨（見 feedback_不要壓屋主的價）。
+
+   ⚠ 資料在 tools/qingpu-communities/data/，整包在 .gitignore 裡，
+     官網抓不到。所以屋主連結必須把算好的結果帶進去（packDoc 的 lv），
+     不能讓屋主的瀏覽器去 fetch。
+   ⚠ 只有她自己看的時候才去算；ownerMode 直接用連結裡帶的。
+═════════════════════════════════════════════════════════ */
+async function loadDocLvr(l){
+  if(ownerMode) return;                       /* 屋主看到的是連結裡帶的，不重算 */
+  const slot = $('#docLvrSlot');
+  if(!slot || !state.doc) return;
+  try{
+    const L = await import('./lvr.mjs');
+    const db = await L.loadLvr();
+    if(!db) return;                           /* 讀不到就整塊不顯示，不要放空殼 */
+    const c = L.matchCommunity(db.communities, l.name, l.addr);
+    if(!c) {
+      /* 配不到社區也要說得出原因（見 learning_沉默要說得出原因）——
+         但這句話只給她看，不印在屋主的報告上。 */
+      state.doc.lvrMiss = l.name;
+      if(!ownerMode) slot.innerHTML = lvrSection(state.doc);
+      save();
+      return;
+    }
+    const s = L.communityDeals(c, db.byId[c.id], {
+      ping: l.size, pingExPk: pingExPk(l)
+    }, db.park);
+    s.windowText = L.windowText(s.months);
+    s.dataAt = (db.generatedAt || '').slice(0,10);
+    state.doc.lvr = s;
+    state.doc.lvrMiss = null;
+    /* 區域定位（地圖底下那一行）。算法刻意跟上面那張表不一樣，
+       所以它只給「排第幾」不給第二個每坪中位 —— 見 lvr.mjs 的 areaContext。 */
+    state.doc.area = L.areaContext(db.communities, db.byId, c, db.park);
+    slot.innerHTML = lvrSection(state.doc);
+    /* ⚠ 結論卡的第二行（定價位置）要等這裡算完才有，重畫一次。
+       地圖那一行同理。兩個都用插槽，不要整張 renderDoc —— 地圖會重畫、會閃。 */
+    const vs = $('#docVerdictSlot'); if(vs) vs.innerHTML = verdict(state.doc);
+    const as = $('#docAreaSlot');    if(as) as.innerHTML = areaLine(state.doc);
+    save();
+  }catch{ /* 這一段是加分項，載不出來不能拖垮整張回報單 */ }
+}
+
+/** 屋主的開價換算成「跟實登同一個算法」的每坪單價
+    ⚠ 她自己填的車位行情優先（委託物件表單的第三格）。
+      沒填才用社區的實登中位。兩個都沒有就不算 —— 不要猜。 */
+function ownerUnitExPk(l, parkWan){
+  const ex = pingExPk(l);
+  if(!ex || !(l.price > 0)) return null;
+  /* 明確沒車位 → 總價不用扣；有車位 → 扣掉車位行情 */
+  const pw = (l.pkWan > 0) ? l.pkWan : parkWan;
+  const net = (l.pk === 'no') ? l.price : (pw != null ? l.price - pw : null);
+  if(net == null || net <= 0) return null;
+  return { up: Math.round(net / ex * 10) / 10, net, ex,
+           parkWan: (l.pk==='no' ? 0 : pw), mine: l.pkWan > 0 };
+}
+
+function lvrSection(d){
+  const s = d.lvr, l = d.listing;
+  if(!s){
+    /* 配不到社區：只在她自己的畫面上講一句，屋主報告上不出現 */
+    if(d.lvrMiss && !ownerMode){
+      return '<div class="doc-sec"><div class="doc-sec-t">同社區實際成交</div>' +
+        '<div class="mk-note">「'+esc(d.lvrMiss)+'」在青埔社區資料庫裡配不到，' +
+        '所以這一段不會出現在屋主的報告上。名稱跟實價登錄不一樣的話，' +
+        '在「委託物件」把社區名改成資料庫裡的寫法就會出現。</div></div>';
+    }
+    return '';
+  }
+  if(!s.n){
+    if(ownerMode) return '';
+    return '<div class="doc-sec"><div class="doc-sec-t">同社區實際成交</div>' +
+      '<div class="mk-note">'+esc(s.name)+'近三年沒有成交紀錄，這一段不會出現在屋主的報告上。' +
+      '（青埔有 13 個社區完全沒有成交登錄）</div></div>';
+  }
+
+  const mine = ownerUnitExPk(l, s.parkWan);
+  const rows = s.rows.map(x =>
+    '<tr><td>'+esc(ymT(x.ym))+'</td>' +
+    '<td class="r">'+(x.fl!=null? x.fl+' 樓' : '—')+'</td>' +
+    '<td class="r">'+x.pg+' 坪</td>' +
+    '<td class="r price">'+fmtPrice(x.tot)+' 萬</td>' +
+    '<td class="r'+(x.est?' est':'')+'">'+(x.up!=null ? (x.est?'≈':'')+x.up : '—')+'</td></tr>').join('');
+
+  /* 屋主那一行放在表格上面：先看到「我在哪裡」，再看到別人成交多少 */
+  let mineRow = '';
+  if(mine && s.upMedian){
+    const gap = Math.round((mine.up - s.upMedian) * 10) / 10;
+    const dir = gap < 0 ? '低' : gap > 0 ? '高' : '';
+    mineRow = '<div class="lvr-mine">' +
+      '您目前的開價換算成同一個算法是每坪 <b>' + mine.up + ' 萬</b>' +
+      (mine.parkWan ? '（' + fmtPrice(l.price) + ' 萬扣掉一個車位 ' + fmtPrice(mine.parkWan) +
+        ' 萬，再除以扣車位的 ' + mine.ex + ' 坪）' : '（' + fmtPrice(l.price) + ' 萬 ÷ ' + mine.ex + ' 坪）') +
+      '，' + (dir
+        ? '比同社區' + esc(s.windowText) + '的成交中位<b>' + dir + ' ' + Math.abs(gap) + ' 萬</b>。'
+        : '跟同社區' + esc(s.windowText) + '的成交中位一樣。') +
+      /* ⚠ 高於中位時不可以寫成「所以要降價」。中位數是「平均的那一戶」，
+         開得比中位高通常有理由，理由就寫在上面那一段。 */
+      (gap > 0 ? '上面「您這一戶的條件」那一段，就是這個差距的來源。' : '') +
+      '</div>';
+  }
+
+  const notes = [];
+  /* ⚠ 坪數的口徑也要講。上面這張表的坪數是扣車位的、下面 591 那張是權狀坪，
+     同一個社區一張寫 20 坪一張寫 30 坪，不解釋屋主一定看不懂。 */
+  notes.push('表上的坪數與每坪都是<b>扣掉車位</b>算的 —— 政府登錄的面積含車位，' +
+    '不扣的話坪數會虛大、單價會虛低。所以這裡的坪數會比 591 上的權狀坪小。');
+  if(s.restored){
+    /* ⚠ 一定要寫「一個車位」。原本只寫「車位行情 240 萬」，
+       屋主會以為那是整筆的車位價 —— 而那幾筆有一半是兩個車位。 */
+    const each = s.spec && s.spec.ping
+      ? '本社區一個車位 ' + s.spec.ping + ' 坪' + (s.spec.kind ? '（' + esc(s.spec.kind) + '）' : '') + '、'
+      : '';
+    notes.push('這 ' + s.n + ' 筆裡有 ' + s.restored +
+      ' 筆是成交時把車位價併在總價裡沒有分開登記（表上標 <span class="est">≈</span> 的那幾筆），' +
+      each + '成交中位 <b>' + fmtPrice(s.parkWan) + ' 萬</b>，' +
+      '照<b>每一筆自己的車位數</b>回推，會有誤差。');
+    if(s.pkGuessed) notes.push('其中 ' + s.pkGuessed +
+      ' 筆查不到登記的車位數，以一個車位計算。');
+  }
+  if(s.noUnit) notes.push('有 ' + s.noUnit + ' 筆算不出每坪單價，只列總價。');
+  if(s.bandDropped) notes.push('坪數跟您相近的成交筆數不足，這裡放寬到本社區所有坪數，' +
+    '所以坪數落差會比較大。');
+  if(!s.upMedian) notes.push('這個窗口只有 ' + s.n + ' 筆，不足以代表行情，' +
+    '所以不列中位數，只把逐筆攤開給您看。');
+  notes.push('資料取自內政部實價登錄' + (s.dataAt ? '，整理於 ' + fmtDate(s.dataAt) : '') +
+    '。成交案件的公告會落後約兩個月，所以最近的成交可能還沒登錄上來。');
+  /* ⚠ 這一條一定要有。591 的開價單價是「總價÷權狀坪」（含車位），
+     實登是「扣車位」，兩個相減會得到 6~10 萬/坪的假價差。 */
+  notes.push('⚠ 這裡的「每坪」是扣掉車位算的，跟 591 在售開價的每坪（含車位）' +
+    '不是同一個算法，兩個數字不能直接相減。');
+
+  return '<div class="doc-sec">' +
+    '<div class="doc-sec-t">' + esc(s.name) + '　實際成交（實價登錄）</div>' +
+    '<div class="lvr-band">' +
+      '<div class="lvr-box"><div class="n">' + s.n + '</div><div class="k">' + esc(s.windowText) + '成交筆數</div></div>' +
+      (s.upMedian
+        ? '<div class="lvr-box hi"><div class="n">' + s.upMedian + '<small>萬/坪</small></div><div class="k">每坪中位（已扣車位）</div></div>'
+        : '') +
+      '<div class="lvr-box"><div class="n">' + fmtPrice(s.totLo) + ' ~ ' + fmtPrice(s.totHi) +
+        '<small>萬</small></div><div class="k">總價範圍</div></div>' +
+    '</div>' +
+    mineRow +
+    '<table class="mk-tbl lvr-tbl"><thead><tr><th>成交</th><th class="r">樓層</th>' +
+      '<th class="r">坪數<em>扣車位</em></th><th class="r">總價</th><th class="r">每坪<em>萬</em></th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table>' +
+    (s.n > s.rows.length ? '<div class="mk-band">' + esc(s.windowText) + '共 ' + s.n +
+      ' 筆，上表列出最近的 ' + s.rows.length + ' 筆。</div>' : '') +
+    '<div class="mk-note">' + notes.map(x=>'・'+x).join('<br>') + '</div>' +
+    /* ⚠ 給她看的操作提示要分開放，而且要掛 only-me ——
+       它不進屋主連結（ownerMode 不算），但她如果直接「列印／存 PDF」
+       再把 PDF 傳給屋主，這幾行就會跟著印出去。only-me 在列印時隱藏。 */
+    (!ownerMode && s.basis === 'gross'
+      ? '<div class="mk-note only-me">⚠ 只有你看得到：這個委託案還沒填車位坪數，' +
+        '所以坪數比較先用權狀坪。到「編輯」把車位坪數補上，這一段會更準 —— ' +
+        '實測同一個社區用權狀坪比出 50.3 萬/坪、用扣車位坪比出 46.4 萬/坪，差 8%。</div>'
+      : '') +
+  '</div>';
+}
+
+const ymT = (ym) => (ym ? Math.floor(ym/100) + '/' + String(ym%100).padStart(2,'0') : '—');
+
+/* ═══ 本期出價 ══════════════════════════════════════════════
+   排在市場反應的正下方，比買方回饋還前面。
+   點閱與收藏屋主半信半疑，出價他信 —— 那是唯一有人真的掏錢說話的數字。
+   ⚠ 這一塊只印買方出多少，絕對不印底價。
+═════════════════════════════════════════════════════════ */
+function offerBand(d){
+  const o = d.offer, t = d.offerTotals, l = d.listing;
+  if(!o){
+    /* 沒有出價也要講一句，不然屋主不知道是「沒人出價」還是「你沒寫」。
+       ⚠ 措辭不暗示該降價（feedback_不要壓屋主的價）。 */
+    if(t) return '<div class="ofr none"><div class="ofr-t">本期沒有新的出價</div>' +
+      '<div class="ofr-d">委託至今累計 ' + t.n + ' 組出過價，最高 <b>' + fmtPrice(t.hi) +
+      ' 萬</b>。我會把那幾組再追一次，確認還在考慮的有誰。</div></div>';
+    return '';
+  }
+  const pctTxt = (o.pct != null && o.gap < 0) ? '（低 ' + Math.abs(o.pct) + '%）'
+    : (o.pct != null && o.gap > 0) ? '（高 ' + o.pct + '%）' : '';
+  const gapTxt = o.gap == null ? '—'
+    : o.gap === 0 ? '＝ 開價'
+      : (o.gap < 0 ? '−' : '+') + fmtPrice(Math.abs(o.gap)) + ' 萬';
+  const st = {};
+  o.list.forEach(x => { st[x.st] = (st[x.st]||0) + 1; });
+  const stTxt = OFFER_ST.filter(k=>st[k]).map(k=>k+' '+st[k]+' 組').join('　');
+
+  return '<div class="ofr">' +
+    '<div class="ofr-t">本期出價</div>' +
+    '<div class="ofr-grid">' +
+      '<div class="ofr-box hi"><div class="n">' + fmtPrice(o.hi) + '<small>萬</small></div>' +
+        '<div class="k">本期最高出價</div></div>' +
+      '<div class="ofr-box"><div class="n' + (o.gap<0?' dn':'') + '">' + gapTxt + '</div>' +
+        '<div class="k">距您的開價 ' + fmtPrice(l.price) + ' 萬' + pctTxt + '</div></div>' +
+      '<div class="ofr-box"><div class="n">' + o.n + '<small>組</small></div>' +
+        '<div class="k">本期出價組數' + (t && t.n > o.n ? '（累計 ' + t.n + ' 組）' : '') + '</div></div>' +
+    '</div>' +
+    (stTxt ? '<div class="ofr-st">' + esc(stTxt) + '</div>' : '') +
+    '<div class="ofr-d">出價是市場最直接的訊號 —— 有人真的掏錢說話。' +
+      '這幾組我會一組一組跟回去，確認還在考慮的有誰。</div>' +
+  '</div>';
+}
+
 async function drawDocMap(name){
   const box = $('#docMapBox');
   if(!box) return;
@@ -1964,16 +3469,53 @@ function docText(){
   L.push('');
   L.push('物件：'+l.name+'　'+(l.size??'—')+' 坪　'+(l.rooms??0)+'房'+(l.halls??0)+'廳'+(l.baths??0)+'衛');
   L.push('目前開價：'+fmtPrice(l.price)+' 萬');
+  /* ⚠ 結論排在數字前面，跟 HTML 版同一個順序。
+     LINE 上屋主多半只看前三行，結論一定要在那三行裡。 */
+  {
+    const v = document.createElement('div');
+    v.innerHTML = verdict(d);
+    const h = v.querySelector('.vd-h')?.textContent || '';
+    const w = v.querySelector('.vd-w')?.textContent || '';
+    const p = v.querySelector('.vd-p')?.textContent || '';
+    if(h){
+      L.push('');
+      L.push('【目前狀況】'+h);
+      if(w) L.push(w);
+      if(p) L.push(p);
+    }
+  }
   L.push('');
   L.push('本期市場反應：');
   L.push('・網路點閱 '+(r.views??0)+' 次');
   L.push('・收藏 '+(r.favs??0)+' 人');
   L.push('・來電洽詢 '+(r.calls??0)+' 組');
   L.push('・實際帶看 '+(r.visits??0)+' 組');
+  /* 出價排在回饋前面，跟 HTML 版一樣的順序 */
+  if(d.offer){
+    const o = d.offer;
+    L.push('');
+    L.push('本期出價：');
+    L.push('・最高出價 '+fmtPrice(o.hi)+' 萬'+
+      (o.gap!=null && o.gap!==0 ? '（距開價 '+(o.gap<0?'−':'+')+fmtPrice(Math.abs(o.gap))+' 萬'+
+        (o.pct!=null?'，'+(o.gap<0?'低':'高')+' '+Math.abs(o.pct)+'%':'')+'）' : ''));
+    L.push('・本期 '+o.n+' 組出價'+
+      (d.offerTotals && d.offerTotals.n>o.n ? '，委託至今累計 '+d.offerTotals.n+' 組' : ''));
+    o.list.forEach(x=>L.push('　'+fmtPrice(x.wan)+' 萬（'+x.st+'）'));
+  }else if(d.offerTotals){
+    L.push('');
+    L.push('本期沒有新的出價。委託至今累計 '+d.offerTotals.n+' 組出過價，最高 '+
+      fmtPrice(d.offerTotals.hi)+' 萬。');
+  }
   if((r.feedback||[]).length){
     L.push('');
     L.push('買方回饋：');
-    r.feedback.forEach(f=>L.push('・['+f.t+'] '+f.n));
+    r.feedback.forEach(f=>L.push('・['+f.t+'] '+f.n+(f.st?'（'+f.st+'）':'')));
+    /* 「後來呢」的統計。⚠ 沒有人標記就整段不出現，不要湊一個「0 組」 */
+    const marked = r.feedback.filter(f=>f.st);
+    if(marked.length){
+      const t={}; marked.forEach(f=>{t[f.st]=(t[f.st]||0)+1;});
+      L.push('　追到目前為止：'+FB_ST.filter(k=>k&&t[k]).map(k=>k+' '+t[k]+' 組').join('、'));
+    }
   }
   if((r.actions||[]).length){
     L.push('');
@@ -1996,7 +3538,79 @@ function docText(){
     if(d.marketStats) L.push('・共 '+d.marketStats.n+' 件在售，'+fmtPrice(d.marketStats.lo)+'～'+fmtPrice(d.marketStats.hi)+' 萬，中位 '+fmtPrice(d.marketStats.mid)+' 萬');
     d.market.slice(0,5).forEach(m=>L.push('・'+m.name+'　'+(m.size??'—')+' 坪　'+fmtPrice(m.price)+' 萬'));
   }
+  /* 實價登錄成交。⚠ 一定要標明窗口與「已扣車位」，
+     不然屋主拿去跟 591 的開價單價相減會得到假的價差。 */
+  if(d.lvr && d.lvr.n){
+    const s = d.lvr;
+    L.push('');
+    L.push(s.name+' 實際成交（實價登錄）：');
+    L.push('・'+s.windowText+' '+s.n+' 筆，總價 '+fmtPrice(s.totLo)+'~'+fmtPrice(s.totHi)+' 萬');
+    if(s.upMedian) L.push('・每坪中位 '+s.upMedian+' 萬（已扣車位）');
+    else L.push('・樣本只有 '+s.n+' 筆，不足以代表行情，僅列逐筆');
+    s.rows.slice(0,5).forEach(x=>L.push('　'+ymT(x.ym)+'　'+
+      (x.fl!=null?x.fl+'樓　':'')+x.pg+' 坪　'+fmtPrice(x.tot)+' 萬'+
+      (x.up!=null?'　'+(x.est?'≈':'')+x.up+' 萬/坪':'')));
+    const mine = ownerUnitExPk(l, s.parkWan);
+    if(mine && s.upMedian){
+      const gap = Math.round((mine.up - s.upMedian)*10)/10;
+      L.push('・您的開價換成同一個算法是每坪 '+mine.up+' 萬（扣掉一個車位 '+fmtPrice(mine.parkWan)+' 萬），'+
+        (gap===0?'跟成交中位一樣':'比成交中位'+(gap<0?'低':'高')+' '+Math.abs(gap)+' 萬'));
+    }
+    if(s.restored) L.push('・標 ≈ 的 '+s.restored+' 筆是車位價未分開登記，用本社區一個車位 '+
+      fmtPrice(s.parkWan)+' 萬、照每一筆自己的車位數回推');
+    L.push('・這裡的每坪已扣車位，跟 591 開價的每坪（含車位）不是同一個算法，不能相減');
+  }
+  if((l.plus||[]).length || (l.plusNote||'').trim()){
+    L.push('');
+    L.push('您這一戶的條件：');
+    if((l.plus||[]).length) L.push('・'+l.plus.join('、'));
+    if((l.plusNote||'').trim()) L.push('・'+l.plusNote.trim());
+  }
+  /* 區域定位：地圖在 LINE 上貼不了，但那一行數字可以 */
+  if(d.area){
+    const a = d.area;
+    L.push('');
+    L.push('區域定位：青埔'+(a.areaMonths<=12?'近一年':'近兩年')+'住家成交每坪中位 '+
+      a.areaMedian+' 萬（'+a.areaComm+' 個社區、'+a.areaN+' 筆，已扣車位）');
+    if(a.rank) L.push('・本社區的成交單價在有成交紀錄的 '+a.total+' 個青埔社區裡排第 '+
+      a.rank+' 高，屬於'+a.band);
+  }
   if(r.advice){ L.push(''); L.push('我的建議：'); L.push(r.advice); }
+  /* 委託到期：只在剩 21 天內才提 */
+  {
+    const dl = daysLeft(l.end);
+    if(dl != null && dl <= 21){
+      L.push('');
+      L.push(dl < 0
+        ? '委託期間到 '+fmtDate(l.end)+' 已經過了 '+(-dl)+' 天。這段時間的完整銷售紀錄都在這份回報裡，我們找個時間談一下下一步。'
+        : '委託期間還剩 '+dl+' 天（到 '+fmtDate(l.end)+'）。到期前我會把整個委託期間的銷售紀錄整理成一份總結給您。');
+    }
+  }
+  /* 累計成績與下一步：LINE 版也要有，不然貼過去的內容跟他點連結看到的對不上 */
+  if(d.totals && (d.history||[]).length > 1){
+    const days = l.start ? Math.max(1, Math.round((new Date() - new Date(l.start))/864e5)) : null;
+    L.push('');
+    L.push('委託至今'+(days?' '+days+' 天':'')+'累計：瀏覽 '+(d.totals.views||0)+' 次、收藏 '+(d.totals.favs||0)+' 人、'+
+      '詢問 '+(d.totals.calls||0)+' 通、實際看過 '+(d.totals.visits||0)+' 組');
+  }
+  {
+    const v = r.visits ?? 0, c = r.calls ?? 0;
+    L.push('');
+    L.push('接下來這兩週我會做什麼：');
+    if(v===0 && c===0){
+      L.push('・把 591 的照片與標題重做一輪');
+      L.push('・轉發同業聯賣');
+      L.push('・回訪看過同類型物件的買方名單');
+    } else if(v===0){
+      L.push('・重拍照片（有人問代表價格帶是對的，卡在呈現）');
+      L.push('・把詢問過的買方追回來問原因');
+    } else {
+      L.push('・看過的買方一組一組跟回去');
+      L.push('・持續更新 591 曝光與社群貼文');
+      if(d.marketStats) L.push('・盯同社區競品，有新成交或降價第一時間告訴您');
+    }
+    L.push('・下一期回報約兩週後給您');
+  }
   L.push('');
   L.push('———');
   L.push(AGENT.name+'｜'+AGENT.title);
@@ -2022,10 +3636,60 @@ function openModal(id){
   $('#fEntrust').value = l?.entrust || '專任委託';
   v('#fStart',l?.start); v('#fEnd',l?.end);
   v('#fOrigPrice',l?.origPrice); v('#fFloorPrice',l?.floorPrice); v('#fLink',l?.link);
+  $('#fPk').value = l?.pk || '';  v('#fPkSize',l?.pkSize);  v('#fPkWan',l?.pkWan);
+  $('#pkHint').hidden = true; $('#pkHint').innerHTML = '';
   $('#modalBg').classList.add('show');
+  /* 社區名已經有了就直接查一次（編輯既有物件的時候）*/
+  fillParkingFromLvr();
   setTimeout(()=>$('#fName').focus(), 60);
 }
 function closeModal(){ $('#modalBg').classList.remove('show'); editingId = null; }
+
+/* ═══ 車位三格自己去實價登錄查 ══════════════════════════════
+   Rita 2026-09-11：「竹風青庭的車位我真的沒辦法補，你直接從網路上查。」
+   —— 那就不要叫她查。實價登錄原始檔有「車位移轉總面積」，
+   除以車位數就是一顆幾坪，型式與單價也都在裡面
+   （tools/owner-report/build-parking.mjs 算好放在 data/parking.json）。
+
+   ⚠ 只填空白的格子。她自己打過的數字一律不覆蓋 —— 她比資料熟，
+     而且「我按一下就被蓋掉」是最惱人的那種 bug。
+   ⚠ 一定要在畫面上說這是哪裡來的、幾筆算的，她才有辦法判斷要不要改。
+═════════════════════════════════════════════════════════ */
+async function fillParkingFromLvr(){
+  const box = $('#pkHint');
+  const name = $('#fName').value.trim();
+  if(!box) return;
+  if(name.length < 2){ box.hidden = true; return; }
+  try{
+    const L = await import('./lvr.mjs');
+    const db = await L.loadLvr();
+    if(!db) { box.hidden = true; return; }
+    const c = L.matchCommunity(db.communities, name, $('#fAddr').value.trim());
+    if(!c){ box.hidden = true; return; }
+    const sp = L.parkingSpec(db.park, c.id);
+    if(!sp){
+      box.hidden = false;
+      box.className = 'pk-hint miss';
+      box.innerHTML = '「'+esc(c.name)+'」在實價登錄裡查不到車位規格（成交筆數不足或規格太雜），這三格請自己填。';
+      return;
+    }
+    const kindId = /機械/.test(sp.kind||'') ? 'mech' : 'plane';
+    const filled = [];
+    if(!$('#fPk').value){ $('#fPk').value = kindId; filled.push('型式'); }
+    if(!num($('#fPkSize').value) && sp.ping > 0){ $('#fPkSize').value = sp.ping; filled.push('坪數'); }
+    if(!num($('#fPkWan').value) && sp.wan > 0){ $('#fPkWan').value = sp.wan; filled.push('行情'); }
+
+    const win = sp.wanWin === 36 ? '近三年' : sp.wanWin === 60 ? '近五年' : '全部期間';
+    box.hidden = false;
+    box.className = 'pk-hint';
+    box.innerHTML = '<b>'+esc(c.name)+'</b> 的實價登錄車位規格：' +
+      '一個 <b>'+sp.ping+' 坪</b>（'+sp.n+' 筆成交裡 '+sp.share+'% 是這個規格）' +
+      (sp.kind ? '、<b>'+esc(sp.kind)+'</b>' : '') +
+      (sp.wan ? '、'+win+'成交中位 <b>'+fmtPrice(sp.wan)+' 萬</b>（'+sp.wanN+' 筆）' : '、單價樣本不足') +
+      '。' + (filled.length ? '已經幫你把<b>'+filled.join('、')+'</b>填好了，' : '') +
+      '數字不對就直接改，改過的不會被蓋回去。';
+  }catch{ box.hidden = true; }
+}
 
 function saveListing(){
   const name = $('#fName').value.trim();
@@ -2045,7 +3709,8 @@ function saveListing(){
     floor:num($('#fFloor').value), totalFloor:num($('#fTotalFloor').value),
     entrust:$('#fEntrust').value, start:$('#fStart').value, end:$('#fEnd').value,
     origPrice:num($('#fOrigPrice').value), floorPrice:num($('#fFloorPrice').value),
-    link:$('#fLink').value.trim()
+    link:$('#fLink').value.trim(),
+    pk:$('#fPk').value, pkSize:num($('#fPkSize').value), pkWan:num($('#fPkWan').value)
   };
   if(editingId){
     const i = state.listings.findIndex(x=>x.id===editingId);
@@ -2138,6 +3803,14 @@ function bind(){
     if(!b) return;
     const a = b.dataset.act;
     if(a==='add'){ openModal(); return; }
+    /* ⚠ 分頁的代號是 'rivals' 不是 'market'。寫錯的話 switchView 會把四個分頁
+       全部藏起來，然後 META['market'] 是 undefined → 整頁白掉。 */
+    if(a==='gomarket'){ const c=e.target.closest('[data-id]'); if(c){ state.activeId=c.dataset.id; save(); } switchView('rivals'); return; }
+    if(a==='lastdoc'){
+      const c=e.target.closest('[data-id]');
+      if(c){ state.activeId=c.dataset.id; save(); }
+      buildDoc(); return;
+    }
     if(a==='seed'){ seed(); renderListings(); toast('已載入範例'); return; }
     const card = b.closest('.lcard'); if(!card) return;
     const id = card.dataset.id;
@@ -2198,14 +3871,17 @@ function bind(){
   });
 
   $('#view-write').addEventListener('click', e=>{
-    const b = e.target.closest('[data-act], #btnAddFb, #btnSaveReport, #btnMarket, #btnMarketRetry, .fb-item .rm, .hist-item .rm');
+    const b = e.target.closest('[data-act], #btnAddFb, #btnAddOf, #btnSaveReport, #btnMarket, #btnMarketRetry, .fb-item .rm, .of-item .rm, .hist-item .rm, .hist-item');
     if(!b) return;
     if(b.dataset && b.dataset.act==='golist'){ switchView('listings'); return; }
     if(b.id==='btnAddFb'){ const cur=readFb(); cur.push({t:'價格',n:''}); renderFb(cur); return; }
+    if(b.id==='btnAddOf'){ const cur=readOf(); cur.push({wan:null,st:OFFER_ST[0]}); renderOf(cur, activeListing()); return; }
     if(b.id==='btnMarket' || b.id==='btnMarketRetry'){ if(b.id==='btnMarketRetry') apiBase=null; loadMarket(); return; }
     if(b.classList.contains('rm')){
       const fbItem = b.closest('.fb-item');
       if(fbItem){ const cur=readFb(); cur.splice(Number(fbItem.dataset.i),1); renderFb(cur); return; }
+      const ofItem = b.closest('.of-item');
+      if(ofItem){ const cur=readOf(); cur.splice(Number(ofItem.dataset.i),1); renderOf(cur, activeListing()); return; }
       const hi = b.closest('.hist-item');
       if(hi){
         const l = activeListing();
@@ -2216,6 +3892,12 @@ function bind(){
       }
       return;
     }
+    /* 點過去回報的那一列 → 把那一期的回報單重新打開。
+       ⚠ 原本這個清單只有刪除鈕，點日期沒反應，上一期的回報單就再也打不開了。 */
+    if(b.classList.contains('hist-item')){
+      buildDoc(Number(b.dataset.i));
+      return;
+    }
     if(b.id==='btnSaveReport'){
       const l = activeListing(); if(!l) return;
       const rec = {
@@ -2223,9 +3905,13 @@ function bind(){
         views:num($('#rViews').value)??0, favs:num($('#rFavs').value)??0,
         calls:num($('#rCalls').value)??0, visits:num($('#rVisits').value)??0,
         feedback: readFb(),
+        offers: readOf(),
         actions: $$('#actChips input:checked').map(i=>i.value),
         advice: $('#rAdvice').value.trim()
       };
+      /* 加分項存在物件身上（不是這一期）。下一期打開表單會自動勾好。*/
+      l.plus = $$('#plusChips input:checked').map(i=>i.value);
+      l.plusNote = $('#rPlusNote').value.trim();
       /* 把這期的競品快照一起存起來——下一期查同一個範圍時就能比出漲跌。
          只存比價需要的欄位，不存照片與房仲名。 */
       if(market.rows && market.forId === l.id){
@@ -2257,6 +3943,26 @@ function bind(){
     }
   });
 
+  /* 出價金額一邊打、價差一邊算。
+     ⚠ 只改那一格的文字，不要整個 renderOf —— 重畫會把游標踢掉，
+       打到第三個字就跳出去了。 */
+  $('#view-write').addEventListener('input', e=>{
+    const it = e.target.closest('.of-item');
+    if(!it || e.target.tagName !== 'INPUT') return;
+    const box = it.querySelector('.of-gap');
+    if(!box) return;
+    const l = activeListing();
+    /* ⚠ 一定要先判斷 wan 是不是 null 再相減。
+       num('') 回 null，而 null - 1880 是 -1880（JS 把 null 當 0），
+       所以「清空金額」會變成「低於開價 1,880 萬」—— 不報錯，只是講錯。 */
+    const wan = num(e.target.value);
+    const gap = (wan != null && wan > 0 && l && l.price > 0) ? wan - l.price : null;
+    if(gap == null || !isFinite(gap)){ box.textContent = ''; box.classList.remove('dn'); return; }
+    box.textContent = gap === 0 ? '＝開價'
+      : (gap > 0 ? '高於開價 ' : '低於開價 ') + fmtPrice(Math.abs(gap)) + ' 萬';
+    box.classList.toggle('dn', gap < 0);
+  });
+
   $('#docWrap').addEventListener('click', e=>{
     const b = e.target.closest('[data-act]'); if(!b) return;
     const a = b.dataset.act;
@@ -2273,6 +3979,7 @@ function bind(){
       return;
     }
     if(a==='gowrite') switchView('write');
+    if(a==='opendoc') buildDoc();
     if(a==='print') window.print();
     if(a==='share') openShare();
     if(a==='copytext'){
@@ -2294,6 +4001,10 @@ function bind(){
   $('#modalClose').addEventListener('click', closeModal);
   $('#modalCancel').addEventListener('click', closeModal);
   $('#modalSave').addEventListener('click', saveListing);
+  /* 社區名／路段打完（離開欄位）就去實價登錄查車位規格。
+     ⚠ 用 change 不用 input —— 打字打到一半去查是白查，而且會一直閃。 */
+  $('#fName').addEventListener('change', fillParkingFromLvr);
+  $('#fAddr').addEventListener('change', fillParkingFromLvr);
   $('#modalBg').addEventListener('click', e=>{ if(e.target===$('#modalBg')) closeModal(); });
 
   $('#shareClose').addEventListener('click', closeShare);
@@ -2366,6 +4077,10 @@ function init(){
   if(!load()) seed();
   bind();
   switchView('listings');
+  /* 自動盯同社區。⚠ 放在畫面畫完之後、而且不 await ——
+     591 查詢要幾秒，擋在這裡的話她會看到一片空白以為工具壞了。
+     12 小時內掃過的不會重掃，所以正常開關頁面不會一直打 591。 */
+  setTimeout(() => { autoScan().catch(() => {}); }, 800);
 }
 
 init();
