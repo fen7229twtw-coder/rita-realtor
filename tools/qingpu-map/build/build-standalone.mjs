@@ -1,7 +1,7 @@
 // 產生離線單檔版：把底圖與社區資料直接內嵌進 HTML。
 // 用法： node build/build-standalone.mjs
 //
-// 產出 青埔地圖_離線版.html —— 點兩下就能開，不必啟動任何伺服器，
+// 產出 青埔社區地圖_離線版.html —— 點兩下就能開，不必啟動任何伺服器，
 // 也可以直接用 LINE／email 傳給別人。
 // （file:// 協定不能 fetch 本機 JSON，所以一定要內嵌，不能只複製 index.html）
 
@@ -86,14 +86,14 @@ async function main() {
   );
 
   // 標題加註，免得跟線上版搞混
-  out = out.replace('<title>青埔地圖｜蕭沛縈 Rita</title>',
-    '<title>青埔地圖（離線版）｜蕭沛縈 Rita</title>');
+  out = out.replace('<title>青埔社區地圖系統｜蕭沛縈 Rita</title>',
+    '<title>青埔社區地圖系統（離線版）｜蕭沛縈 Rita</title>');
 
-  const file = join(ROOT, '青埔地圖_離線版.html');
+  const file = join(ROOT, '青埔社區地圖_離線版.html');
   await writeFile(file, out, 'utf8');
 
   const { size } = await stat(file);
-  console.log(`已產生 青埔地圖_離線版.html（${(size / 1024 / 1024).toFixed(1)} MB）`);
+  console.log(`已產生 青埔社區地圖_離線版.html（${(size / 1024 / 1024).toFixed(1)} MB）`);
   console.log(`  地標 ${(basemap.pois || []).length} 個　建物 ${(basemap.buildings || []).length} 棟`);
   console.log(`  社區 ${pins ? pins.pins.length : 0} 個${manual ? '　含手動校正' : ''}`);
   console.log('\n點兩下就能開，不必啟動伺服器，也可以直接傳給別人。');

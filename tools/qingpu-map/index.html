@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>青埔地圖｜蕭沛縈 Rita</title>
+<title>青埔社區地圖系統｜蕭沛縈 Rita</title>
 <style>
 /* ===================================================================
-   青埔地圖 — 蕭沛縈 Rita
+   青埔社區地圖系統 — 蕭沛縈 Rita
    沿用買方配案／屋主回報／青埔社區資料庫同一套 CIS。
    螢幕是可縮放互動地圖，Ctrl+P 直接輸出 A2 橫式印刷級 PDF。
 =================================================================== */
@@ -726,7 +726,7 @@ body{
     </div>
 
     <div class="brand-title">
-      <h1>青埔生活地圖</h1>
+      <h1>青埔社區地圖系統</h1>
       <div class="sub">高鐵桃園車站特定區 ‧ A17 領航 ─ A18 高鐵 ─ A19 體育園區</div>
     </div>
 
@@ -3094,7 +3094,7 @@ async function exportPNG() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   const stamp = new Date().toISOString().slice(0, 10);
-  a.download = tourOn() && tour.length ? `帶看地圖_${stamp}.png` : `青埔地圖_${stamp}.png`;
+  a.download = tourOn() && tour.length ? `帶看地圖_${stamp}.png` : `青埔社區地圖_${stamp}.png`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 3000);
   if (tourOn()) toastTour('圖片已存到「下載」資料夾，可以直接傳 LINE');
@@ -3126,7 +3126,7 @@ function exportSVG() {
   const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + s], { type:'image/svg+xml' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `青埔地圖_${MAP.meta.generatedAt.slice(0,10)}.svg`;
+  a.download = `青埔社區地圖_${MAP.meta.generatedAt.slice(0,10)}.svg`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 3000);
 }
